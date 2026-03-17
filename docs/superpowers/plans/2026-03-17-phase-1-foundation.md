@@ -480,7 +480,7 @@ export {};
 `packages/cli/package.json`:
 ```json
 {
-  "name": "@sdx/cli",
+  "name": "sdx",
   "version": "0.0.0",
   "type": "module",
   "bin": {
@@ -562,7 +562,6 @@ git commit -m "chore: scaffold monorepo with turborepo, pnpm workspaces, and 8 p
 - Create: `packages/schema/src/schemas/test-plan.json`
 - Create: `packages/schema/src/schemas/adr.json`
 - Create: `packages/schema/src/schemas/api-contract.json`
-- Create: `packages/schema/src/schemas/sections.json`
 - Test: `packages/schema/src/schemas.test.ts`
 
 - [ ] **Step 1: Write test for base spec schema**
@@ -1294,10 +1293,10 @@ export const REQUIRED_SECTIONS: Record<SpecType, string[]> = {
     "Risks",
     "Open Questions",
   ],
-  "user-story": ["Description", "Acceptance Criteria"],
+  "user-story": ["Description", "Acceptance Criteria", "Dependencies", "Notes"],
   "test-plan": ["Scope", "Test Cases", "Coverage Matrix", "Edge Cases"],
   adr: ["Context", "Decision", "Status", "Consequences"],
-  "api-contract": ["Endpoints", "Auth", "Error Codes"],
+  "api-contract": ["Endpoints", "Request/Response Schemas", "Auth", "Error Codes"],
 };
 ```
 
@@ -2465,8 +2464,8 @@ export interface LintResults {
 
 `packages/lint/src/engine.ts`:
 ```typescript
-import type { ParsedSpec } from "@sdx/core";
-import type { SdxConfig, DependencyGraph } from "@sdx/core";
+import type { ParsedSpec, DependencyGraph } from "@sdx/core";
+import type { SdxConfig } from "@sdx/schema";
 import type { LintRule, LintResults, Diagnostic } from "./types.js";
 
 export interface LintEngineOptions {
@@ -3481,6 +3480,8 @@ authors: []
 
 ## Endpoints
 
+## Request/Response Schemas
+
 ## Auth
 
 ## Error Codes
@@ -3670,6 +3671,7 @@ import { sharedArgs } from "../shared-args.js";
 import { formatPretty } from "../formatters/pretty.js";
 import { formatJson } from "../formatters/json.js";
 import { formatGithub } from "../formatters/github.js";
+import { createLogger } from "@sdx/core";
 
 export interface RunLintOptions {
   configDir: string;
@@ -3738,8 +3740,10 @@ export default defineCommand({
     },
   },
   async run({ args }) {
+    const logger = createLogger({ quiet: args.quiet, verbose: args.verbose });
+
     if (args.fix) {
-      console.log("  No auto-fixable issues supported yet.");
+      logger.info("No auto-fixable issues supported yet.");
     }
 
     const results = await runLint({
@@ -3987,6 +3991,8 @@ Expected: Passes with strict preset (no errors). Warnings are acceptable and sho
 
 Include:
 - Project overview (from roadmap Vision section)
+- Philosophy: spec-driven development, deterministic validation, skills-first AI integration
+- Comparison to alternatives: why not just Markdown lint? why not just YAML schemas? What makes sdx different (dependency chains, context packing, drift detection)
 - Installation: `npm install -g sdx`
 - Quick start: `sdx init`, `sdx lint`, `sdx graph`
 - Spec file format example
