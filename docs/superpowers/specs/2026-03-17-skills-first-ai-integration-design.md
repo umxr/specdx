@@ -134,6 +134,7 @@ The `sdx generate` commands (`sdx generate story --from prd`, `sdx generate test
 - Mastra integration: unchanged
 - Jira/Linear sync: unchanged
 - Slack notifications: unchanged
+- Dashboard: unchanged
 - **Added:** Skills adapter architecture — document how to write adapter layers for Cursor rules, Codex plugins, Windsurf, etc. Claude Code ships first; interface defined so community can contribute adapters.
 
 #### 4.5 — Advanced Lint Rules: Minor change
