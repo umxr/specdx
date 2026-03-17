@@ -37,7 +37,8 @@ sdx/                          # monorepo root
 │   ├── lint/                     # @sdx/lint — linting engine and built-in rules
 │   ├── pack/                     # @sdx/pack — context packing and token optimisation
 │   ├── diff/                     # @sdx/diff — spec-to-spec and spec-to-implementation diffing
-│   └── github-action/            # @sdx/action — GitHub Action wrapper
+│   ├── github-action/            # @sdx/action — GitHub Action wrapper
+│   └── skills/                  # @sdx/skills — Claude Code skill definitions
 ├── rules/                        # community-contributed lint rules
 ├── templates/                    # starter spec templates (BMAD, lightweight, API-first)
 ├── docs/                         # documentation site
@@ -327,6 +328,17 @@ The context packing engine.
 | Cursor rules file generation | `sdx pack --cursor` generates a `.cursorrules` file from the packed context | Valid Cursor rules file |
 | Claude Project knowledge export | `sdx pack --claude-project` formats output optimised for Claude Project knowledge | Format matches Claude Project knowledge expectations |
 
+#### 2.4 — `@sdx/skills` (Claude Code)
+
+AI coding tool integration via opinionated workflow skills. Skills wrap sdx CLI commands and encode methodology — not just "how to call sdx" but when and why. Initially Claude Code only, with architecture open to Cursor/Codex adapters later. Depends on 2.1 (`@sdx/pack`) and 2.2 (CLI Integration) being complete first.
+
+| Task | Description | Acceptance Criteria |
+|---|---|---|
+| Skills package scaffolding | Set up `@sdx/skills` package with skill file structure, README, and install instructions. | `npm install @sdx/skills` makes skills available to Claude Code. |
+| Skill: `sdx:start-task` | Developer describes their task. Skill runs `sdx pack --task "..."`, injects the packed spec context, establishes guardrails. | Spec context is loaded automatically. LLM references specs during implementation. |
+| Skill: `sdx:author-spec` | Guided spec authoring. Determines type, walks through sections, runs `sdx lint` iteratively, validates references. This is an interactive workflow distinct from Phase 4's `sdx generate` commands, which are deterministic stub generators for batch use. | Developer can author a valid spec without knowing the schema by heart. |
+| Skill installation docs | How to install and configure sdx skills for Claude Code. Cover install, project setup, available skills, customization. | Developer can go from zero to working skills in under 2 minutes. |
+
 ### Phase 2 Exit Criteria
 
 - [ ] `sdx pack` produces token-optimised context payloads
@@ -335,6 +347,8 @@ The context packing engine.
 - [ ] Token budget is respected and reported
 - [ ] At least 3 output formats supported (XML, Markdown, JSON)
 - [ ] Used daily on at least one real project (Flarecast or NearForm client)
+- [ ] `sdx:start-task` skill loads spec context into Claude Code sessions
+- [ ] `sdx:author-spec` skill guides spec creation with iterative linting
 
 ---
 
@@ -393,6 +407,9 @@ The spec-to-spec diffing engine.
 | Spec ownership | Assign owners to specs in config. Staleness warnings tag owners. | CI comment @-mentions the right people |
 | Changelog generation | `sdx changelog` generates a changelog of spec changes between two refs | Useful for sprint reviews and handoffs |
 | Onboarding mode | `sdx explain` prints a human-readable summary of the spec suite for new team members | Clear overview of project structure and intent |
+| Skill: `sdx:pre-commit` | Before committing, runs `sdx lint` + `sdx diff` (working tree vs. last commit). LLM interprets drift, suggests whether specs or code need updating. Can also be wired as a Claude Code hook. Depends on 3.1 (`@sdx/diff`) and 3.2 (CLI Integration). | Drift is caught before entering commit history. Developer makes an informed decision. |
+| Skill: `sdx:onboard` | Wraps `sdx explain` + full suite pack + graph + status. LLM walks new developer through the project. | New developer understands the spec landscape within one conversation. |
+| Skill: `sdx:sprint-review` | Wraps `sdx status` + `sdx diff` + `sdx changelog`. LLM produces actionable spec health summary. | Team gets a shareable summary without manually running commands. |
 
 #### 3.5 — Content & Adoption
 
@@ -412,6 +429,8 @@ The spec-to-spec diffing engine.
 - [ ] `sdx status` gives a useful overview for standups
 - [ ] Blog post published
 - [ ] Used on at least one NearForm client project
+- [ ] Claude Code skills cover pre-commit checks, onboarding, and sprint review workflows
+- [ ] Skills are documented and installable from npm
 
 ---
 
@@ -419,7 +438,7 @@ The spec-to-spec diffing engine.
 
 **Goal**: Add spec-to-implementation diffing with optional LLM-assisted analysis. This is the ambitious, differentiated phase that makes sdx genuinely novel. No other tool in the ecosystem does this.
 
-**Timeline target**: 6–8 weeks after Phase 3
+**Timeline target**: 4–5 weeks after Phase 3
 
 **Prerequisite**: Phase 3 complete with real-world usage feedback.
 
@@ -442,18 +461,13 @@ LLM-free analysis that compares specs against code using AST parsing and pattern
 
 #### 4.2 — LLM-Assisted Analysis (Opt-In)
 
-Optional, deeper analysis that uses an LLM to assess whether implementation matches spec intent. This should always be opt-in and clearly flagged as AI-assisted.
+Lightweight fallback for developers not using an AI coding tool. The recommended path for AI-assisted analysis is via the `sdx:verify` skill (see below), which delegates reasoning to the host tool's LLM. The `--ai` flag is a minimal single-provider alternative.
 
 | Task | Description | Acceptance Criteria |
 |---|---|---|
-| Intent drift detector | Send spec section + corresponding code to an LLM, ask whether the implementation matches the spec's intent | Returns assessment with confidence score and explanation |
-| Provider abstraction | Support multiple LLM providers (Anthropic, OpenAI, local models via Ollama) | Works with at least Anthropic and OpenAI APIs |
-| Cost estimation | Before running LLM analysis, estimate the token cost and ask for confirmation | Shows estimated cost, waits for user confirmation |
-| Caching layer | Cache LLM analysis results to avoid re-running on unchanged spec+code pairs | Cache hit rate >80% on repeated runs |
-| `sdx check --ai` flag | Opt-in flag to enable LLM-assisted analysis | Only runs LLM analysis when explicitly requested |
-| `sdx check --ai --provider anthropic` | Choose LLM provider | Respects provider choice, falls back gracefully |
-| Confidence thresholds | Only report LLM findings above a configurable confidence threshold | Reduces noise from low-confidence assessments |
-| Spec generation suggestions | When drift is detected, suggest spec updates or implementation changes | Suggestions are actionable and specific |
+| `sdx check --ai` | Opt-in flag that sends spec + code + static analysis results to a single LLM provider (Anthropic only). Lightweight fallback for developers not using an AI coding tool. | Returns assessment for each drift finding. Works with an `ANTHROPIC_API_KEY` env var. |
+| Spec generation suggestions | When drift is detected, output actionable suggestions in a structured format that both humans and skills can consume. | Suggestions are specific. Skills can parse the output. |
+| Skill: `sdx:verify` | After implementing a feature, runs `sdx check`, feeds results + specs + code to the LLM. This is the recommended path for AI-assisted verification — replaces the need for provider abstraction, caching, and cost management. | Developer gets spec-vs-implementation review without configuring API keys or providers. |
 
 #### 4.3 — Spec Generation & Maintenance
 
@@ -475,6 +489,7 @@ Tools that help maintain and evolve specs over time.
 | Jira/Linear sync | Map user stories to issue tracker tickets, detect when tickets drift from specs | Two-way awareness between specs and tickets |
 | Slack notifications | Post spec health updates to a Slack channel (daily digest or on-change) | Configurable, useful for team awareness |
 | Dashboard | Web-based dashboard showing spec health across multiple projects | Deployable as a standalone app or embedded in existing tools |
+| Skills adapter architecture | Document how to write adapter layers for Cursor rules, Codex plugins, Windsurf, etc. Claude Code ships first; interface defined so community can contribute adapters. | Adapter guide with at least one worked example. Community can follow it to add a new tool. |
 
 #### 4.5 — Advanced Lint Rules
 
@@ -484,14 +499,16 @@ Tools that help maintain and evolve specs over time.
 | Rule: `consistency/terminology` | Detect when the same concept is referred to by different names across specs | Flags terminology drift, suggests canonical terms |
 | Rule: `security/threat-coverage` | If a threat model spec exists, check that technical design addresses identified threats | Maps threats to mitigations |
 | Rule: `completeness/edge-case-coverage` | Flag user stories or test plans that don't address error states, boundary conditions, or failure modes | Catches common omissions |
-| Rule: `clarity/ambiguity-score-ai` (opt-in) | Use an LLM to score ambiguity more accurately than heuristic pattern matching | Better detection than rule-based, clearly flagged as AI-assisted |
+| Rule: `clarity/ambiguity-score-ai` (opt-in) | Use an LLM to score ambiguity more accurately than heuristic pattern matching. Note: the `sdx:author-spec` skill (Phase 2) already provides real-time ambiguity guidance during authoring — this rule is for CI/batch validation. | Better detection than rule-based, clearly flagged as AI-assisted |
 
 ### Phase 4 Exit Criteria
 
 - [ ] `sdx check` detects drift between specs and code (static analysis)
-- [ ] `sdx check --ai` provides LLM-assisted intent analysis (opt-in)
+- [ ] `sdx check --ai` provides single-provider LLM-assisted analysis as fallback (opt-in)
+- [ ] `sdx:verify` skill provides AI-assisted spec review within AI coding tools (recommended path)
 - [ ] API route matching works for at least Express, Hono, and Next.js
 - [ ] MCP server is functional and tested with Claude
+- [ ] Skills adapter architecture is documented for community contributions
 - [ ] Spec generation stubs are useful starting points
 - [ ] Conference talk delivered or submitted
 - [ ] npm weekly downloads >500
@@ -544,6 +561,7 @@ Tools that help maintain and evolve specs over time.
 | AST parsing (Phase 4) | `ts-morph` | TypeScript AST analysis for spec-to-implementation matching. |
 | CLI framework | `citty` or `commander` | Lightweight, good subcommand support. |
 | Schema validation | `ajv` | Fast JSON Schema validation, well-maintained. |
+| AI integration strategy | Skills-first, API-fallback | AI coding tools already have an LLM. sdx exposes structured spec data and deterministic analysis; the host tool provides reasoning. Eliminates provider abstraction, cost management, and caching. Opt-in `--ai` flag retained as lightweight fallback. |
 
 ---
 
@@ -557,7 +575,8 @@ Tools that help maintain and evolve specs over time.
 | GitHub Action is slow on large spec suites | Low | Medium | Implement caching, incremental analysis. |
 | Scope creep into full project management tool | High | High | Stay focused on the spec layer. Integrate with PM tools, don't replace them. |
 | Adoption stalls without community | Medium | High | Dogfood aggressively. Write content. Ship templates that lower the barrier. |
-| LLM-assisted features (Phase 4) are unreliable | Medium | Medium | Keep them opt-in. Always show confidence scores. Never make them required for core workflows. |
+| LLM-assisted features (Phase 4) are unreliable | Low | Low | Skills delegate reasoning to the host tool's LLM, so unreliability is the host tool's concern, not sdx's. The lightweight `--ai` fallback uses a single provider (Anthropic) with no complex orchestration. Keep opt-in. Never required for core workflows. |
+| Dependency on Claude Code's skill system stability | Medium | Medium | Skills are thin workflow orchestrators over the CLI — if the skill system changes, the skills are quick to update. CLI commands work independently of skills. Plan adapter layers for other tools (Cursor, Codex) to avoid single-platform lock-in. |
 
 ---
 
@@ -572,3 +591,5 @@ Tools that help maintain and evolve specs over time.
 4. **Pack personalisation** — No provider-specific formatting. Modern LLMs all handle XML and structured markdown well enough that the differences are marginal. SDX offers three output formats (XML, markdown, JSON) and lets the user pick. If a meaningful provider divergence emerges later, it can be added as a community-contributed format plugin.
 
 5. **Naming** — `sdx` (Spec Developer Experience). The `@sdx` npm scope will be registered as an npm org. Target domain: `sdx.dev`. The name mirrors the "DX" (Developer Experience) abbreviation familiar to the TypeScript ecosystem.
+
+6. **AI integration model** — Skills-first, not API-first. The original design had sdx calling LLM APIs directly for intent analysis, ambiguity scoring, and drift detection. This required provider abstraction, cost estimation, caching, and confidence thresholds — significant complexity. The revised approach recognizes that developers using AI-assisted workflows already have an LLM available in their coding tool. sdx skills orchestrate the workflow (when to pack, lint, diff, check) and feed structured results to the host LLM for reasoning. The `--ai` flag on `sdx check` is retained as a minimal single-provider fallback, not the primary path. This cuts ~40% of Phase 4 scope and moves the highest-value AI integration (spec-aware coding sessions) from Phase 4 to Phase 2.
