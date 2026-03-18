@@ -273,7 +273,7 @@ The unified CLI entry point.
 - [x] `npx specdx lint` validates specs and reports diagnostics
 - [x] `npx specdx graph` visualises the dependency tree
 - [x] sdx's own specs pass `sdx lint --preset strict`
-- [ ] Published to npm as `specdx` (CLI) and `@sdx/*` (packages) — alpha publish pending
+- [x] Published to npm as `specdx@0.1.0-alpha.1` (CLI) — `@sdx/*` packages pending org creation
 - [x] README with quick start guide
 - [ ] At least one external user (even if it's just using it on Flarecast or a NearForm project)
 
