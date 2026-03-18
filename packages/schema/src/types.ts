@@ -66,6 +66,19 @@ export interface SpecEntry {
   requires?: string[];
 }
 
+export interface PackCompressionConfig {
+  strip_boilerplate?: boolean;
+  stable_days?: number;
+  collapse_resolved_adrs?: boolean;
+}
+
+export interface PackConfig {
+  max_tokens?: number;
+  format?: "xml" | "markdown" | "json";
+  compression?: PackCompressionConfig;
+  boilerplate_sections?: string[];
+}
+
 export interface SdxConfig {
   version: string;
   project?: { name?: string; description?: string };
@@ -75,7 +88,7 @@ export interface SdxConfig {
     rules?: Record<string, unknown>;
     ignore?: string[];
   };
-  pack?: Record<string, unknown>;
+  pack?: PackConfig;
   diff?: Record<string, unknown>;
   ci?: Record<string, unknown>;
 }

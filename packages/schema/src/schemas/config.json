@@ -35,7 +35,27 @@
       },
       "additionalProperties": false
     },
-    "pack": { "type": "object" },
+    "pack": {
+      "type": "object",
+      "properties": {
+        "max_tokens": { "type": "integer", "minimum": 1 },
+        "format": { "type": "string", "enum": ["xml", "markdown", "json"] },
+        "compression": {
+          "type": "object",
+          "properties": {
+            "strip_boilerplate": { "type": "boolean" },
+            "stable_days": { "type": "integer", "minimum": 0 },
+            "collapse_resolved_adrs": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "boilerplate_sections": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
     "diff": { "type": "object" },
     "ci": { "type": "object" }
   },

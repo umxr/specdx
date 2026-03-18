@@ -12,6 +12,8 @@ export {
   type SpecReference,
   type SdxConfig,
   type SpecEntry,
+  type PackConfig,
+  type PackCompressionConfig,
   SPEC_TYPES,
   SPEC_STATUSES,
 } from "./types.js";

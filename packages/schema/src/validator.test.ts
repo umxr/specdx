@@ -43,4 +43,59 @@ describe("validateConfig", () => {
     const result = validateConfig({ specs: {} });
     expect(result.valid).toBe(false);
   });
+
+  it("accepts valid pack config with all fields", () => {
+    const result = validateConfig({
+      version: "1.0",
+      specs: { prd: { path: "specs/prd.md", type: "prd" } },
+      pack: {
+        max_tokens: 100000,
+        format: "xml",
+        compression: {
+          strip_boilerplate: true,
+          stable_days: 30,
+          collapse_resolved_adrs: true,
+        },
+        boilerplate_sections: ["changelog", "license"],
+      },
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeNull();
+  });
+
+  it("rejects invalid pack format value", () => {
+    const result = validateConfig({
+      version: "1.0",
+      specs: { prd: { path: "specs/prd.md", type: "prd" } },
+      pack: {
+        format: "yaml",
+      },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).not.toBeNull();
+  });
+
+  it("rejects negative max_tokens in pack config", () => {
+    const result = validateConfig({
+      version: "1.0",
+      specs: { prd: { path: "specs/prd.md", type: "prd" } },
+      pack: {
+        max_tokens: -1,
+      },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).not.toBeNull();
+  });
+
+  it("rejects zero max_tokens in pack config", () => {
+    const result = validateConfig({
+      version: "1.0",
+      specs: { prd: { path: "specs/prd.md", type: "prd" } },
+      pack: {
+        max_tokens: 0,
+      },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).not.toBeNull();
+  });
 });
