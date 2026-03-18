@@ -1,0 +1,23 @@
+version: "1.0"
+
+project:
+  name: "test-project"
+  description: "A test project"
+
+specs:
+  prd:
+    path: "specs/prd.md"
+    type: "prd"
+    required: true
+  technical:
+    path: "specs/technical-design.md"
+    type: "technical-design"
+    requires: ["prd"]
+  stories:
+    path: "specs/stories/*.md"
+    type: "user-story"
+    requires: ["prd"]
+
+lint:
+  extends: "recommended"
+  rules: {}
