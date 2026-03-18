@@ -65,8 +65,8 @@ function buildSpecFile(
     `title: "${title}"`,
     `status: draft`,
     `version: "0.1"`,
-    `created: ${today}`,
-    `authors: []`,
+    `created: "${today}"`,
+    `authors: ["author"]`,
     "---",
   ].join("\n");
 
