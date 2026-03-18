@@ -151,6 +151,13 @@ importers:
         version: 5.9.3
 
   packages/pack:
+    dependencies:
+      '@sdx/core':
+        specifier: workspace:*
+        version: link:../core
+      '@sdx/schema':
+        specifier: workspace:*
+        version: link:../schema
     devDependencies:
       typescript:
         specifier: ^5.7.0
