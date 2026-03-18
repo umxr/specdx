@@ -4,7 +4,7 @@ import { requiredSectionsRule } from "./required-sections.js";
 import { validReferencesRule } from "./valid-references.js";
 import { noCircularDepsRule } from "./no-circular-deps.js";
 import type { LintContext } from "../types.js";
-import type { ParsedSpec } from "@sdx/core";
+import type { ParsedSpec } from "@specdx/core";
 
 function makeSpec(overrides: Partial<ParsedSpec> = {}): ParsedSpec {
   return {

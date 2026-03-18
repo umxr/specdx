@@ -1,5 +1,5 @@
-import { countTokens } from "@sdx/core";
-import type { ParsedSection } from "@sdx/core";
+import { countTokens } from "@specdx/core";
+import type { ParsedSection } from "@specdx/core";
 import type { CompressedSpec, CompressedSection, CompressionOptions } from "./types.js";
 
 /**

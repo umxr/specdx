@@ -3,7 +3,7 @@ import { storyCoverageRule } from "./story-coverage.js";
 import { noVagueLanguageRule } from "./no-vague-language.js";
 import { stalenessCheckRule } from "./staleness-check.js";
 import type { LintContext } from "../types.js";
-import type { ParsedSpec } from "@sdx/core";
+import type { ParsedSpec } from "@specdx/core";
 
 function makeSpec(overrides: Partial<ParsedSpec> = {}): ParsedSpec {
   return {

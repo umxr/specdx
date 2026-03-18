@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createLintEngine } from "./engine.js";
 import type { LintRule, LintContext, Diagnostic } from "./types.js";
-import type { ParsedSpec } from "@sdx/core";
+import type { ParsedSpec } from "@specdx/core";
 
 const mockSpec: ParsedSpec = {
   filePath: "specs/prd.md",

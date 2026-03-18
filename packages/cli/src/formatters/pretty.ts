@@ -1,4 +1,4 @@
-import type { Diagnostic } from "@sdx/lint";
+import type { Diagnostic } from "@specdx/lint";
 
 export function formatPretty(diagnostics: Diagnostic[]): string {
   if (diagnostics.length === 0) return "  ✓ All specs pass lint checks.\n";

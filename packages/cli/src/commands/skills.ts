@@ -1,5 +1,5 @@
 import { defineCommand } from "citty";
-import { installSkills } from "@sdx/skills";
+import { installSkills } from "@specdx/skills";
 
 export default defineCommand({
   meta: { name: "skills", description: "Manage specdx skills for AI coding tools" },

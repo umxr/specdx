@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { scoreSpecs, scoreSpecsByIds } from "./resolver.js";
-import type { ParsedSpec, DependencyGraph, Edge } from "@sdx/core";
+import type { ParsedSpec, DependencyGraph, Edge } from "@specdx/core";
 
 function makeSpec(
   id: string,

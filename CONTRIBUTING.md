@@ -117,7 +117,7 @@ interface Diagnostic {
 Create a file, for example `rules/require-jira-ticket.js`:
 
 ```javascript
-/** @type {import('@sdx/lint').LintRule} */
+/** @type {import('@specdx/lint').LintRule} */
 const rule = {
   id: "myorg/require-jira-ticket",
   description: "PRDs must have a Jira ticket ID in their frontmatter",

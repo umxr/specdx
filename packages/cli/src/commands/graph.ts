@@ -1,5 +1,5 @@
 import { defineCommand } from "citty";
-import { loadConfig, buildGraph, GraphError } from "@sdx/core";
+import { loadConfig, buildGraph, GraphError } from "@specdx/core";
 import { sharedArgs } from "../shared-args.js";
 
 export default defineCommand({

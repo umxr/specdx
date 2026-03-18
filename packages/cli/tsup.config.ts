@@ -11,7 +11,7 @@ export default defineConfig([
     sourcemap: true,
     dts: false,
     clean: true,
-    noExternal: ["@sdx/schema", "@sdx/core", "@sdx/lint", "@sdx/pack", "@sdx/skills"],
+    noExternal: ["@specdx/schema", "@specdx/core", "@specdx/lint", "@specdx/pack", "@specdx/skills"],
     external: [
       "ajv", "ajv-formats", "gray-matter", "yaml", "unified", "remark-parse",
       "unist-util-visit", "tinyglobby", "js-tiktoken", "consola", "citty",
@@ -28,7 +28,7 @@ export default defineConfig([
     bundle: true,
     sourcemap: true,
     dts: false,
-    noExternal: ["@sdx/schema", "@sdx/core", "@sdx/lint", "@sdx/pack", "@sdx/skills"],
+    noExternal: ["@specdx/schema", "@specdx/core", "@specdx/lint", "@specdx/pack", "@specdx/skills"],
     external: [
       "ajv", "ajv-formats", "gray-matter", "yaml", "unified", "remark-parse",
       "unist-util-visit", "tinyglobby", "js-tiktoken", "consola", "citty",

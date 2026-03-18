@@ -1,6 +1,6 @@
 import type { LintRule } from "../types.js";
-import { REQUIRED_SECTIONS } from "@sdx/schema";
-import type { SpecType } from "@sdx/schema";
+import { REQUIRED_SECTIONS } from "@specdx/schema";
+import type { SpecType } from "@specdx/schema";
 
 export const requiredSectionsRule: LintRule = {
   id: "structure/required-sections",

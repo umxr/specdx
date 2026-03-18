@@ -1,4 +1,4 @@
-import type { ParsedSpec, DependencyGraph } from "@sdx/core";
+import type { ParsedSpec, DependencyGraph } from "@specdx/core";
 import type { RelevanceScore } from "./types.js";
 
 /**

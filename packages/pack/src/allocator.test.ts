@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { allocate } from "./allocator.js";
-import type { ParsedSpec, ParsedSection } from "@sdx/core";
+import type { ParsedSpec, ParsedSection } from "@specdx/core";
 import type { RelevanceScore, CompressionOptions } from "./types.js";
 
 function sec(heading: string, content: string, tokens: number): ParsedSection {

@@ -5,8 +5,8 @@ import { parse as parseYaml } from "yaml";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import { visit } from "unist-util-visit";
-import { validateSpec, type ValidationResult } from "@sdx/schema";
-import type { BaseSpec, SpecType } from "@sdx/schema";
+import { validateSpec, type ValidationResult } from "@specdx/schema";
+import type { BaseSpec, SpecType } from "@specdx/schema";
 import { countTokens } from "./tokens.js";
 
 // gray-matter is CJS — its callable default is exposed via .default in an ESM context

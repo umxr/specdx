@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { pack } from "./index.js";
-import type { ParsedSpec, ParsedSection, DependencyGraph } from "@sdx/core";
-import type { PackConfig } from "@sdx/schema";
+import type { ParsedSpec, ParsedSection, DependencyGraph } from "@specdx/core";
+import type { PackConfig } from "@specdx/schema";
 
 function sec(heading: string, content: string, tokens: number): ParsedSection {
   return { heading, content, tokens };

@@ -1,5 +1,5 @@
 import { defineCommand } from "citty";
-import { loadConfig, ConfigError } from "@sdx/core";
+import { loadConfig, ConfigError } from "@specdx/core";
 import { sharedArgs } from "../shared-args.js";
 
 export default defineCommand({

@@ -1,5 +1,5 @@
-import type { ParsedSpec, DependencyGraph } from "@sdx/core";
-import type { PackConfig } from "@sdx/schema";
+import type { ParsedSpec, DependencyGraph } from "@specdx/core";
+import type { PackConfig } from "@specdx/schema";
 import type { PackOptions, PackResult, CompressionOptions } from "./types.js";
 import { scoreSpecs, scoreSpecsByIds } from "./resolver.js";
 import { allocate } from "./allocator.js";

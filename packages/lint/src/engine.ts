@@ -1,5 +1,5 @@
-import type { ParsedSpec, DependencyGraph } from "@sdx/core";
-import type { SdxConfig } from "@sdx/schema";
+import type { ParsedSpec, DependencyGraph } from "@specdx/core";
+import type { SdxConfig } from "@specdx/schema";
 import type { LintRule, LintResults, Diagnostic } from "./types.js";
 
 export interface LintEngineOptions {

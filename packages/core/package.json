@@ -1,5 +1,5 @@
 {
-  "name": "@sdx/core",
+  "name": "@specdx/core",
   "version": "0.0.0",
   "type": "module",
   "exports": {
@@ -16,7 +16,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@sdx/schema": "workspace:*",
+    "@specdx/schema": "workspace:*",
     "gray-matter": "^4.0.3",
     "yaml": "^2.7.0",
     "unified": "^11.0.0",

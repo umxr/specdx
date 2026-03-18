@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { compressSpec } from "./compressor.js";
 import type { CompressionOptions } from "./types.js";
-import type { ParsedSection } from "@sdx/core";
+import type { ParsedSection } from "@specdx/core";
 
 const defaultOptions: CompressionOptions = {
   stripBoilerplate: false,

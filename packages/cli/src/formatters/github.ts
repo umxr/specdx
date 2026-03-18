@@ -1,4 +1,4 @@
-import type { Diagnostic } from "@sdx/lint";
+import type { Diagnostic } from "@specdx/lint";
 export function formatGithub(diagnostics: Diagnostic[]): string {
   return diagnostics
     .map((d) => {

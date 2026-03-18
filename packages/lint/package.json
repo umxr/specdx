@@ -1,5 +1,5 @@
 {
-  "name": "@sdx/lint",
+  "name": "@specdx/lint",
   "version": "0.0.0",
   "type": "module",
   "exports": {
@@ -16,8 +16,8 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@sdx/schema": "workspace:*",
-    "@sdx/core": "workspace:*"
+    "@specdx/schema": "workspace:*",
+    "@specdx/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

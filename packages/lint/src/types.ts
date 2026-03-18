@@ -1,5 +1,5 @@
-import type { ParsedSpec, DependencyGraph } from "@sdx/core";
-import type { SdxConfig } from "@sdx/schema";
+import type { ParsedSpec, DependencyGraph } from "@specdx/core";
+import type { SdxConfig } from "@specdx/schema";
 
 export type Severity = "error" | "warn" | "info";
 

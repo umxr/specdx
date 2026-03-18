@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildGraph, GraphError } from "./graph.js";
-import type { SdxConfig } from "@sdx/schema";
+import type { SdxConfig } from "@specdx/schema";
 
 const makeConfig = (specs: SdxConfig["specs"]): SdxConfig => ({ version: "1.0", specs });
 

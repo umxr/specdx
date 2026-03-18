@@ -34,11 +34,11 @@
     "yaml": "^2.7.0"
   },
   "devDependencies": {
-    "@sdx/core": "workspace:*",
-    "@sdx/lint": "workspace:*",
-    "@sdx/pack": "workspace:*",
-    "@sdx/schema": "workspace:*",
-    "@sdx/skills": "workspace:*",
+    "@specdx/core": "workspace:*",
+    "@specdx/lint": "workspace:*",
+    "@specdx/pack": "workspace:*",
+    "@specdx/schema": "workspace:*",
+    "@specdx/skills": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0"
   }

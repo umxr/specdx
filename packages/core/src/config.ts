@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { validateConfig, type SdxConfig } from "@sdx/schema";
+import { validateConfig, type SdxConfig } from "@specdx/schema";
 
 export class ConfigError extends Error {
   constructor(

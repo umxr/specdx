@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
-import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@sdx/core";
-import { createLintEngine, getPreset, type LintResults } from "@sdx/lint";
-import type { ParsedSpec } from "@sdx/core";
+import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@specdx/core";
+import { createLintEngine, getPreset, type LintResults } from "@specdx/lint";
+import type { ParsedSpec } from "@specdx/core";
 import { sharedArgs } from "../shared-args.js";
 import { formatPretty } from "../formatters/pretty.js";
 import { formatJson } from "../formatters/json.js";

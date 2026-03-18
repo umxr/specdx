@@ -1,5 +1,5 @@
 {
-  "name": "@sdx/action",
+  "name": "@specdx/action",
   "version": "0.0.0",
   "type": "module",
   "exports": {

@@ -1,4 +1,4 @@
-import type { SdxConfig } from "@sdx/schema";
+import type { SdxConfig } from "@specdx/schema";
 
 export class GraphError extends Error {
   constructor(message: string) {

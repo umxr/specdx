@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { REQUIRED_SECTIONS } from "@sdx/schema";
+import { REQUIRED_SECTIONS } from "@specdx/schema";
 
 export type Template = "lightweight" | "bmad" | "api-first";
 
