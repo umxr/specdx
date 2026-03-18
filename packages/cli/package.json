@@ -1,6 +1,6 @@
 {
   "name": "specdx",
-  "version": "0.1.0-alpha.4",
+  "version": "0.2.0-alpha.1",
   "type": "module",
   "bin": {
     "sdx": "./dist/main.js"
