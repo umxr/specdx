@@ -1,10 +1,16 @@
 import type { SdxConfig } from "@sdx/schema";
 
 export class GraphError extends Error {
-  constructor(message: string) { super(message); this.name = "GraphError"; }
+  constructor(message: string) {
+    super(message);
+    this.name = "GraphError";
+  }
 }
 
-export interface Edge { from: string; to: string; }
+export interface Edge {
+  from: string;
+  to: string;
+}
 
 export interface DependencyGraph {
   nodes: string[];
@@ -29,7 +35,9 @@ export function buildGraph(config: SdxConfig): DependencyGraph {
     if (!entry.requires) continue;
     for (const dep of entry.requires) {
       if (!adjacency.has(dep)) {
-        throw new GraphError(`Spec "${name}" requires "${dep}", which does not exist in the config.`);
+        throw new GraphError(
+          `Spec "${name}" requires "${dep}", which does not exist in the config.`,
+        );
       }
       adjacency.get(dep)!.push(name);
       reverseAdj.get(name)!.push(dep);
@@ -42,7 +50,9 @@ export function buildGraph(config: SdxConfig): DependencyGraph {
   for (const name of specNames) inDegree.set(name, reverseAdj.get(name)!.length);
 
   const queue: string[] = [];
-  for (const [name, degree] of inDegree) { if (degree === 0) queue.push(name); }
+  for (const [name, degree] of inDegree) {
+    if (degree === 0) queue.push(name);
+  }
 
   const sorted: string[] = [];
   while (queue.length > 0) {
@@ -70,7 +80,10 @@ export function buildGraph(config: SdxConfig): DependencyGraph {
       while (stack.length > 0) {
         const current = stack.pop()!;
         for (const neighbor of adjacency.get(current) ?? []) {
-          if (!visited.has(neighbor)) { visited.add(neighbor); stack.push(neighbor); }
+          if (!visited.has(neighbor)) {
+            visited.add(neighbor);
+            stack.push(neighbor);
+          }
         }
       }
       return [...visited];
@@ -81,7 +94,10 @@ export function buildGraph(config: SdxConfig): DependencyGraph {
       while (stack.length > 0) {
         const current = stack.pop()!;
         for (const dep of reverseAdj.get(current) ?? []) {
-          if (!visited.has(dep)) { visited.add(dep); stack.push(dep); }
+          if (!visited.has(dep)) {
+            visited.add(dep);
+            stack.push(dep);
+          }
         }
       }
       return [...visited];

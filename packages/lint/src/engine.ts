@@ -19,7 +19,10 @@ export function createLintEngine(options: LintEngineOptions): LintEngine {
       for (const spec of specs) {
         for (const rule of options.rules) {
           const results = rule.run({
-            spec, allSpecs: specs, config: options.config, graph: options.graph,
+            spec,
+            allSpecs: specs,
+            config: options.config,
+            graph: options.graph,
           });
           diagnostics.push(...results);
         }

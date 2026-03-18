@@ -8,16 +8,26 @@ import { noVagueLanguageRule } from "./no-vague-language.js";
 import type { LintRule } from "../types.js";
 
 export const structureRules: LintRule[] = [
-  validFrontmatterRule, requiredSectionsRule, validReferencesRule, noCircularDepsRule,
+  validFrontmatterRule,
+  requiredSectionsRule,
+  validReferencesRule,
+  noCircularDepsRule,
 ];
 
 export const contentRules: LintRule[] = [
-  storyCoverageRule, stalenessCheckRule, noVagueLanguageRule,
+  storyCoverageRule,
+  stalenessCheckRule,
+  noVagueLanguageRule,
 ];
 
 export const allBuiltinRules: LintRule[] = [...structureRules, ...contentRules];
 
 export {
-  validFrontmatterRule, requiredSectionsRule, validReferencesRule, noCircularDepsRule,
-  storyCoverageRule, stalenessCheckRule, noVagueLanguageRule,
+  validFrontmatterRule,
+  requiredSectionsRule,
+  validReferencesRule,
+  noCircularDepsRule,
+  storyCoverageRule,
+  stalenessCheckRule,
+  noVagueLanguageRule,
 };

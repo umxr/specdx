@@ -24,7 +24,10 @@ export default defineCommand({
       }
       console.log("");
     } catch (err) {
-      if (err instanceof GraphError) { console.error(`  ✗ ${err.message}`); process.exit(1); }
+      if (err instanceof GraphError) {
+        console.error(`  ✗ ${err.message}`);
+        process.exit(1);
+      }
       throw err;
     }
   },

@@ -1,11 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { validateSpec, validateConfig, type ValidationResult } from "./validator.js";
+import { validateSpec, validateConfig } from "./validator.js";
 
 describe("validateSpec", () => {
   it("validates a correct PRD frontmatter", () => {
     const result = validateSpec("prd", {
-      id: "prd-001", type: "prd", title: "Auth System", status: "draft",
-      version: "1.0", created: "2026-01-15", authors: ["umar"],
+      id: "prd-001",
+      type: "prd",
+      title: "Auth System",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-15",
+      authors: ["umar"],
     });
     expect(result.valid).toBe(true);
     expect(result.errors).toBeNull();

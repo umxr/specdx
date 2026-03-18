@@ -11,7 +11,10 @@ interface ScaffoldOptions {
   targetDir: string;
 }
 
-const TEMPLATE_SPECS: Record<Template, Array<{ filename: string; type: keyof typeof REQUIRED_SECTIONS }>> = {
+const TEMPLATE_SPECS: Record<
+  Template,
+  Array<{ filename: string; type: keyof typeof REQUIRED_SECTIONS }>
+> = {
   lightweight: [
     { filename: "prd.md", type: "prd" },
     { filename: "technical-design.md", type: "technical-design" },
@@ -67,14 +70,15 @@ function buildSpecFile(
     "---",
   ].join("\n");
 
-  const body = sections
-    .map((section) => `\n## ${section}\n\n<!-- placeholder -->`)
-    .join("\n");
+  const body = sections.map((section) => `\n## ${section}\n\n<!-- placeholder -->`).join("\n");
 
   return `${frontmatter}\n${body}\n`;
 }
 
-function buildConfigYaml(projectName: string, specs: Array<{ filename: string; type: string }>): string {
+function buildConfigYaml(
+  projectName: string,
+  specs: Array<{ filename: string; type: string }>,
+): string {
   const specEntries = specs
     .map(({ filename, type }) => {
       const key = specIdFromFilename(filename);
@@ -82,16 +86,17 @@ function buildConfigYaml(projectName: string, specs: Array<{ filename: string; t
     })
     .join("\n");
 
-  return [
-    `version: "1.0"`,
-    `project:`,
-    `  name: "${projectName}"`,
-    `specs:`,
-    specEntries,
-  ].join("\n") + "\n";
+  return (
+    [`version: "1.0"`, `project:`, `  name: "${projectName}"`, `specs:`, specEntries].join("\n") +
+    "\n"
+  );
 }
 
-export async function scaffoldProject({ projectName, template, targetDir }: ScaffoldOptions): Promise<void> {
+export async function scaffoldProject({
+  projectName,
+  template,
+  targetDir,
+}: ScaffoldOptions): Promise<void> {
   const today = new Date().toISOString().slice(0, 10);
   const specsDir = join(targetDir, "specs");
 

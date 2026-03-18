@@ -22,9 +22,15 @@ describe("base-spec schema", () => {
 
   it("accepts valid base frontmatter", () => {
     const valid = validate({
-      id: "prd-001", type: "prd", title: "User Auth System", status: "draft",
-      version: "1.0", created: "2026-01-15", updated: "2026-02-01",
-      authors: ["umar"], tags: ["auth"],
+      id: "prd-001",
+      type: "prd",
+      title: "User Auth System",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-15",
+      updated: "2026-02-01",
+      authors: ["umar"],
+      tags: ["auth"],
       references: [{ id: "tech-001", relationship: "implemented-by" }],
     });
     expect(valid).toBe(true);
@@ -41,16 +47,26 @@ describe("base-spec schema", () => {
 
   it("rejects invalid status enum", () => {
     const valid = validate({
-      id: "x", type: "prd", title: "X", status: "invalid",
-      version: "1.0", created: "2026-01-01", authors: ["a"],
+      id: "x",
+      type: "prd",
+      title: "X",
+      status: "invalid",
+      version: "1.0",
+      created: "2026-01-01",
+      authors: ["a"],
     });
     expect(valid).toBe(false);
   });
 
   it("accepts minimal valid frontmatter (only required fields)", () => {
     const valid = validate({
-      id: "x-001", type: "prd", title: "Minimal", status: "draft",
-      version: "1.0", created: "2026-01-01", authors: ["dev"],
+      id: "x-001",
+      type: "prd",
+      title: "Minimal",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-01",
+      authors: ["dev"],
     });
     expect(valid).toBe(true);
   });
@@ -62,42 +78,125 @@ describe("spec type schemas", () => {
 
   it("PRD schema validates a well-formed PRD", () => {
     const validate = ajv.compile(prdSchema);
-    expect(validate({ id: "prd-001", type: "prd", title: "Auth System", status: "approved", version: "1.0", created: "2026-01-15", authors: ["umar"] })).toBe(true);
+    expect(
+      validate({
+        id: "prd-001",
+        type: "prd",
+        title: "Auth System",
+        status: "approved",
+        version: "1.0",
+        created: "2026-01-15",
+        authors: ["umar"],
+      }),
+    ).toBe(true);
   });
 
   it("PRD schema rejects wrong type field", () => {
     const validate = ajv.compile(prdSchema);
-    expect(validate({ id: "prd-001", type: "adr", title: "Auth System", status: "approved", version: "1.0", created: "2026-01-15", authors: ["umar"] })).toBe(false);
+    expect(
+      validate({
+        id: "prd-001",
+        type: "adr",
+        title: "Auth System",
+        status: "approved",
+        version: "1.0",
+        created: "2026-01-15",
+        authors: ["umar"],
+      }),
+    ).toBe(false);
   });
 
   it("user-story schema requires story_id, priority, estimate", () => {
     const validate = ajv.compile(userStorySchema);
-    expect(validate({ id: "story-001", type: "user-story", title: "Login flow", status: "draft", version: "1.0", created: "2026-01-15", authors: ["umar"], story_id: "US-001", priority: "high", estimate: "3" })).toBe(true);
+    expect(
+      validate({
+        id: "story-001",
+        type: "user-story",
+        title: "Login flow",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-15",
+        authors: ["umar"],
+        story_id: "US-001",
+        priority: "high",
+        estimate: "3",
+      }),
+    ).toBe(true);
   });
 
   it("user-story schema rejects missing story_id", () => {
     const validate = ajv.compile(userStorySchema);
-    expect(validate({ id: "story-001", type: "user-story", title: "Login", status: "draft", version: "1.0", created: "2026-01-15", authors: ["umar"] })).toBe(false);
+    expect(
+      validate({
+        id: "story-001",
+        type: "user-story",
+        title: "Login",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-15",
+        authors: ["umar"],
+      }),
+    ).toBe(false);
   });
 
   it("ADR schema validates a well-formed ADR", () => {
     const validate = ajv.compile(adrSchema);
-    expect(validate({ id: "adr-001", type: "adr", title: "Use PostgreSQL", status: "approved", version: "1.0", created: "2026-01-15", authors: ["umar"] })).toBe(true);
+    expect(
+      validate({
+        id: "adr-001",
+        type: "adr",
+        title: "Use PostgreSQL",
+        status: "approved",
+        version: "1.0",
+        created: "2026-01-15",
+        authors: ["umar"],
+      }),
+    ).toBe(true);
   });
 
   it("technical-design schema validates correctly", () => {
     const validate = ajv.compile(technicalDesignSchema);
-    expect(validate({ id: "tech-001", type: "technical-design", title: "Auth Architecture", status: "review", version: "1.0", created: "2026-01-15", authors: ["umar"] })).toBe(true);
+    expect(
+      validate({
+        id: "tech-001",
+        type: "technical-design",
+        title: "Auth Architecture",
+        status: "review",
+        version: "1.0",
+        created: "2026-01-15",
+        authors: ["umar"],
+      }),
+    ).toBe(true);
   });
 
   it("test-plan schema validates correctly", () => {
     const validate = ajv.compile(testPlanSchema);
-    expect(validate({ id: "tp-001", type: "test-plan", title: "Auth Test Plan", status: "draft", version: "1.0", created: "2026-01-15", authors: ["umar"] })).toBe(true);
+    expect(
+      validate({
+        id: "tp-001",
+        type: "test-plan",
+        title: "Auth Test Plan",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-15",
+        authors: ["umar"],
+      }),
+    ).toBe(true);
   });
 
   it("api-contract schema validates correctly", () => {
     const validate = ajv.compile(apiContractSchema);
-    expect(validate({ id: "api-001", type: "api-contract", title: "Auth API", status: "draft", version: "1.0", created: "2026-01-15", authors: ["umar"] })).toBe(true);
+    expect(
+      validate({
+        id: "api-001",
+        type: "api-contract",
+        title: "Auth API",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-15",
+        authors: ["umar"],
+      }),
+    ).toBe(true);
   });
 });
 
@@ -106,12 +205,17 @@ describe("config schema", () => {
   const validate = ajv.compile(configSchema);
 
   it("accepts a valid spec.config.yaml structure", () => {
-    expect(validate({
-      version: "1.0",
-      project: { name: "my-project", description: "test" },
-      specs: { prd: { path: "specs/prd.md", type: "prd", required: true }, stories: { path: "specs/stories/*.md", type: "user-story", requires: ["prd"] } },
-      lint: { extends: "recommended", rules: {}, ignore: [] },
-    })).toBe(true);
+    expect(
+      validate({
+        version: "1.0",
+        project: { name: "my-project", description: "test" },
+        specs: {
+          prd: { path: "specs/prd.md", type: "prd", required: true },
+          stories: { path: "specs/stories/*.md", type: "user-story", requires: ["prd"] },
+        },
+        lint: { extends: "recommended", rules: {}, ignore: [] },
+      }),
+    ).toBe(true);
   });
 
   it("requires version field", () => {
@@ -123,6 +227,8 @@ describe("config schema", () => {
   });
 
   it("validates spec entry structure", () => {
-    expect(validate({ version: "1.0", specs: { prd: { path: "specs/prd.md", type: "prd" } } })).toBe(true);
+    expect(
+      validate({ version: "1.0", specs: { prd: { path: "specs/prd.md", type: "prd" } } }),
+    ).toBe(true);
   });
 });

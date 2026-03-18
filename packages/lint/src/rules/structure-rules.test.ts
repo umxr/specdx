@@ -10,8 +10,13 @@ function makeSpec(overrides: Partial<ParsedSpec> = {}): ParsedSpec {
   return {
     filePath: "specs/prd.md",
     frontmatter: {
-      id: "prd-001", type: "prd", title: "Test", status: "draft",
-      version: "1.0", created: "2026-01-01", authors: ["dev"],
+      id: "prd-001",
+      type: "prd",
+      title: "Test",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-01",
+      authors: ["dev"],
     },
     content: "",
     sections: ["Problem Statement", "Goals", "Non-Goals", "Features", "Success Criteria"],
@@ -60,14 +65,27 @@ describe("valid-references", () => {
   it("passes when all references exist", () => {
     const prd = makeSpec({
       frontmatter: {
-        id: "prd-001", type: "prd", title: "PRD", status: "draft",
-        version: "1.0", created: "2026-01-01", authors: ["dev"],
+        id: "prd-001",
+        type: "prd",
+        title: "PRD",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-01",
+        authors: ["dev"],
         references: [{ id: "tech-001", relationship: "implemented-by" as const }],
       },
     });
     const tech = makeSpec({
       filePath: "specs/tech.md",
-      frontmatter: { id: "tech-001", type: "technical-design", title: "Tech", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+      frontmatter: {
+        id: "tech-001",
+        type: "technical-design",
+        title: "Tech",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-01",
+        authors: ["dev"],
+      },
     });
     expect(validReferencesRule.run(makeContext(prd, [prd, tech]))).toHaveLength(0);
   });
@@ -75,8 +93,13 @@ describe("valid-references", () => {
   it("reports broken references", () => {
     const prd = makeSpec({
       frontmatter: {
-        id: "prd-001", type: "prd", title: "PRD", status: "draft",
-        version: "1.0", created: "2026-01-01", authors: ["dev"],
+        id: "prd-001",
+        type: "prd",
+        title: "PRD",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-01",
+        authors: ["dev"],
         references: [{ id: "nonexistent", relationship: "implemented-by" as const }],
       },
     });

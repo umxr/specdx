@@ -4,7 +4,10 @@ import { parse as parseYaml } from "yaml";
 import { validateConfig, type SdxConfig } from "@sdx/schema";
 
 export class ConfigError extends Error {
-  constructor(message: string, public readonly errors?: unknown[]) {
+  constructor(
+    message: string,
+    public readonly errors?: unknown[],
+  ) {
     super(message);
     this.name = "ConfigError";
   }

@@ -13,7 +13,6 @@ import apiContractSchema from "./schemas/api-contract.json" with { type: "json" 
 // addFormats is CJS-only; access via the namespace default at runtime
 // The type cast is needed because TypeScript's NodeNext resolution exposes
 // the CJS module as a namespace without a callable default signature.
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as addFormatsNs from "ajv-formats";
 type AddFormatsPlugin = (ajv: AjvClass, formats?: unknown) => AjvClass;
 const addFormats = ((addFormatsNs as unknown as { default?: AddFormatsPlugin }).default ??

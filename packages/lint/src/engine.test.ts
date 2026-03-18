@@ -6,8 +6,13 @@ import type { ParsedSpec } from "@sdx/core";
 const mockSpec: ParsedSpec = {
   filePath: "specs/prd.md",
   frontmatter: {
-    id: "prd-001", type: "prd", title: "Test", status: "draft",
-    version: "1.0", created: "2026-01-01", authors: ["dev"],
+    id: "prd-001",
+    type: "prd",
+    title: "Test",
+    status: "draft",
+    version: "1.0",
+    created: "2026-01-01",
+    authors: ["dev"],
   },
   content: "## Problem Statement\n\nSome content.",
   sections: ["Problem Statement"],
@@ -20,7 +25,14 @@ const alwaysWarnRule: LintRule = {
   description: "Always produces a warning",
   severity: "warn",
   run(context: LintContext): Diagnostic[] {
-    return [{ ruleId: "test/always-warn", severity: "warn", message: "This is a test warning", filePath: context.spec.filePath }];
+    return [
+      {
+        ruleId: "test/always-warn",
+        severity: "warn",
+        message: "This is a test warning",
+        filePath: context.spec.filePath,
+      },
+    ];
   },
 };
 
@@ -28,7 +40,9 @@ const alwaysPassRule: LintRule = {
   id: "test/always-pass",
   description: "Never produces diagnostics",
   severity: "error",
-  run(): Diagnostic[] { return []; },
+  run(): Diagnostic[] {
+    return [];
+  },
 };
 
 describe("createLintEngine", () => {
@@ -48,8 +62,14 @@ describe("createLintEngine", () => {
 
   it("reports hasErrors correctly", () => {
     const errorRule: LintRule = {
-      id: "test/error", description: "Error rule", severity: "error",
-      run(ctx): Diagnostic[] { return [{ ruleId: "test/error", severity: "error", message: "fail", filePath: ctx.spec.filePath }]; },
+      id: "test/error",
+      description: "Error rule",
+      severity: "error",
+      run(ctx): Diagnostic[] {
+        return [
+          { ruleId: "test/error", severity: "error", message: "fail", filePath: ctx.spec.filePath },
+        ];
+      },
     };
     const engine = createLintEngine({ rules: [errorRule] });
     const results = engine.lint([mockSpec]);
@@ -59,8 +79,13 @@ describe("createLintEngine", () => {
   it("passes context with config and all specs to each rule", () => {
     let receivedContext: LintContext | undefined;
     const spyRule: LintRule = {
-      id: "test/spy", description: "Captures context", severity: "warn",
-      run(ctx): Diagnostic[] { receivedContext = ctx; return []; },
+      id: "test/spy",
+      description: "Captures context",
+      severity: "warn",
+      run(ctx): Diagnostic[] {
+        receivedContext = ctx;
+        return [];
+      },
     };
     const engine = createLintEngine({ rules: [spyRule] });
     engine.lint([mockSpec]);

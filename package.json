@@ -7,12 +7,20 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "lint:code": "eslint packages/*/src/",
+    "format": "prettier --write \"packages/*/src/**/*.ts\"",
+    "format:check": "prettier --check \"packages/*/src/**/*.ts\""
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.0.0",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.2.0",
-    "@types/node": "^22.0.0"
+    "typescript-eslint": "^8.57.1",
+    "vitest": "^3.2.0"
   }
 }

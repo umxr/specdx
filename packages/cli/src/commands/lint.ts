@@ -29,16 +29,21 @@ export async function runLint(options: RunLintOptions): Promise<LintResults> {
 
   let graph;
   let graphError: string | undefined;
-  try { graph = buildGraph(config); }
-  catch (err) { graphError = (err as Error).message; }
+  try {
+    graph = buildGraph(config);
+  } catch (err) {
+    graphError = (err as Error).message;
+  }
 
   const engine = createLintEngine({ rules, config, graph });
   const results = engine.lint(specs);
 
   if (graphError) {
     results.diagnostics.push({
-      ruleId: "structure/no-circular-deps", severity: "error",
-      message: graphError, filePath: "spec.config.yaml",
+      ruleId: "structure/no-circular-deps",
+      severity: "error",
+      message: graphError,
+      filePath: "spec.config.yaml",
     });
     results.hasErrors = true;
   }
@@ -62,10 +67,13 @@ export default defineCommand({
     }
 
     const results = await runLint({
-      configDir: process.cwd(), specPath: args.path, preset: args.preset as any,
+      configDir: process.cwd(),
+      specPath: args.path,
+      preset: args.preset as any,
     });
 
-    const formatter = args.format === "json" ? formatJson : args.format === "github" ? formatGithub : formatPretty;
+    const formatter =
+      args.format === "json" ? formatJson : args.format === "github" ? formatGithub : formatPretty;
     console.log(formatter(results.diagnostics));
 
     if (results.hasErrors) process.exit(1);

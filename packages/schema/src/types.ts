@@ -1,5 +1,10 @@
 export const SPEC_TYPES = [
-  "prd", "technical-design", "user-story", "test-plan", "adr", "api-contract",
+  "prd",
+  "technical-design",
+  "user-story",
+  "test-plan",
+  "adr",
+  "api-contract",
 ] as const;
 export type SpecType = (typeof SPEC_TYPES)[number];
 
@@ -24,19 +29,35 @@ export interface BaseSpec {
   references?: SpecReference[];
 }
 
-export interface PrdSpec extends BaseSpec { type: "prd"; }
-export interface TechnicalDesignSpec extends BaseSpec { type: "technical-design"; }
+export interface PrdSpec extends BaseSpec {
+  type: "prd";
+}
+export interface TechnicalDesignSpec extends BaseSpec {
+  type: "technical-design";
+}
 export interface UserStorySpec extends BaseSpec {
   type: "user-story";
   story_id: string;
   priority: "critical" | "high" | "medium" | "low";
   estimate: string;
 }
-export interface TestPlanSpec extends BaseSpec { type: "test-plan"; }
-export interface AdrSpec extends BaseSpec { type: "adr"; }
-export interface ApiContractSpec extends BaseSpec { type: "api-contract"; }
+export interface TestPlanSpec extends BaseSpec {
+  type: "test-plan";
+}
+export interface AdrSpec extends BaseSpec {
+  type: "adr";
+}
+export interface ApiContractSpec extends BaseSpec {
+  type: "api-contract";
+}
 
-export type Spec = PrdSpec | TechnicalDesignSpec | UserStorySpec | TestPlanSpec | AdrSpec | ApiContractSpec;
+export type Spec =
+  | PrdSpec
+  | TechnicalDesignSpec
+  | UserStorySpec
+  | TestPlanSpec
+  | AdrSpec
+  | ApiContractSpec;
 
 export interface SpecEntry {
   path: string;
@@ -47,9 +68,13 @@ export interface SpecEntry {
 
 export interface SdxConfig {
   version: string;
-  project?: { name?: string; description?: string; };
+  project?: { name?: string; description?: string };
   specs: Record<string, SpecEntry>;
-  lint?: { extends?: "minimal" | "recommended" | "strict"; rules?: Record<string, unknown>; ignore?: string[]; };
+  lint?: {
+    extends?: "minimal" | "recommended" | "strict";
+    rules?: Record<string, unknown>;
+    ignore?: string[];
+  };
   pack?: Record<string, unknown>;
   diff?: Record<string, unknown>;
   ci?: Record<string, unknown>;
