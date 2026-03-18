@@ -66,16 +66,21 @@ export default defineCommand({
       logger.info("No auto-fixable issues supported yet.");
     }
 
-    const results = await runLint({
-      configDir: process.cwd(),
-      specPath: args.path,
-      preset: args.preset as any,
-    });
+    try {
+      const results = await runLint({
+        configDir: process.cwd(),
+        specPath: args.path,
+        preset: args.preset as any,
+      });
 
-    const formatter =
-      args.format === "json" ? formatJson : args.format === "github" ? formatGithub : formatPretty;
-    console.log(formatter(results.diagnostics));
+      const formatter =
+        args.format === "json" ? formatJson : args.format === "github" ? formatGithub : formatPretty;
+      console.log(formatter(results.diagnostics));
 
-    if (results.hasErrors) process.exit(1);
+      if (results.hasErrors) process.exit(1);
+    } catch (err) {
+      console.error(`\n  ✗ ${(err as Error).message}\n`);
+      process.exit(1);
+    }
   },
 });

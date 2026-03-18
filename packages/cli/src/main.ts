@@ -12,4 +12,7 @@ const main = defineCommand({
   },
 });
 
-runMain(main);
+runMain(main).catch((err: Error) => {
+  console.error(`\n  ✗ ${err.message}\n`);
+  process.exit(1);
+});

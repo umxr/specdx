@@ -6,7 +6,13 @@ export default defineCommand({
   meta: { name: "graph", description: "Print the spec dependency graph" },
   args: { ...sharedArgs },
   async run({ args }) {
-    const config = await loadConfig(undefined, process.cwd());
+    let config;
+    try {
+      config = await loadConfig(undefined, process.cwd());
+    } catch (err) {
+      console.error(`\n  ✗ ${(err as Error).message}\n`);
+      process.exit(1);
+    }
     try {
       const graph = buildGraph(config);
       const sorted = graph.topologicalSort();
