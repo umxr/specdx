@@ -1,6 +1,6 @@
 {
   "name": "specdx",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "type": "module",
   "bin": {
     "sdx": "./dist/main.js"
@@ -15,19 +15,29 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsup",
     "typecheck": "tsc --build --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@sdx/schema": "workspace:*",
-    "@sdx/core": "workspace:*",
-    "@sdx/lint": "workspace:*",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
     "citty": "^0.2.1",
-    "consola": "^3.4.0"
+    "consola": "^3.4.0",
+    "gray-matter": "^4.0.3",
+    "js-tiktoken": "^1.0.18",
+    "remark-parse": "^11.0.0",
+    "tinyglobby": "^0.2.12",
+    "unified": "^11.0.0",
+    "unist-util-visit": "^5.0.0",
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
+    "@sdx/core": "workspace:*",
+    "@sdx/lint": "workspace:*",
+    "@sdx/schema": "workspace:*",
+    "tsup": "^8.5.1",
     "typescript": "^5.7.0"
   }
 }
