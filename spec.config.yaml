@@ -1,7 +1,7 @@
 version: "1.0"
 
 project:
-  name: "sdx"
+  name: "specdx"
   description: "Spec Developer Experience — opinionated tooling for spec-driven development with AI"
 
 specs:

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export const SKILL_FILES = ["sdx-start-task.md", "sdx-author-spec.md"];
+export const SKILL_FILES = ["specdx-start-task.md", "specdx-author-spec.md"];
 
 export interface InstallResult {
   installed: string[];

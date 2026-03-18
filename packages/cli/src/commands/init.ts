@@ -124,7 +124,7 @@ export async function scaffoldProject({
 export default defineCommand({
   meta: {
     name: "init",
-    description: "Initialize a new SDX project with spec scaffolding",
+    description: "Initialize a new specdx project with spec scaffolding",
   },
   args: {
     name: {

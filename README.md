@@ -1,4 +1,4 @@
-# sdx — Spec Developer Experience
+# specdx — Spec Developer Experience
 
 > One CLI to validate, pack, diff, and ship specs that keep your LLM-assisted workflows honest.
 
@@ -17,7 +17,7 @@ A PRD missing its "Non-Goals" section ships the same as one that is complete. A 
 that was updated last month silently invalidates the test plan nobody touched. A developer context-
 switches into a Claude session and spends 10 minutes assembling the right spec fragments by hand.
 
-**sdx** is the missing toolchain for spec-driven development. It enforces structure on the way in,
+**specdx** is the missing toolchain for spec-driven development. It enforces structure on the way in,
 packs context on the way out, and catches drift along the way.
 
 ---
@@ -26,32 +26,32 @@ packs context on the way out, and catches drift along the way.
 
 ### Spec-driven development is a discipline, not a file format
 
-sdx does not care whether you use a particular methodology. It provides a formal schema for the
+specdx does not care whether you use a particular methodology. It provides a formal schema for the
 most common spec types — PRD, technical design, user story, test plan, ADR, API contract — and
 lets you bring your own content. The structure is enforced; the ideas are yours.
 
 ### Deterministic validation before AI reasoning
 
-sdx's core pipeline is entirely deterministic. No LLM calls during validation, linting, or graph
+specdx's core pipeline is entirely deterministic. No LLM calls during validation, linting, or graph
 resolution. You get reproducible results in CI, fast feedback at the CLI, and no API keys required
 for the fundamental workflow. AI integration is opt-in and skills-based, delegating reasoning to
 the tool you already have open.
 
 ### Skills-first AI integration
 
-Modern developers already have an LLM in their coding environment. sdx does not bolt on a second
+Modern developers already have an LLM in their coding environment. specdx does not bolt on a second
 one. Instead, it exposes structured spec data and deterministic analysis through Claude Code skills
 that orchestrate *when* to pack context, lint, or check drift. The host tool provides the
-reasoning; sdx provides the signal.
+reasoning; specdx provides the signal.
 
 ---
 
 ## Why Not Just Markdown Lint?
 
-Standard markdown linters (markdownlint, remark-lint) check formatting and syntax. sdx checks
+Standard markdown linters (markdownlint, remark-lint) check formatting and syntax. specdx checks
 **semantics**:
 
-| Concern | Markdown linters | sdx |
+| Concern | Markdown linters | specdx |
 |---|---|---|
 | Valid YAML frontmatter | No | Yes |
 | Required sections by spec type | No | Yes |
@@ -65,19 +65,19 @@ Standard markdown linters (markdownlint, remark-lint) check formatting and synta
 
 YAML schema validators (e.g. JSON Schema + AJV) validate structure. They cannot check that a PRD
 contains a "Problem Statement" section, that a cross-reference resolves to a real spec, or that
-a downstream test plan is still fresh relative to the technical design it depends on. sdx combines
+a downstream test plan is still fresh relative to the technical design it depends on. specdx combines
 schema validation with document-level semantic rules.
 
-## What Makes sdx Different
+## What Makes specdx Different
 
 1. **Dependency chains.** `requires` declarations in `spec.config.yaml` build a DAG. Rules that
    understand this graph catch staleness and broken references across the entire suite.
 
-2. **Context packing.** `sdx pack` (Phase 2) assembles a token-optimised payload for any LLM
+2. **Context packing.** `specdx pack` (Phase 2) assembles a token-optimised payload for any LLM
    session. Relevance filtering, budget allocation, and boilerplate stripping mean you send the
    right content, not all of it.
 
-3. **Drift detection.** `sdx diff` (Phase 3) compares spec versions and walks the dependency graph
+3. **Drift detection.** `specdx diff` (Phase 3) compares spec versions and walks the dependency graph
    to identify downstream specs affected by upstream changes. Drift is caught before it reaches a
    reviewer or an LLM.
 
@@ -103,7 +103,7 @@ npx specdx init
 
 ```bash
 cd your-project
-sdx init
+specdx init
 ```
 
 Follow the prompts to choose a project name, which spec types to include, and a lint preset.
@@ -151,16 +151,16 @@ authors: ["alice"]
 ### 3. Lint your specs
 
 ```bash
-sdx lint
+specdx lint
 ```
 
-sdx validates frontmatter, checks that all required sections are present, verifies cross-references,
+specdx validates frontmatter, checks that all required sections are present, verifies cross-references,
 and runs the configured rule preset. Exit code 0 means clean; exit code 1 means errors.
 
 ### 4. View the dependency graph
 
 ```bash
-sdx graph
+specdx graph
 ```
 
 Prints the dependency tree derived from `requires` declarations. Use `--format dot` to get
@@ -258,26 +258,26 @@ lint:
 Validate the config with:
 
 ```bash
-sdx validate
+specdx validate
 ```
 
 ---
 
 ## Schema Versioning
 
-sdx uses a three-level versioning model:
+specdx uses a three-level versioning model:
 
 - **Schema version** — tracked by the `version` field in `spec.config.yaml`. This is the version
-  of the sdx config schema itself. Increment when sdx releases breaking config changes.
+  of the specdx config schema itself. Increment when specdx releases breaking config changes.
 
 - **Spec version** — tracked by the `version` field in each spec's frontmatter. Authors manage
   this independently per spec. Use semver conventions: increment the minor version for additive
   changes, the major version for breaking changes.
 
-- **Package version** — sdx packages use semver with Changesets. Breaking changes to the JSON
+- **Package version** — specdx packages use semver with Changesets. Breaking changes to the JSON
   Schema, public TypeScript APIs, or CLI interface increment the major version.
 
-When the schema version changes between sdx releases, a `sdx migrate` command (Phase 4) will
+When the schema version changes between specdx releases, a `specdx migrate` command (Phase 4) will
 handle upgrading spec suites.
 
 ---
@@ -286,15 +286,15 @@ handle upgrading spec suites.
 
 | Command | Description |
 |---|---|
-| `sdx init` | Scaffold a new spec suite interactively |
-| `sdx init --template bmad` | Scaffold using the BMAD methodology template |
-| `sdx init --template api-first` | Scaffold for API-first projects |
-| `sdx lint` | Lint all specs in the suite |
-| `sdx lint [path]` | Lint a single spec file |
-| `sdx lint --preset strict` | Override the configured preset |
-| `sdx validate` | Validate `spec.config.yaml` structure |
-| `sdx graph` | Print the dependency tree |
-| `sdx graph --format dot` | Print in Graphviz DOT format |
+| `specdx init` | Scaffold a new spec suite interactively |
+| `specdx init --template bmad` | Scaffold using the BMAD methodology template |
+| `specdx init --template api-first` | Scaffold for API-first projects |
+| `specdx lint` | Lint all specs in the suite |
+| `specdx lint [path]` | Lint a single spec file |
+| `specdx lint --preset strict` | Override the configured preset |
+| `specdx validate` | Validate `spec.config.yaml` structure |
+| `specdx graph` | Print the dependency tree |
+| `specdx graph --format dot` | Print in Graphviz DOT format |
 
 Global flags: `--format pretty|json|github`, `--quiet`, `--verbose`.
 

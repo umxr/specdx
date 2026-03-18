@@ -3,7 +3,7 @@
   "version": "0.2.0-alpha.1",
   "type": "module",
   "bin": {
-    "sdx": "./dist/main.js"
+    "specdx": "./dist/main.js"
   },
   "exports": {
     ".": {

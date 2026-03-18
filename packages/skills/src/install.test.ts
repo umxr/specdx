@@ -19,8 +19,8 @@ describe("installSkills", () => {
   });
 
   it("exports expected SKILL_FILES list", () => {
-    expect(SKILL_FILES).toContain("sdx-start-task.md");
-    expect(SKILL_FILES).toContain("sdx-author-spec.md");
+    expect(SKILL_FILES).toContain("specdx-start-task.md");
+    expect(SKILL_FILES).toContain("specdx-author-spec.md");
     expect(SKILL_FILES).toHaveLength(2);
   });
 
@@ -29,8 +29,8 @@ describe("installSkills", () => {
 
     expect(result.installed).toHaveLength(2);
     expect(result.updated).toHaveLength(0);
-    expect(result.installed).toContain("sdx-start-task.md");
-    expect(result.installed).toContain("sdx-author-spec.md");
+    expect(result.installed).toContain("specdx-start-task.md");
+    expect(result.installed).toContain("specdx-author-spec.md");
   });
 
   it("copies skill files with real markdown content", async () => {
@@ -48,30 +48,30 @@ describe("installSkills", () => {
     }
   });
 
-  it("sdx-start-task.md has correct frontmatter name", async () => {
+  it("specdx-start-task.md has correct frontmatter name", async () => {
     await installSkills(targetDir);
 
     const content = await readFile(
-      join(targetDir, ".claude", "skills", "sdx-start-task.md"),
+      join(targetDir, ".claude", "skills", "specdx-start-task.md"),
       "utf-8",
     );
-    expect(content).toMatch(/name:\s*sdx:start-task/);
+    expect(content).toMatch(/name:\s*specdx:start-task/);
     expect(content).toMatch(/description:/);
-    // Should reference sdx pack command
-    expect(content).toContain("sdx pack");
+    // Should reference specdx pack command
+    expect(content).toContain("specdx pack");
   });
 
-  it("sdx-author-spec.md has correct frontmatter name", async () => {
+  it("specdx-author-spec.md has correct frontmatter name", async () => {
     await installSkills(targetDir);
 
     const content = await readFile(
-      join(targetDir, ".claude", "skills", "sdx-author-spec.md"),
+      join(targetDir, ".claude", "skills", "specdx-author-spec.md"),
       "utf-8",
     );
-    expect(content).toMatch(/name:\s*sdx:author-spec/);
+    expect(content).toMatch(/name:\s*specdx:author-spec/);
     expect(content).toMatch(/description:/);
-    // Should reference sdx lint command
-    expect(content).toContain("sdx lint");
+    // Should reference specdx lint command
+    expect(content).toContain("specdx lint");
   });
 
   it("reports 'updated' on second install", async () => {
@@ -82,8 +82,8 @@ describe("installSkills", () => {
     const second = await installSkills(targetDir);
     expect(second.installed).toHaveLength(0);
     expect(second.updated).toHaveLength(2);
-    expect(second.updated).toContain("sdx-start-task.md");
-    expect(second.updated).toContain("sdx-author-spec.md");
+    expect(second.updated).toContain("specdx-start-task.md");
+    expect(second.updated).toContain("specdx-author-spec.md");
   });
 
   it("installs into nested directory structure", async () => {
@@ -93,7 +93,7 @@ describe("installSkills", () => {
     expect(result.installed).toHaveLength(2);
 
     const content = await readFile(
-      join(nested, ".claude", "skills", "sdx-start-task.md"),
+      join(nested, ".claude", "skills", "specdx-start-task.md"),
       "utf-8",
     );
     expect(content.length).toBeGreaterThan(100);
@@ -104,14 +104,14 @@ describe("installSkills", () => {
     const skillsDir = join(targetDir, ".claude", "skills");
 
     // Modify a file
-    await writeFile(join(skillsDir, "sdx-start-task.md"), "modified content");
+    await writeFile(join(skillsDir, "specdx-start-task.md"), "modified content");
 
     const result = await installSkills(targetDir);
-    expect(result.updated).toContain("sdx-start-task.md");
+    expect(result.updated).toContain("specdx-start-task.md");
 
     // Should have original content restored
     const content = await readFile(
-      join(skillsDir, "sdx-start-task.md"),
+      join(skillsDir, "specdx-start-task.md"),
       "utf-8",
     );
     expect(content).not.toBe("modified content");

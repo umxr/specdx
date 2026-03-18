@@ -3,7 +3,7 @@ import { defineCommand, runMain } from "citty";
 import initCommand from "./commands/init.js";
 
 const main = defineCommand({
-  meta: { name: "sdx", version: "0.0.0", description: "SDX — Spec Developer Experience" },
+  meta: { name: "specdx", version: "0.0.0", description: "specdx — Spec Developer Experience" },
   subCommands: {
     init: initCommand,
     lint: () => import("./commands/lint.js").then((m) => m.default),

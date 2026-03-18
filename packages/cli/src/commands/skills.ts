@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 import { installSkills } from "@sdx/skills";
 
 export default defineCommand({
-  meta: { name: "skills", description: "Manage sdx skills for AI coding tools" },
+  meta: { name: "skills", description: "Manage specdx skills for AI coding tools" },
   subCommands: {
     install: defineCommand({
       meta: { name: "install", description: "Install Claude Code skill files" },
