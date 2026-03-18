@@ -31,7 +31,10 @@ export function formatMarkdown(
       parts.push("");
     } else {
       for (const section of spec.sections) {
-        parts.push(`## ${section.heading}`);
+        if (section.heading) {
+          parts.push(`## ${section.heading}`);
+          parts.push("");
+        }
         parts.push(section.content);
         parts.push("");
       }

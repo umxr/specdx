@@ -35,9 +35,10 @@ describe("installSkills", () => {
 
   it("copies skill files with real markdown content", async () => {
     await installSkills(targetDir);
+    const skillsDir = join(targetDir, ".claude", "skills");
 
     for (const file of SKILL_FILES) {
-      const content = await readFile(join(targetDir, file), "utf-8");
+      const content = await readFile(join(skillsDir, file), "utf-8");
       // Must have substantive content
       expect(content.length).toBeGreaterThan(100);
       // Must have YAML frontmatter delimiters
@@ -51,7 +52,7 @@ describe("installSkills", () => {
     await installSkills(targetDir);
 
     const content = await readFile(
-      join(targetDir, "sdx-start-task.md"),
+      join(targetDir, ".claude", "skills", "sdx-start-task.md"),
       "utf-8",
     );
     expect(content).toMatch(/name:\s*sdx:start-task/);
@@ -64,7 +65,7 @@ describe("installSkills", () => {
     await installSkills(targetDir);
 
     const content = await readFile(
-      join(targetDir, "sdx-author-spec.md"),
+      join(targetDir, ".claude", "skills", "sdx-author-spec.md"),
       "utf-8",
     );
     expect(content).toMatch(/name:\s*sdx:author-spec/);
@@ -86,13 +87,13 @@ describe("installSkills", () => {
   });
 
   it("installs into nested directory structure", async () => {
-    const nested = join(targetDir, ".claude", "skills");
+    const nested = join(targetDir, "sub", "project");
     const result = await installSkills(nested);
 
     expect(result.installed).toHaveLength(2);
 
     const content = await readFile(
-      join(nested, "sdx-start-task.md"),
+      join(nested, ".claude", "skills", "sdx-start-task.md"),
       "utf-8",
     );
     expect(content.length).toBeGreaterThan(100);
@@ -100,16 +101,17 @@ describe("installSkills", () => {
 
   it("overwrites modified files and reports as updated", async () => {
     await installSkills(targetDir);
+    const skillsDir = join(targetDir, ".claude", "skills");
 
     // Modify a file
-    await writeFile(join(targetDir, "sdx-start-task.md"), "modified content");
+    await writeFile(join(skillsDir, "sdx-start-task.md"), "modified content");
 
     const result = await installSkills(targetDir);
     expect(result.updated).toContain("sdx-start-task.md");
 
     // Should have original content restored
     const content = await readFile(
-      join(targetDir, "sdx-start-task.md"),
+      join(skillsDir, "sdx-start-task.md"),
       "utf-8",
     );
     expect(content).not.toBe("modified content");

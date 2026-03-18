@@ -95,7 +95,7 @@ function parseYamlSpec(filePath: string, raw: string): ParsedSpec {
 function extractParsedSections(markdown: string): ParsedSection[] {
   const tree = unified().use(remarkParse).parse(markdown);
 
-  const h2s: { heading: string; offset: number }[] = [];
+  const h2s: { heading: string; startOffset: number; endOffset: number }[] = [];
 
   visit(tree, "heading", (node: any) => {
     if (node.depth === 2) {
@@ -103,7 +103,11 @@ function extractParsedSections(markdown: string): ParsedSection[] {
         .filter((c: any) => c.type === "text")
         .map((c: any) => c.value)
         .join("");
-      h2s.push({ heading: text, offset: node.position!.start.offset as number });
+      h2s.push({
+        heading: text,
+        startOffset: node.position!.start.offset as number,
+        endOffset: node.position!.end.offset as number,
+      });
     }
   });
 
@@ -111,18 +115,18 @@ function extractParsedSections(markdown: string): ParsedSection[] {
 
   // Preamble: content before first H2
   const firstH2 = h2s[0];
-  const firstOffset = firstH2 ? firstH2.offset : markdown.length;
+  const firstOffset = firstH2 ? firstH2.startOffset : markdown.length;
   const preamble = markdown.slice(0, firstOffset).trim();
   if (preamble) {
     sections.push({ heading: "", content: preamble, tokens: countTokens(preamble) });
   }
 
-  // Each H2 section: content from this H2 to the next H2 (or end)
+  // Each H2 section: content AFTER the heading line, up to the next H2 (or end)
   for (let i = 0; i < h2s.length; i++) {
     const current = h2s[i]!;
     const next = h2s[i + 1];
-    const end = next ? next.offset : markdown.length;
-    const content = markdown.slice(current.offset, end).trim();
+    const end = next ? next.startOffset : markdown.length;
+    const content = markdown.slice(current.endOffset, end).trim();
     sections.push({
       heading: current.heading,
       content,

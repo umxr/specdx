@@ -25,18 +25,19 @@ function getSkillSourceDir(): string {
 }
 
 export async function installSkills(
-  targetDir: string,
+  projectDir: string,
 ): Promise<InstallResult> {
   const sourceDir = getSkillSourceDir();
+  const skillsDir = join(projectDir, ".claude", "skills");
   const installed: string[] = [];
   const updated: string[] = [];
 
-  // Ensure target directory exists (recursive creates parent dirs too)
-  await mkdir(targetDir, { recursive: true });
+  // Ensure .claude/skills/ directory exists
+  await mkdir(skillsDir, { recursive: true });
 
   for (const file of SKILL_FILES) {
     const sourcePath = join(sourceDir, file);
-    const targetPath = join(targetDir, file);
+    const targetPath = join(skillsDir, file);
 
     const content = await readFile(sourcePath, "utf-8");
 
