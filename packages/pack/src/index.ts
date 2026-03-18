@@ -8,3 +8,5 @@ export type {
   CompressedSection,
   CompressionOptions,
 } from "./types.js";
+
+export { scoreSpecs, scoreSpecsByIds } from "./resolver.js";
