@@ -8,7 +8,7 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "skills"],
   "scripts": {
     "build": "tsc --build",
     "typecheck": "tsc --build --noEmit",
