@@ -1,0 +1,31 @@
+{
+  "name": "sdx",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "sdx": "./dist/main.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@sdx/schema": "workspace:*",
+    "@sdx/core": "workspace:*",
+    "@sdx/lint": "workspace:*",
+    "citty": "^0.2.1",
+    "consola": "^3.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

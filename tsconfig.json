@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true },
+  "references": [
+    { "path": "packages/schema" },
+    { "path": "packages/core" },
+    { "path": "packages/lint" },
+    { "path": "packages/cli" },
+    { "path": "packages/pack" },
+    { "path": "packages/diff" },
+    { "path": "packages/github-action" },
+    { "path": "packages/skills" }
+  ]
+}
