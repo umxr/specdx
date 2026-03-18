@@ -37,6 +37,7 @@
     "@sdx/core": "workspace:*",
     "@sdx/lint": "workspace:*",
     "@sdx/schema": "workspace:*",
+    "@sdx/skills": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0"
   }

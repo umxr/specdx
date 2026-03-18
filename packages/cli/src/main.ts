@@ -9,6 +9,7 @@ const main = defineCommand({
     lint: () => import("./commands/lint.js").then((m) => m.default),
     validate: () => import("./commands/validate.js").then((m) => m.default),
     graph: () => import("./commands/graph.js").then((m) => m.default),
+    skills: () => import("./commands/skills.js").then((m) => m.default),
   },
 });
 
