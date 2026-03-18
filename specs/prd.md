@@ -84,10 +84,10 @@ These gaps mean spec-driven development is aspirational rather than operational 
 
 ## Success Criteria
 
-- `npx sdx init` scaffolds a valid spec suite in under 60 seconds for a first-time user.
-- `npx sdx lint` runs against a 20-spec suite in under 10 seconds and reports all structural errors
+- `npx specdx init` scaffolds a valid spec suite in under 60 seconds for a first-time user.
+- `npx specdx lint` runs against a 20-spec suite in under 10 seconds and reports all structural errors
   with precise file and section references.
-- `npx sdx graph` renders the full dependency tree in ASCII and DOT formats.
+- `npx specdx graph` renders the full dependency tree in ASCII and DOT formats.
 - sdx's own spec suite (this repo's `specs/` directory) passes `sdx lint` with the `strict` preset.
 - At least one external project uses sdx in Phase 1.
 - The README enables a developer to go from zero to a passing lint run in under 5 minutes.

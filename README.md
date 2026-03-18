@@ -2,8 +2,8 @@
 
 > One CLI to validate, pack, diff, and ship specs that keep your LLM-assisted workflows honest.
 
-[![npm version](https://img.shields.io/npm/v/sdx)](https://www.npmjs.com/package/sdx)
-[![license](https://img.shields.io/npm/l/sdx)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/specdx)](https://www.npmjs.com/package/specdx)
+[![license](https://img.shields.io/npm/l/specdx)](LICENSE)
 
 ---
 
@@ -86,13 +86,13 @@ schema validation with document-level semantic rules.
 ## Installation
 
 ```bash
-npm install -g sdx
+npm install -g specdx
 ```
 
 Or use without installing:
 
 ```bash
-npx sdx init
+npx specdx init
 ```
 
 ---

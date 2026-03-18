@@ -22,7 +22,7 @@ diffing, CI) lives in a dedicated package with a clear public API. The CLI packa
 packages into user-facing commands.
 
 The monorepo is managed with pnpm workspaces and Turborepo for build orchestration. All packages
-are published under the `@sdx` npm scope, with the top-level `sdx` package being the CLI entry
+are published under the `@sdx` npm scope, with the top-level `specdx` package being the CLI entry
 point.
 
 ## Architecture

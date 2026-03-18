@@ -480,7 +480,7 @@ export {};
 `packages/cli/package.json`:
 ```json
 {
-  "name": "sdx",
+  "name": "specdx",
   "version": "0.0.0",
   "type": "module",
   "bin": {
@@ -3993,7 +3993,7 @@ Include:
 - Project overview (from roadmap Vision section)
 - Philosophy: spec-driven development, deterministic validation, skills-first AI integration
 - Comparison to alternatives: why not just Markdown lint? why not just YAML schemas? What makes sdx different (dependency chains, context packing, drift detection)
-- Installation: `npm install -g sdx`
+- Installation: `npm install -g specdx`
 - Quick start: `sdx init`, `sdx lint`, `sdx graph`
 - Spec file format example
 - Config example

@@ -1,6 +1,6 @@
 {
-  "name": "sdx",
-  "version": "0.0.0",
+  "name": "specdx",
+  "version": "0.1.0-alpha.1",
   "type": "module",
   "bin": {
     "sdx": "./dist/main.js"
@@ -11,7 +11,9 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --build",
     "typecheck": "tsc --build --noEmit",

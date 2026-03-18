@@ -269,11 +269,11 @@ The unified CLI entry point.
 
 ### Phase 1 Exit Criteria
 
-- [ ] `npx sdx init` scaffolds a valid spec suite
-- [ ] `npx sdx lint` validates specs and reports diagnostics
-- [ ] `npx sdx graph` visualises the dependency tree
+- [ ] `npx specdx init` scaffolds a valid spec suite
+- [ ] `npx specdx lint` validates specs and reports diagnostics
+- [ ] `npx specdx graph` visualises the dependency tree
 - [ ] sdx's own specs pass `sdx lint --preset strict`
-- [ ] Published to npm as `sdx` (CLI) and `@sdx/*` (packages)
+- [ ] Published to npm as `specdx` (CLI) and `@sdx/*` (packages)
 - [ ] README with quick start guide
 - [ ] At least one external user (even if it's just using it on Flarecast or a NearForm project)
 
@@ -590,6 +590,6 @@ Tools that help maintain and evolve specs over time.
 
 4. **Pack personalisation** — No provider-specific formatting. Modern LLMs all handle XML and structured markdown well enough that the differences are marginal. SDX offers three output formats (XML, markdown, JSON) and lets the user pick. If a meaningful provider divergence emerges later, it can be added as a community-contributed format plugin.
 
-5. **Naming** — `sdx` (Spec Developer Experience). The `@sdx` npm scope will be registered as an npm org. Target domain: `sdx.dev`. The name mirrors the "DX" (Developer Experience) abbreviation familiar to the TypeScript ecosystem.
+5. **Naming** — The project is called `sdx` (Spec Developer Experience) and the CLI command is `sdx`. The npm package is published as `specdx` (the `sdx` name was unavailable on npm). The `@sdx` npm scope will be registered as an npm org. Target domain: `sdx.dev`. The name mirrors the "DX" (Developer Experience) abbreviation familiar to the TypeScript ecosystem.
 
 6. **AI integration model** — Skills-first, not API-first. The original design had sdx calling LLM APIs directly for intent analysis, ambiguity scoring, and drift detection. This required provider abstraction, cost estimation, caching, and confidence thresholds — significant complexity. The revised approach recognizes that developers using AI-assisted workflows already have an LLM available in their coding tool. sdx skills orchestrate the workflow (when to pack, lint, diff, check) and feed structured results to the host LLM for reasoning. The `--ai` flag on `sdx check` is retained as a minimal single-provider fallback, not the primary path. This cuts ~40% of Phase 4 scope and moves the highest-value AI integration (spec-aware coding sessions) from Phase 4 to Phase 2.
