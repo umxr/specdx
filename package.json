@@ -10,9 +10,13 @@
     "clean": "turbo run clean",
     "lint:code": "eslint packages/*/src/",
     "format": "prettier --write \"packages/*/src/**/*.ts\"",
-    "format:check": "prettier --check \"packages/*/src/**/*.ts\""
+    "format:check": "prettier --check \"packages/*/src/**/*.ts\"",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.0.0",
     "eslint": "^10.0.3",
