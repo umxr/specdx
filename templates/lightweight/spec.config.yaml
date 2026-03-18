@@ -1,0 +1,17 @@
+version: "1.0"
+
+project:
+  name: "my-project"
+
+specs:
+  prd:
+    path: "specs/prd.md"
+    type: "prd"
+    required: true
+  technical:
+    path: "specs/technical-design.md"
+    type: "technical-design"
+    requires: ["prd"]
+
+lint:
+  extends: "recommended"

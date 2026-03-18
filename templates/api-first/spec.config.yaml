@@ -1,0 +1,21 @@
+version: "1.0"
+
+project:
+  name: "my-api"
+
+specs:
+  technical:
+    path: "specs/technical-design.md"
+    type: "technical-design"
+    required: true
+  api-contract:
+    path: "specs/api-contract.md"
+    type: "api-contract"
+    requires: ["technical"]
+  test-plan:
+    path: "specs/test-plan.md"
+    type: "test-plan"
+    requires: ["api-contract"]
+
+lint:
+  extends: "recommended"
