@@ -1,4 +1,5 @@
 import { defineConfig } from "tsup";
+import { cpSync } from "node:fs";
 
 export default defineConfig([
   {
@@ -10,11 +11,14 @@ export default defineConfig([
     sourcemap: true,
     dts: false,
     clean: true,
-    noExternal: ["@sdx/schema", "@sdx/core", "@sdx/lint"],
+    noExternal: ["@sdx/schema", "@sdx/core", "@sdx/lint", "@sdx/pack", "@sdx/skills"],
     external: [
       "ajv", "ajv-formats", "gray-matter", "yaml", "unified", "remark-parse",
       "unist-util-visit", "tinyglobby", "js-tiktoken", "consola", "citty",
     ],
+    onSuccess: async () => {
+      cpSync("../skills/skills", "./dist/skills", { recursive: true });
+    },
   },
   {
     entry: { index: "src/index.ts" },
@@ -24,7 +28,7 @@ export default defineConfig([
     bundle: true,
     sourcemap: true,
     dts: false,
-    noExternal: ["@sdx/schema", "@sdx/core", "@sdx/lint"],
+    noExternal: ["@sdx/schema", "@sdx/core", "@sdx/lint", "@sdx/pack", "@sdx/skills"],
     external: [
       "ajv", "ajv-formats", "gray-matter", "yaml", "unified", "remark-parse",
       "unist-util-visit", "tinyglobby", "js-tiktoken", "consola", "citty",
