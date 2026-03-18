@@ -110,7 +110,8 @@ function extractParsedSections(markdown: string): ParsedSection[] {
   const sections: ParsedSection[] = [];
 
   // Preamble: content before first H2
-  const firstOffset = h2s.length > 0 ? h2s[0].offset : markdown.length;
+  const firstH2 = h2s[0];
+  const firstOffset = firstH2 ? firstH2.offset : markdown.length;
   const preamble = markdown.slice(0, firstOffset).trim();
   if (preamble) {
     sections.push({ heading: "", content: preamble, tokens: countTokens(preamble) });
@@ -118,11 +119,12 @@ function extractParsedSections(markdown: string): ParsedSection[] {
 
   // Each H2 section: content from this H2 to the next H2 (or end)
   for (let i = 0; i < h2s.length; i++) {
-    const start = h2s[i].offset;
-    const end = i + 1 < h2s.length ? h2s[i + 1].offset : markdown.length;
-    const content = markdown.slice(start, end).trim();
+    const current = h2s[i]!;
+    const next = h2s[i + 1];
+    const end = next ? next.offset : markdown.length;
+    const content = markdown.slice(current.offset, end).trim();
     sections.push({
-      heading: h2s[i].heading,
+      heading: current.heading,
       content,
       tokens: countTokens(content),
     });
