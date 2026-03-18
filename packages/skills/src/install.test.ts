@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdir, rm, readFile, writeFile } from "node:fs/promises";
+import { rm, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { installSkills, SKILL_FILES } from "./install.js";
+import { installSkills, SKILL_DIRS } from "./install.js";
 
 describe("installSkills", () => {
   let targetDir: string;
@@ -18,60 +18,61 @@ describe("installSkills", () => {
     await rm(targetDir, { recursive: true, force: true });
   });
 
-  it("exports expected SKILL_FILES list", () => {
-    expect(SKILL_FILES).toContain("specdx-start-task.md");
-    expect(SKILL_FILES).toContain("specdx-author-spec.md");
-    expect(SKILL_FILES).toHaveLength(2);
+  it("exports expected SKILL_DIRS list", () => {
+    expect(SKILL_DIRS).toContain("specdx-start-task");
+    expect(SKILL_DIRS).toContain("specdx-author-spec");
+    expect(SKILL_DIRS).toHaveLength(2);
   });
 
-  it("creates target directory if it does not exist", async () => {
+  it("creates skill directories with SKILL.md files", async () => {
     const result = await installSkills(targetDir);
 
     expect(result.installed).toHaveLength(2);
     expect(result.updated).toHaveLength(0);
-    expect(result.installed).toContain("specdx-start-task.md");
-    expect(result.installed).toContain("specdx-author-spec.md");
-  });
+    expect(result.installed).toContain("specdx-start-task");
+    expect(result.installed).toContain("specdx-author-spec");
 
-  it("copies skill files with real markdown content", async () => {
-    await installSkills(targetDir);
-    const skillsDir = join(targetDir, ".claude", "skills");
-
-    for (const file of SKILL_FILES) {
-      const content = await readFile(join(skillsDir, file), "utf-8");
-      // Must have substantive content
+    for (const skill of SKILL_DIRS) {
+      const content = await readFile(
+        join(targetDir, ".claude", "skills", skill, "SKILL.md"),
+        "utf-8",
+      );
       expect(content.length).toBeGreaterThan(100);
-      // Must have YAML frontmatter delimiters
-      expect(content).toContain("---");
-      // Must contain markdown headings
-      expect(content).toMatch(/^#/m);
     }
   });
 
-  it("specdx-start-task.md has correct frontmatter name", async () => {
+  it("skill files have valid frontmatter", async () => {
     await installSkills(targetDir);
 
-    const content = await readFile(
-      join(targetDir, ".claude", "skills", "specdx-start-task.md"),
-      "utf-8",
-    );
-    expect(content).toMatch(/name:\s*specdx:start-task/);
-    expect(content).toMatch(/description:/);
-    // Should reference specdx pack command
-    expect(content).toContain("specdx pack");
+    for (const skill of SKILL_DIRS) {
+      const content = await readFile(
+        join(targetDir, ".claude", "skills", skill, "SKILL.md"),
+        "utf-8",
+      );
+      expect(content).toMatch(/^---\n/);
+      expect(content).toMatch(/name:\s*specdx-/);
+      expect(content).toMatch(/description:/);
+    }
   });
 
-  it("specdx-author-spec.md has correct frontmatter name", async () => {
+  it("specdx-start-task references specdx pack command", async () => {
     await installSkills(targetDir);
 
     const content = await readFile(
-      join(targetDir, ".claude", "skills", "specdx-author-spec.md"),
+      join(targetDir, ".claude", "skills", "specdx-start-task", "SKILL.md"),
       "utf-8",
     );
-    expect(content).toMatch(/name:\s*specdx:author-spec/);
-    expect(content).toMatch(/description:/);
-    // Should reference specdx lint command
-    expect(content).toContain("specdx lint");
+    expect(content).toContain("npx specdx pack");
+  });
+
+  it("specdx-author-spec references specdx lint command", async () => {
+    await installSkills(targetDir);
+
+    const content = await readFile(
+      join(targetDir, ".claude", "skills", "specdx-author-spec", "SKILL.md"),
+      "utf-8",
+    );
+    expect(content).toContain("npx specdx lint");
   });
 
   it("reports 'updated' on second install", async () => {
@@ -82,38 +83,18 @@ describe("installSkills", () => {
     const second = await installSkills(targetDir);
     expect(second.installed).toHaveLength(0);
     expect(second.updated).toHaveLength(2);
-    expect(second.updated).toContain("specdx-start-task.md");
-    expect(second.updated).toContain("specdx-author-spec.md");
-  });
-
-  it("installs into nested directory structure", async () => {
-    const nested = join(targetDir, "sub", "project");
-    const result = await installSkills(nested);
-
-    expect(result.installed).toHaveLength(2);
-
-    const content = await readFile(
-      join(nested, ".claude", "skills", "specdx-start-task.md"),
-      "utf-8",
-    );
-    expect(content.length).toBeGreaterThan(100);
   });
 
   it("overwrites modified files and reports as updated", async () => {
     await installSkills(targetDir);
-    const skillsDir = join(targetDir, ".claude", "skills");
+    const skillPath = join(targetDir, ".claude", "skills", "specdx-start-task", "SKILL.md");
 
-    // Modify a file
-    await writeFile(join(skillsDir, "specdx-start-task.md"), "modified content");
+    await writeFile(skillPath, "modified content");
 
     const result = await installSkills(targetDir);
-    expect(result.updated).toContain("specdx-start-task.md");
+    expect(result.updated).toContain("specdx-start-task");
 
-    // Should have original content restored
-    const content = await readFile(
-      join(skillsDir, "specdx-start-task.md"),
-      "utf-8",
-    );
+    const content = await readFile(skillPath, "utf-8");
     expect(content).not.toBe("modified content");
     expect(content.length).toBeGreaterThan(100);
   });

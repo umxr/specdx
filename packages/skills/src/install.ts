@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export const SKILL_FILES = ["specdx-start-task.md", "specdx-author-spec.md"];
+/** Skill directory names — each contains a SKILL.md file */
+export const SKILL_DIRS = ["specdx-start-task", "specdx-author-spec"];
 
 export interface InstallResult {
   installed: string[];
@@ -32,12 +33,10 @@ export async function installSkills(
   const installed: string[] = [];
   const updated: string[] = [];
 
-  // Ensure .claude/skills/ directory exists
-  await mkdir(skillsDir, { recursive: true });
-
-  for (const file of SKILL_FILES) {
-    const sourcePath = join(sourceDir, file);
-    const targetPath = join(skillsDir, file);
+  for (const skillName of SKILL_DIRS) {
+    const sourcePath = join(sourceDir, skillName, "SKILL.md");
+    const targetDir = join(skillsDir, skillName);
+    const targetPath = join(targetDir, "SKILL.md");
 
     const content = await readFile(sourcePath, "utf-8");
 
@@ -50,12 +49,13 @@ export async function installSkills(
       // File doesn't exist
     }
 
+    await mkdir(targetDir, { recursive: true });
     await writeFile(targetPath, content, "utf-8");
 
     if (exists) {
-      updated.push(file);
+      updated.push(skillName);
     } else {
-      installed.push(file);
+      installed.push(skillName);
     }
   }
 

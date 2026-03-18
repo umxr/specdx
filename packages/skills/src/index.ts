@@ -1,1 +1,1 @@
-export { installSkills, SKILL_FILES, type InstallResult } from "./install.js";
+export { installSkills, SKILL_DIRS, type InstallResult } from "./install.js";
