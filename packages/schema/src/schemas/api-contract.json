@@ -1,0 +1,8 @@
+{
+  "$id": "api-contract",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "allOf": [
+    { "$ref": "base-spec" },
+    { "type": "object", "properties": { "type": { "const": "api-contract" } }, "required": ["type"] }
+  ]
+}

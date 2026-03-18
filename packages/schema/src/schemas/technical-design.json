@@ -1,0 +1,8 @@
+{
+  "$id": "technical-design",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "allOf": [
+    { "$ref": "base-spec" },
+    { "type": "object", "properties": { "type": { "const": "technical-design" } }, "required": ["type"] }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$id": "user-story",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "allOf": [
+    { "$ref": "base-spec" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "user-story" },
+        "story_id": { "type": "string", "minLength": 1 },
+        "priority": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+        "estimate": { "type": "string" }
+      },
+      "required": ["type", "story_id", "priority", "estimate"]
+    }
+  ]
+}

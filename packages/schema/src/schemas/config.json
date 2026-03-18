@@ -1,0 +1,44 @@
+{
+  "$id": "sdx-config",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "project": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "specs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "type": { "type": "string", "enum": ["prd", "technical-design", "user-story", "test-plan", "adr", "api-contract"] },
+          "required": { "type": "boolean", "default": false },
+          "requires": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["path", "type"],
+        "additionalProperties": false
+      }
+    },
+    "lint": {
+      "type": "object",
+      "properties": {
+        "extends": { "type": "string", "enum": ["minimal", "recommended", "strict"] },
+        "rules": { "type": "object" },
+        "ignore": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "pack": { "type": "object" },
+    "diff": { "type": "object" },
+    "ci": { "type": "object" }
+  },
+  "required": ["version", "specs"],
+  "additionalProperties": false
+}
