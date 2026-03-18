@@ -3,3 +3,7 @@ dist/
 coverage/
 .turbo/
 *.tsbuildinfo
+
+# Project docs (tracked separately)
+roadmap.md
+docs/superpowers/

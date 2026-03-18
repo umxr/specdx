@@ -269,12 +269,12 @@ The unified CLI entry point.
 
 ### Phase 1 Exit Criteria
 
-- [ ] `npx specdx init` scaffolds a valid spec suite
-- [ ] `npx specdx lint` validates specs and reports diagnostics
-- [ ] `npx specdx graph` visualises the dependency tree
-- [ ] sdx's own specs pass `sdx lint --preset strict`
-- [ ] Published to npm as `specdx` (CLI) and `@sdx/*` (packages)
-- [ ] README with quick start guide
+- [x] `npx specdx init` scaffolds a valid spec suite
+- [x] `npx specdx lint` validates specs and reports diagnostics
+- [x] `npx specdx graph` visualises the dependency tree
+- [x] sdx's own specs pass `sdx lint --preset strict`
+- [ ] Published to npm as `specdx` (CLI) and `@sdx/*` (packages) — alpha publish pending
+- [x] README with quick start guide
 - [ ] At least one external user (even if it's just using it on Flarecast or a NearForm project)
 
 ---

@@ -1,6 +1,6 @@
 # Phase 1 — Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Ship a usable `sdx init`, `sdx lint`, `sdx graph`, and `sdx validate` with structural validation, establishing the schema, spec file format, and config structure.
 
@@ -158,7 +158,7 @@ sdx/
 - Create: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, `tsconfig.json`, `vitest.shared.ts`, `.gitignore`, `.npmrc`
 - Create: `packages/*/package.json`, `packages/*/tsconfig.json`, `packages/*/vitest.config.ts`, `packages/*/src/index.ts`
 
-- [ ] **Step 1: Create root package.json**
+- [x] **Step 1: Create root package.json**
 
 ```json
 {
@@ -181,14 +181,14 @@ sdx/
 }
 ```
 
-- [ ] **Step 2: Create pnpm-workspace.yaml**
+- [x] **Step 2: Create pnpm-workspace.yaml**
 
 ```yaml
 packages:
   - "packages/*"
 ```
 
-- [ ] **Step 3: Create turbo.json**
+- [x] **Step 3: Create turbo.json**
 
 ```json
 {
@@ -216,7 +216,7 @@ packages:
 }
 ```
 
-- [ ] **Step 4: Create tsconfig.base.json**
+- [x] **Step 4: Create tsconfig.base.json**
 
 ```json
 {
@@ -243,7 +243,7 @@ packages:
 }
 ```
 
-- [ ] **Step 5: Create tsconfig.json (root references)**
+- [x] **Step 5: Create tsconfig.json (root references)**
 
 ```json
 {
@@ -262,7 +262,7 @@ packages:
 }
 ```
 
-- [ ] **Step 6: Create vitest.shared.ts**
+- [x] **Step 6: Create vitest.shared.ts**
 
 ```typescript
 import { defineConfig } from "vitest/config";
@@ -289,7 +289,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 7: Create .gitignore**
+- [x] **Step 7: Create .gitignore**
 
 ```
 node_modules/
@@ -299,14 +299,14 @@ coverage/
 *.tsbuildinfo
 ```
 
-- [ ] **Step 8: Create .npmrc**
+- [x] **Step 8: Create .npmrc**
 
 ```
 shamefully-hoist=false
 strict-peer-dependencies=true
 ```
 
-- [ ] **Step 9: Create @sdx/schema package scaffold**
+- [x] **Step 9: Create @sdx/schema package scaffold**
 
 `packages/schema/package.json`:
 ```json
@@ -364,7 +364,7 @@ export default mergeConfig(sharedConfig, defineConfig({}));
 export {};
 ```
 
-- [ ] **Step 10: Create @sdx/core package scaffold**
+- [x] **Step 10: Create @sdx/core package scaffold**
 
 `packages/core/package.json`:
 ```json
@@ -426,7 +426,7 @@ export {};
 export {};
 ```
 
-- [ ] **Step 11: Create @sdx/lint package scaffold**
+- [x] **Step 11: Create @sdx/lint package scaffold**
 
 `packages/lint/package.json`:
 ```json
@@ -475,7 +475,7 @@ export {};
 }
 ```
 
-- [ ] **Step 12: Create @sdx/cli package scaffold**
+- [x] **Step 12: Create @sdx/cli package scaffold**
 
 `packages/cli/package.json`:
 ```json
@@ -531,18 +531,18 @@ export {};
 }
 ```
 
-- [ ] **Step 13: Create placeholder packages (pack, diff, github-action, skills)**
+- [x] **Step 13: Create placeholder packages (pack, diff, github-action, skills)**
 
 Each gets the same scaffold pattern: `package.json` (name only, no deps beyond typescript), `tsconfig.json` (no references), `vitest.config.ts`, `src/index.ts` with `export {}`.
 
 Package names: `@sdx/pack`, `@sdx/diff`, `@sdx/action`, `@sdx/skills`
 
-- [ ] **Step 14: Install dependencies and verify build**
+- [x] **Step 14: Install dependencies and verify build**
 
 Run: `pnpm install && pnpm build && pnpm test`
 Expected: All packages build and test successfully (tests pass with no tests).
 
-- [ ] **Step 15: Commit**
+- [x] **Step 15: Commit**
 
 ```bash
 git add -A
@@ -564,7 +564,7 @@ git commit -m "chore: scaffold monorepo with turborepo, pnpm workspaces, and 8 p
 - Create: `packages/schema/src/schemas/api-contract.json`
 - Test: `packages/schema/src/schemas.test.ts`
 
-- [ ] **Step 1: Write test for base spec schema**
+- [x] **Step 1: Write test for base spec schema**
 
 `packages/schema/src/schemas.test.ts`:
 ```typescript
@@ -636,12 +636,12 @@ describe("base-spec schema", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd packages/schema && pnpm test`
 Expected: FAIL — schema files don't exist yet
 
-- [ ] **Step 3: Create base-spec.json schema**
+- [x] **Step 3: Create base-spec.json schema**
 
 `packages/schema/src/schemas/base-spec.json`:
 ```json
@@ -697,12 +697,12 @@ Expected: FAIL — schema files don't exist yet
 
 Note: `additionalProperties: true` on base so spec-type schemas can add their own fields.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd packages/schema && pnpm test`
 Expected: PASS — all 4 base-spec tests pass
 
-- [ ] **Step 5: Write tests for spec-type schemas**
+- [x] **Step 5: Write tests for spec-type schemas**
 
 Add to `packages/schema/src/schemas.test.ts`:
 
@@ -835,12 +835,12 @@ describe("spec type schemas", () => {
 });
 ```
 
-- [ ] **Step 6: Run test to verify it fails**
+- [x] **Step 6: Run test to verify it fails**
 
 Run: `cd packages/schema && pnpm test`
 Expected: FAIL — spec type schema files don't exist
 
-- [ ] **Step 7: Create all spec-type schemas**
+- [x] **Step 7: Create all spec-type schemas**
 
 Each spec type schema uses `allOf` to extend the base and adds a `const` constraint on `type`.
 
@@ -958,12 +958,12 @@ Each spec type schema uses `allOf` to extend the base and adds a `const` constra
 }
 ```
 
-- [ ] **Step 8: Run tests to verify they pass**
+- [x] **Step 8: Run tests to verify they pass**
 
 Run: `cd packages/schema && pnpm test`
 Expected: PASS — all spec type schema tests pass
 
-- [ ] **Step 9: Write test for config schema**
+- [x] **Step 9: Write test for config schema**
 
 Add to `packages/schema/src/schemas.test.ts`:
 
@@ -1009,7 +1009,7 @@ describe("config schema", () => {
 });
 ```
 
-- [ ] **Step 10: Create config.json schema**
+- [x] **Step 10: Create config.json schema**
 
 `packages/schema/src/schemas/config.json`:
 ```json
@@ -1065,12 +1065,12 @@ describe("config schema", () => {
 }
 ```
 
-- [ ] **Step 11: Run tests to verify they pass**
+- [x] **Step 11: Run tests to verify they pass**
 
 Run: `cd packages/schema && pnpm test`
 Expected: PASS
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add packages/schema/src/schemas/ packages/schema/src/schemas.test.ts
@@ -1086,7 +1086,7 @@ git commit -m "feat(schema): add JSON Schema definitions for all spec types and 
 - Create: `packages/schema/src/sections.ts`
 - Test: `packages/schema/src/types.test.ts`
 
-- [ ] **Step 1: Write test for types**
+- [x] **Step 1: Write test for types**
 
 `packages/schema/src/types.test.ts`:
 ```typescript
@@ -1170,12 +1170,12 @@ describe("sections", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd packages/schema && pnpm test`
 Expected: FAIL — types.ts and sections.ts don't exist
 
-- [ ] **Step 3: Create types.ts**
+- [x] **Step 3: Create types.ts**
 
 `packages/schema/src/types.ts`:
 ```typescript
@@ -1276,7 +1276,7 @@ export interface SdxConfig {
 }
 ```
 
-- [ ] **Step 4: Create sections.ts**
+- [x] **Step 4: Create sections.ts**
 
 `packages/schema/src/sections.ts`:
 ```typescript
@@ -1300,12 +1300,12 @@ export const REQUIRED_SECTIONS: Record<SpecType, string[]> = {
 };
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `cd packages/schema && pnpm test`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/schema/src/types.ts packages/schema/src/sections.ts packages/schema/src/types.test.ts
@@ -1321,7 +1321,7 @@ git commit -m "feat(schema): add TypeScript types and required sections definiti
 - Modify: `packages/schema/src/index.ts`
 - Test: `packages/schema/src/validator.test.ts`
 
-- [ ] **Step 1: Write test for validator**
+- [x] **Step 1: Write test for validator**
 
 `packages/schema/src/validator.test.ts`:
 ```typescript
@@ -1375,12 +1375,12 @@ describe("validateConfig", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd packages/schema && pnpm test`
 Expected: FAIL
 
-- [ ] **Step 3: Create validator.ts**
+- [x] **Step 3: Create validator.ts**
 
 `packages/schema/src/validator.ts`:
 ```typescript
@@ -1441,7 +1441,7 @@ export function validateConfig(
 }
 ```
 
-- [ ] **Step 4: Update index.ts with public exports**
+- [x] **Step 4: Update index.ts with public exports**
 
 `packages/schema/src/index.ts`:
 ```typescript
@@ -1468,17 +1468,17 @@ export { REQUIRED_SECTIONS } from "./sections.js";
 export { validateSpec, validateConfig, type ValidationResult } from "./validator.js";
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `cd packages/schema && pnpm test`
 Expected: PASS — all schema, types, and validator tests pass
 
-- [ ] **Step 6: Build the package to verify exports compile**
+- [x] **Step 6: Build the package to verify exports compile**
 
 Run: `cd packages/schema && pnpm build`
 Expected: Build succeeds, `dist/` contains compiled JS + declarations
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/schema/src/
@@ -1495,7 +1495,7 @@ git commit -m "feat(schema): add AJV validator and public exports"
 - Create: `packages/core/test/fixtures/invalid-config.yaml`
 - Test: `packages/core/src/config.test.ts`
 
-- [ ] **Step 1: Create test fixtures**
+- [x] **Step 1: Create test fixtures**
 
 `packages/core/test/fixtures/valid-config.yaml`:
 ```yaml
@@ -1531,7 +1531,7 @@ specs:
     path: "specs/prd.md"
 ```
 
-- [ ] **Step 2: Write test for config loader**
+- [x] **Step 2: Write test for config loader**
 
 `packages/core/src/config.test.ts`:
 ```typescript
@@ -1572,12 +1572,12 @@ describe("loadConfig", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `cd packages/core && pnpm build && pnpm test`
 Expected: FAIL
 
-- [ ] **Step 4: Implement config loader**
+- [x] **Step 4: Implement config loader**
 
 `packages/core/src/config.ts`:
 ```typescript
@@ -1654,12 +1654,12 @@ async function findConfig(from: string): Promise<string | undefined> {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `pnpm build --filter=@sdx/schema && cd packages/core && pnpm test`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/core/src/config.ts packages/core/src/config.test.ts packages/core/test/
@@ -1676,7 +1676,7 @@ git commit -m "feat(core): add config loader with YAML parsing and schema valida
 - Create: `packages/core/test/fixtures/specs/story.yaml`
 - Test: `packages/core/src/parser.test.ts`
 
-- [ ] **Step 1: Create test fixtures**
+- [x] **Step 1: Create test fixtures**
 
 `packages/core/test/fixtures/specs/prd.md`:
 ```markdown
@@ -1738,7 +1738,7 @@ acceptance_criteria:
   - "Invalid credentials show error message"
 ```
 
-- [ ] **Step 2: Write test for spec parser**
+- [x] **Step 2: Write test for spec parser**
 
 `packages/core/src/parser.test.ts`:
 ```typescript
@@ -1784,12 +1784,12 @@ describe("parseSpec", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `cd packages/core && pnpm test`
 Expected: FAIL
 
-- [ ] **Step 4: Implement spec parser**
+- [x] **Step 4: Implement spec parser**
 
 `packages/core/src/parser.ts`:
 ```typescript
@@ -1901,12 +1901,12 @@ function extractSections(markdown: string): string[] {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `pnpm build --filter=@sdx/schema && cd packages/core && pnpm test`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/core/src/parser.ts packages/core/src/parser.test.ts packages/core/test/fixtures/specs/
@@ -1921,7 +1921,7 @@ git commit -m "feat(core): add spec parser for markdown and YAML formats"
 - Create: `packages/core/src/graph.ts`
 - Test: `packages/core/src/graph.test.ts`
 
-- [ ] **Step 1: Write test for dependency graph**
+- [x] **Step 1: Write test for dependency graph**
 
 `packages/core/src/graph.test.ts`:
 ```typescript
@@ -1990,12 +1990,12 @@ describe("buildGraph", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd packages/core && pnpm test`
 Expected: FAIL
 
-- [ ] **Step 3: Implement dependency graph**
+- [x] **Step 3: Implement dependency graph**
 
 `packages/core/src/graph.ts`:
 ```typescript
@@ -2111,12 +2111,12 @@ export function buildGraph(config: SdxConfig): DependencyGraph {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd packages/core && pnpm test`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/core/src/graph.ts packages/core/src/graph.test.ts
@@ -2132,7 +2132,7 @@ git commit -m "feat(core): add dependency graph builder with cycle detection and
 - Modify: `packages/core/src/index.ts`
 - Test: `packages/core/src/glob.test.ts`, `packages/core/src/tokens.test.ts`, `packages/core/src/logger.test.ts`
 
-- [ ] **Step 1: Write tests for glob resolver**
+- [x] **Step 1: Write tests for glob resolver**
 
 `packages/core/src/glob.test.ts`:
 ```typescript
@@ -2163,7 +2163,7 @@ describe("resolveGlob", () => {
 });
 ```
 
-- [ ] **Step 2: Implement glob resolver**
+- [x] **Step 2: Implement glob resolver**
 
 `packages/core/src/glob.ts`:
 ```typescript
@@ -2179,7 +2179,7 @@ export async function resolveGlob(
 }
 ```
 
-- [ ] **Step 3: Write tests for token counter**
+- [x] **Step 3: Write tests for token counter**
 
 `packages/core/src/tokens.test.ts`:
 ```typescript
@@ -2206,7 +2206,7 @@ describe("countTokens", () => {
 });
 ```
 
-- [ ] **Step 4: Implement token counter**
+- [x] **Step 4: Implement token counter**
 
 `packages/core/src/tokens.ts`:
 ```typescript
@@ -2227,7 +2227,7 @@ export function countTokens(text: string): number {
 }
 ```
 
-- [ ] **Step 5: Write tests for logger**
+- [x] **Step 5: Write tests for logger**
 
 `packages/core/src/logger.test.ts`:
 ```typescript
@@ -2257,7 +2257,7 @@ describe("createLogger", () => {
 });
 ```
 
-- [ ] **Step 6: Implement logger**
+- [x] **Step 6: Implement logger**
 
 `packages/core/src/logger.ts`:
 ```typescript
@@ -2283,7 +2283,7 @@ export function createLogger(options?: LoggerOptions): Logger {
 }
 ```
 
-- [ ] **Step 7: Update core index.ts with all public exports**
+- [x] **Step 7: Update core index.ts with all public exports**
 
 `packages/core/src/index.ts`:
 ```typescript
@@ -2295,12 +2295,12 @@ export { countTokens } from "./tokens.js";
 export { createLogger, type Logger, type LoggerOptions, type LogLevel } from "./logger.js";
 ```
 
-- [ ] **Step 8: Run all core tests**
+- [x] **Step 8: Run all core tests**
 
 Run: `pnpm build --filter=@sdx/schema && cd packages/core && pnpm test`
 Expected: PASS — all config, parser, graph, glob, tokens, logger tests pass
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/core/src/
@@ -2316,7 +2316,7 @@ git commit -m "feat(core): add glob resolver, token counter, logger, and public 
 - Create: `packages/lint/src/engine.ts`
 - Test: `packages/lint/src/engine.test.ts`
 
-- [ ] **Step 1: Write test for lint engine**
+- [x] **Step 1: Write test for lint engine**
 
 `packages/lint/src/engine.test.ts`:
 ```typescript
@@ -2416,12 +2416,12 @@ describe("createLintEngine", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm build --filter=@sdx/schema --filter=@sdx/core && cd packages/lint && pnpm test`
 Expected: FAIL
 
-- [ ] **Step 3: Create types.ts**
+- [x] **Step 3: Create types.ts**
 
 `packages/lint/src/types.ts`:
 ```typescript
@@ -2460,7 +2460,7 @@ export interface LintResults {
 }
 ```
 
-- [ ] **Step 4: Create engine.ts**
+- [x] **Step 4: Create engine.ts**
 
 `packages/lint/src/engine.ts`:
 ```typescript
@@ -2505,12 +2505,12 @@ export function createLintEngine(options: LintEngineOptions): LintEngine {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `pnpm build --filter=@sdx/schema --filter=@sdx/core && cd packages/lint && pnpm test`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/lint/src/types.ts packages/lint/src/engine.ts packages/lint/src/engine.test.ts
@@ -2529,7 +2529,7 @@ git commit -m "feat(lint): add lint engine with rule runner and diagnostic colle
 - Create: `packages/lint/src/rules/index.ts`
 - Test: `packages/lint/src/rules/structure-rules.test.ts`
 
-- [ ] **Step 1: Write tests for structure rules**
+- [x] **Step 1: Write tests for structure rules**
 
 `packages/lint/src/rules/structure-rules.test.ts`:
 ```typescript
@@ -2639,12 +2639,12 @@ describe("no-circular-deps", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd packages/lint && pnpm test`
 Expected: FAIL
 
-- [ ] **Step 3: Implement structure rules**
+- [x] **Step 3: Implement structure rules**
 
 `packages/lint/src/rules/valid-frontmatter.ts`:
 ```typescript
@@ -2764,12 +2764,12 @@ export {
 };
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `pnpm build --filter=@sdx/schema --filter=@sdx/core && cd packages/lint && pnpm test`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/lint/src/rules/
@@ -2791,7 +2791,7 @@ git commit -m "feat(lint): add structure rules (valid-frontmatter, required-sect
 - Test: `packages/lint/src/rules/content-rules.test.ts`
 - Test: `packages/lint/src/presets.test.ts`
 
-- [ ] **Step 1: Write tests for content rules**
+- [x] **Step 1: Write tests for content rules**
 
 `packages/lint/src/rules/content-rules.test.ts`:
 ```typescript
@@ -2926,12 +2926,12 @@ describe("staleness-check", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd packages/lint && pnpm test`
 Expected: FAIL
 
-- [ ] **Step 3: Implement content rules**
+- [x] **Step 3: Implement content rules**
 
 `packages/lint/src/rules/story-coverage.ts`:
 ```typescript
@@ -3063,7 +3063,7 @@ export const noVagueLanguageRule: LintRule = {
 };
 ```
 
-- [ ] **Step 4: Write test for presets**
+- [x] **Step 4: Write test for presets**
 
 `packages/lint/src/presets.test.ts`:
 ```typescript
@@ -3090,7 +3090,7 @@ describe("presets", () => {
 });
 ```
 
-- [ ] **Step 5: Implement presets**
+- [x] **Step 5: Implement presets**
 
 `packages/lint/src/presets.ts`:
 ```typescript
@@ -3135,7 +3135,7 @@ export const contentRules: LintRule[] = [
 export const allBuiltinRules: LintRule[] = [...structureRules, ...contentRules];
 ```
 
-- [ ] **Step 6: Create custom rule loader**
+- [x] **Step 6: Create custom rule loader**
 
 `packages/lint/src/custom-rule-loader.ts`:
 ```typescript
@@ -3154,7 +3154,7 @@ export async function loadCustomRule(filePath: string): Promise<LintRule> {
 }
 ```
 
-- [ ] **Step 7: Update lint index.ts with public exports**
+- [x] **Step 7: Update lint index.ts with public exports**
 
 `packages/lint/src/index.ts`:
 ```typescript
@@ -3176,12 +3176,12 @@ export {
 } from "./rules/index.js";
 ```
 
-- [ ] **Step 8: Run all lint tests**
+- [x] **Step 8: Run all lint tests**
 
 Run: `pnpm build --filter=@sdx/schema --filter=@sdx/core && cd packages/lint && pnpm test`
 Expected: PASS
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/lint/src/
@@ -3198,7 +3198,7 @@ git commit -m "feat(lint): add content rules (story-coverage, staleness, vague-l
 - Create: `packages/cli/src/commands/init.ts`
 - Test: `packages/cli/src/commands/init.test.ts`
 
-- [ ] **Step 1: Write test for init command**
+- [x] **Step 1: Write test for init command**
 
 `packages/cli/src/commands/init.test.ts`:
 ```typescript
@@ -3259,12 +3259,12 @@ describe("scaffoldProject", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd packages/cli && pnpm test`
 Expected: FAIL
 
-- [ ] **Step 3: Create shared args and init scaffolding logic**
+- [x] **Step 3: Create shared args and init scaffolding logic**
 
 `packages/cli/src/shared-args.ts`:
 ```typescript
@@ -3522,7 +3522,7 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 4: Create main.ts (root CLI entry)**
+- [x] **Step 4: Create main.ts (root CLI entry)**
 
 `packages/cli/src/main.ts`:
 ```typescript
@@ -3547,12 +3547,12 @@ const main = defineCommand({
 runMain(main);
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `pnpm build --filter=@sdx/schema --filter=@sdx/core --filter=@sdx/lint && cd packages/cli && pnpm test`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/cli/src/
@@ -3572,7 +3572,7 @@ git commit -m "feat(cli): add sdx init command with lightweight, bmad, and api-f
 - Create: `packages/cli/src/formatters/github.ts`
 - Test: `packages/cli/src/commands/lint.test.ts`
 
-- [ ] **Step 1: Write test for lint command logic**
+- [x] **Step 1: Write test for lint command logic**
 
 `packages/cli/src/commands/lint.test.ts`:
 ```typescript
@@ -3658,7 +3658,7 @@ describe("runLint", () => {
 });
 ```
 
-- [ ] **Step 2: Implement lint command**
+- [x] **Step 2: Implement lint command**
 
 `packages/cli/src/commands/lint.ts`:
 ```typescript
@@ -3763,7 +3763,7 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 3: Implement validate command**
+- [x] **Step 3: Implement validate command**
 
 `packages/cli/src/commands/validate.ts`:
 ```typescript
@@ -3797,7 +3797,7 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 4: Implement graph command**
+- [x] **Step 4: Implement graph command**
 
 `packages/cli/src/commands/graph.ts`:
 ```typescript
@@ -3847,7 +3847,7 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 5: Create formatters (pretty, json, github)**
+- [x] **Step 5: Create formatters (pretty, json, github)**
 
 `packages/cli/src/formatters/pretty.ts`:
 ```typescript
@@ -3889,24 +3889,24 @@ export function formatGithub(diagnostics: Diagnostic[]): string {
 }
 ```
 
-- [ ] **Step 6: Create CLI index.ts**
+- [x] **Step 6: Create CLI index.ts**
 
 `packages/cli/src/index.ts`:
 ```typescript
 export { runLint } from "./commands/lint.js";
 ```
 
-- [ ] **Step 7: Run all CLI tests**
+- [x] **Step 7: Run all CLI tests**
 
 Run: `pnpm build --filter=@sdx/schema --filter=@sdx/core --filter=@sdx/lint && cd packages/cli && pnpm test`
 Expected: PASS
 
-- [ ] **Step 8: Build and test the full CLI**
+- [x] **Step 8: Build and test the full CLI**
 
 Run: `pnpm build && node packages/cli/dist/main.js --help`
 Expected: Shows sdx help with init, lint, validate, graph subcommands
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/cli/src/
@@ -3922,20 +3922,20 @@ git commit -m "feat(cli): add lint, validate, and graph commands with pretty/jso
 - Create: `templates/bmad/spec.config.yaml`, `templates/bmad/specs/prd.md`, `templates/bmad/specs/technical-design.md`, `templates/bmad/specs/test-plan.md`
 - Create: `templates/api-first/spec.config.yaml`, `templates/api-first/specs/technical-design.md`, `templates/api-first/specs/api-contract.md`, `templates/api-first/specs/test-plan.md`
 
-- [ ] **Step 1: Create template files**
+- [x] **Step 1: Create template files**
 
 Templates are static reference examples. The `sdx init` command generates files dynamically (Task 12), but these templates serve as standalone examples users can copy.
 
 Create each template directory with a valid `spec.config.yaml` and spec files following the patterns established in Task 12's template functions. Each spec file should have valid frontmatter and all required sections with helpful placeholder comments.
 
-- [ ] **Step 2: Validate templates with sdx lint**
+- [x] **Step 2: Validate templates with sdx lint**
 
 Run: `cd templates/lightweight && node ../../packages/cli/dist/main.js lint`
 Expected: No errors (warnings acceptable for placeholder content)
 
 Repeat for bmad and api-first templates.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add templates/
@@ -3951,7 +3951,7 @@ git commit -m "feat: add lightweight, bmad, and api-first template directories"
 - Create: `specs/prd.md`, `specs/technical-design.md`, `specs/test-plan.md`
 - Create: `README.md`
 
-- [ ] **Step 1: Create sdx's own spec.config.yaml**
+- [x] **Step 1: Create sdx's own spec.config.yaml**
 
 ```yaml
 version: "1.0"
@@ -3978,16 +3978,16 @@ lint:
   extends: "strict"
 ```
 
-- [ ] **Step 2: Create sdx's own specs**
+- [x] **Step 2: Create sdx's own specs**
 
 Write `specs/prd.md`, `specs/technical-design.md`, and `specs/test-plan.md` based on the content in `roadmap.md`. Each should have valid frontmatter and all required sections for its type. The content should describe sdx itself — this is dogfooding.
 
-- [ ] **Step 3: Validate with sdx lint**
+- [x] **Step 3: Validate with sdx lint**
 
 Run: `node packages/cli/dist/main.js lint`
 Expected: Passes with strict preset (no errors). Warnings are acceptable and should be addressed.
 
-- [ ] **Step 4: Write README.md**
+- [x] **Step 4: Write README.md**
 
 Include:
 - Project overview (from roadmap Vision section)
@@ -4000,7 +4000,7 @@ Include:
 - Schema versioning section: explain that schemas use semver via the `version` field in `spec.config.yaml`, individual specs are versioned independently via frontmatter `version`, and schema migrations will be handled by `sdx migrate` (Phase 4). Breaking schema changes bump the config `version` field.
 - Contributing section: how to write custom lint rules (implement `LintRule` interface, export as default), how to contribute spec type schemas (add JSON Schema + type + validator entry), how to submit changes (fork, branch, PR)
 
-- [ ] **Step 5: Write CONTRIBUTING.md**
+- [x] **Step 5: Write CONTRIBUTING.md**
 
 Create `CONTRIBUTING.md` covering:
 - Development setup (`pnpm install`, `pnpm build`, `pnpm test`)
@@ -4008,14 +4008,14 @@ Create `CONTRIBUTING.md` covering:
 - How to add a new spec type schema
 - PR process and coding standards
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add spec.config.yaml specs/ README.md CONTRIBUTING.md
 git commit -m "feat: add sdx's own spec suite (dogfooding), README, and contributing guide"
 ```
 
-- [ ] **Step 6: Final integration test**
+- [x] **Step 6: Final integration test**
 
 Run from repo root:
 ```bash
@@ -4028,7 +4028,7 @@ node packages/cli/dist/main.js graph
 
 Expected: All pass. CLI commands produce correct output for sdx's own spec suite.
 
-- [ ] **Step 7: Commit any remaining fixes**
+- [x] **Step 7: Commit any remaining fixes**
 
 ```bash
 git add -A
@@ -4044,14 +4044,14 @@ git commit -m "chore: final integration fixes for Phase 1"
 - Create: `.prettierrc`
 - Modify: `package.json` (root — add lint:code and format scripts)
 
-- [ ] **Step 1: Install ESLint and Prettier**
+- [x] **Step 1: Install ESLint and Prettier**
 
 Run:
 ```bash
 pnpm add -D eslint @eslint/js typescript-eslint prettier eslint-config-prettier
 ```
 
-- [ ] **Step 2: Create eslint.config.js (flat config)**
+- [x] **Step 2: Create eslint.config.js (flat config)**
 
 `eslint.config.js`:
 ```javascript
@@ -4075,7 +4075,7 @@ export default tseslint.config(
 );
 ```
 
-- [ ] **Step 3: Create .prettierrc**
+- [x] **Step 3: Create .prettierrc**
 
 `.prettierrc`:
 ```json
@@ -4088,7 +4088,7 @@ export default tseslint.config(
 }
 ```
 
-- [ ] **Step 4: Add scripts to root package.json**
+- [x] **Step 4: Add scripts to root package.json**
 
 Add to `scripts`:
 ```json
@@ -4097,12 +4097,12 @@ Add to `scripts`:
 "format:check": "prettier --check \"packages/*/src/**/*.ts\""
 ```
 
-- [ ] **Step 5: Run lint and format to verify**
+- [x] **Step 5: Run lint and format to verify**
 
 Run: `pnpm lint:code && pnpm format:check`
 Expected: Passes (fix any issues that come up)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add eslint.config.js .prettierrc package.json
@@ -4117,15 +4117,15 @@ git commit -m "chore: add ESLint + Prettier configuration"
 - Create: `.changeset/config.json`
 - Modify: `package.json` (root — add changeset scripts)
 
-- [ ] **Step 1: Install changesets**
+- [x] **Step 1: Install changesets**
 
 Run: `pnpm add -D @changesets/cli`
 
-- [ ] **Step 2: Initialize changesets**
+- [x] **Step 2: Initialize changesets**
 
 Run: `pnpm changeset init`
 
-- [ ] **Step 3: Update .changeset/config.json**
+- [x] **Step 3: Update .changeset/config.json**
 
 `.changeset/config.json`:
 ```json
@@ -4142,7 +4142,7 @@ Run: `pnpm changeset init`
 }
 ```
 
-- [ ] **Step 4: Add scripts to root package.json**
+- [x] **Step 4: Add scripts to root package.json**
 
 Add to `scripts`:
 ```json
@@ -4151,7 +4151,7 @@ Add to `scripts`:
 "release": "pnpm build && changeset publish"
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .changeset/ package.json
@@ -4166,7 +4166,7 @@ git commit -m "chore: add changesets for versioning and publishing"
 - Create: `.github/workflows/ci.yml`
 - Create: `.github/workflows/release.yml`
 
-- [ ] **Step 1: Create CI workflow**
+- [x] **Step 1: Create CI workflow**
 
 `.github/workflows/ci.yml`:
 ```yaml
@@ -4204,7 +4204,7 @@ jobs:
       - run: pnpm test
 ```
 
-- [ ] **Step 2: Create release workflow**
+- [x] **Step 2: Create release workflow**
 
 `.github/workflows/release.yml`:
 ```yaml
@@ -4246,7 +4246,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .github/
