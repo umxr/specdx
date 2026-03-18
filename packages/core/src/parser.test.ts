@@ -37,4 +37,46 @@ describe("parseSpec", () => {
   it("throws ParseError for nonexistent file", async () => {
     await expect(parseSpec("/nonexistent.md")).rejects.toThrow(ParseError);
   });
+
+  describe("parsedSections", () => {
+    it("extracts section content from fixture prd.md", async () => {
+      const spec = await parseSpec(join(fixturesDir, "prd.md"));
+      expect(spec.parsedSections.length).toBeGreaterThan(0);
+
+      const problemSection = spec.parsedSections.find(
+        (s) => s.heading === "Problem Statement",
+      );
+      expect(problemSection).toBeDefined();
+      expect(problemSection!.content).toContain(
+        "Users need a secure way to authenticate.",
+      );
+      expect(problemSection!.tokens).toBeGreaterThan(0);
+
+      const goalsSection = spec.parsedSections.find(
+        (s) => s.heading === "Goals",
+      );
+      expect(goalsSection).toBeDefined();
+      expect(goalsSection!.content).toContain("Secure login flow");
+      expect(goalsSection!.tokens).toBeGreaterThan(0);
+
+      // sections derived from parsedSections should match
+      const derivedSections = spec.parsedSections
+        .map((s) => s.heading)
+        .filter(Boolean);
+      expect(derivedSections).toEqual(spec.sections);
+    });
+
+    it("returns empty heading for preamble content", async () => {
+      const spec = await parseSpec(join(fixturesDir, "prd.md"));
+      const preamble = spec.parsedSections.find((s) => s.heading === "");
+      expect(preamble).toBeDefined();
+      expect(preamble!.content).toContain("# User Authentication System");
+      expect(preamble!.tokens).toBeGreaterThan(0);
+    });
+
+    it("returns empty parsedSections for YAML specs", async () => {
+      const spec = await parseSpec(join(fixturesDir, "story.yaml"));
+      expect(spec.parsedSections).toEqual([]);
+    });
+  });
 });

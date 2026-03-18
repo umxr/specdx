@@ -7,6 +7,7 @@ import remarkParse from "remark-parse";
 import { visit } from "unist-util-visit";
 import { validateSpec, type ValidationResult } from "@sdx/schema";
 import type { BaseSpec, SpecType } from "@sdx/schema";
+import { countTokens } from "./tokens.js";
 
 // gray-matter is CJS — its callable default is exposed via .default in an ESM context
 type GrayMatterFn = (input: string) => { data: Record<string, unknown>; content: string };
@@ -20,11 +21,18 @@ export class ParseError extends Error {
   }
 }
 
+export interface ParsedSection {
+  heading: string;
+  content: string;
+  tokens: number;
+}
+
 export interface ParsedSpec {
   filePath: string;
   frontmatter: BaseSpec & Record<string, unknown>;
   content: string;
   sections: string[];
+  parsedSections: ParsedSection[];
   valid: boolean;
   validationErrors: ValidationResult["errors"];
 }
@@ -46,7 +54,8 @@ export async function parseSpec(filePath: string): Promise<ParsedSpec> {
 
 function parseMarkdownSpec(filePath: string, raw: string): ParsedSpec {
   const { data, content } = matter(raw);
-  const sections = extractSections(content);
+  const parsedSections = extractParsedSections(content);
+  const sections = parsedSections.map((s) => s.heading).filter(Boolean);
   const frontmatter = data as BaseSpec & Record<string, unknown>;
   const specType = frontmatter.type as SpecType | undefined;
 
@@ -58,7 +67,7 @@ function parseMarkdownSpec(filePath: string, raw: string): ParsedSpec {
     validationErrors = result.errors;
   }
 
-  return { filePath, frontmatter, content, sections, valid, validationErrors };
+  return { filePath, frontmatter, content, sections, parsedSections, valid, validationErrors };
 }
 
 function parseYamlSpec(filePath: string, raw: string): ParsedSpec {
@@ -80,12 +89,13 @@ function parseYamlSpec(filePath: string, raw: string): ParsedSpec {
     validationErrors = result.errors;
   }
 
-  return { filePath, frontmatter, content: "", sections: [], valid, validationErrors };
+  return { filePath, frontmatter, content: "", sections: [], parsedSections: [], valid, validationErrors };
 }
 
-function extractSections(markdown: string): string[] {
+function extractParsedSections(markdown: string): ParsedSection[] {
   const tree = unified().use(remarkParse).parse(markdown);
-  const sections: string[] = [];
+
+  const h2s: { heading: string; offset: number }[] = [];
 
   visit(tree, "heading", (node: any) => {
     if (node.depth === 2) {
@@ -93,9 +103,30 @@ function extractSections(markdown: string): string[] {
         .filter((c: any) => c.type === "text")
         .map((c: any) => c.value)
         .join("");
-      if (text) sections.push(text);
+      h2s.push({ heading: text, offset: node.position!.start.offset as number });
     }
   });
+
+  const sections: ParsedSection[] = [];
+
+  // Preamble: content before first H2
+  const firstOffset = h2s.length > 0 ? h2s[0].offset : markdown.length;
+  const preamble = markdown.slice(0, firstOffset).trim();
+  if (preamble) {
+    sections.push({ heading: "", content: preamble, tokens: countTokens(preamble) });
+  }
+
+  // Each H2 section: content from this H2 to the next H2 (or end)
+  for (let i = 0; i < h2s.length; i++) {
+    const start = h2s[i].offset;
+    const end = i + 1 < h2s.length ? h2s[i + 1].offset : markdown.length;
+    const content = markdown.slice(start, end).trim();
+    sections.push({
+      heading: h2s[i].heading,
+      content,
+      tokens: countTokens(content),
+    });
+  }
 
   return sections;
 }
