@@ -36,6 +36,7 @@
   "devDependencies": {
     "@sdx/core": "workspace:*",
     "@sdx/lint": "workspace:*",
+    "@sdx/pack": "workspace:*",
     "@sdx/schema": "workspace:*",
     "@sdx/skills": "workspace:*",
     "tsup": "^8.5.1",

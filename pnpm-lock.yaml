@@ -81,6 +81,9 @@ importers:
       '@sdx/lint':
         specifier: workspace:*
         version: link:../lint
+      '@sdx/pack':
+        specifier: workspace:*
+        version: link:../pack
       '@sdx/schema':
         specifier: workspace:*
         version: link:../schema

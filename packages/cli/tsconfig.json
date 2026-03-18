@@ -9,6 +9,7 @@
   "references": [
     { "path": "../schema" },
     { "path": "../core" },
-    { "path": "../lint" }
+    { "path": "../lint" },
+    { "path": "../pack" }
   ]
 }
