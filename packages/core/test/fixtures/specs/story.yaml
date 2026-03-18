@@ -1,0 +1,10 @@
+id: "story-001"
+type: "user-story"
+title: "Login with email"
+status: "draft"
+version: "1.0"
+created: "2026-02-20"
+authors: ["umar"]
+story_id: "US-001"
+priority: "high"
+estimate: "3"
