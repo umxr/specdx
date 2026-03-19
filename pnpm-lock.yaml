@@ -132,6 +132,16 @@ importers:
         version: 5.9.3
 
   packages/diff:
+    dependencies:
+      '@specdx/core':
+        specifier: workspace:*
+        version: link:../core
+      '@specdx/schema':
+        specifier: workspace:*
+        version: link:../schema
+      diff:
+        specifier: ^7.0.0
+        version: 7.0.0
     devDependencies:
       typescript:
         specifier: ^5.7.0
@@ -892,6 +902,10 @@ packages:
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
+
+  diff@7.0.0:
+    resolution: {integrity: sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==}
+    engines: {node: '>=0.3.1'}
 
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -2451,6 +2465,8 @@ snapshots:
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
+
+  diff@7.0.0: {}
 
   dir-glob@3.0.1:
     dependencies:
