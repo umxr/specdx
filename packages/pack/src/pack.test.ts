@@ -54,19 +54,15 @@ const specB = makeSpec("spec-b", [
   sec("Details", "details for B", 10),
 ]);
 
-const specC = makeSpec("spec-c", [
-  sec("", "preamble for C", 5),
-  sec("Summary", "summary for C about logging", 30),
-], { tags: ["logging", "observability"] });
+const specC = makeSpec(
+  "spec-c",
+  [sec("", "preamble for C", 5), sec("Summary", "summary for C about logging", 30)],
+  { tags: ["logging", "observability"] },
+);
 
 describe("pack", () => {
   it("packs all specs with no task (default XML format)", () => {
-    const result = pack(
-      [specA, specB],
-      {},
-      undefined,
-      undefined,
-    );
+    const result = pack([specA, specB], {}, undefined, undefined);
 
     expect(result.output).toContain("<context");
     expect(result.output).toContain("</context>");
@@ -86,23 +82,14 @@ describe("pack", () => {
 
     // specC matches "logging" and "observability" tags, should be included
     expect(result.stats.specsIncluded).toBeGreaterThanOrEqual(1);
-    const includedIds = result.stats.allocations
-      .filter((a) => a.included)
-      .map((a) => a.specId);
+    const includedIds = result.stats.allocations.filter((a) => a.included).map((a) => a.specId);
     expect(includedIds).toContain("spec-c");
   });
 
   it("filters by explicit spec IDs", () => {
-    const result = pack(
-      [specA, specB, specC],
-      { specs: ["spec-a"] },
-      undefined,
-      emptyGraph(),
-    );
+    const result = pack([specA, specB, specC], { specs: ["spec-a"] }, undefined, emptyGraph());
 
-    const includedIds = result.stats.allocations
-      .filter((a) => a.included)
-      .map((a) => a.specId);
+    const includedIds = result.stats.allocations.filter((a) => a.included).map((a) => a.specId);
     expect(includedIds).toContain("spec-a");
     // specB and specC should not be included (no graph dependencies)
     expect(includedIds).not.toContain("spec-b");
@@ -111,12 +98,7 @@ describe("pack", () => {
 
   it("respects budget", () => {
     // Use a very small budget that can't fit everything
-    const result = pack(
-      [specA, specB, specC],
-      { budget: 30 },
-      undefined,
-      undefined,
-    );
+    const result = pack([specA, specB, specC], { budget: 30 }, undefined, undefined);
 
     expect(result.stats.budget).toBe(30);
     expect(result.stats.used).toBeLessThanOrEqual(30);
@@ -124,12 +106,7 @@ describe("pack", () => {
   });
 
   it("outputs markdown format", () => {
-    const result = pack(
-      [specA],
-      { format: "markdown" },
-      undefined,
-      undefined,
-    );
+    const result = pack([specA], { format: "markdown" }, undefined, undefined);
 
     expect(result.output).toContain("# spec-a");
     expect(result.output).toContain("## Context");
@@ -137,12 +114,7 @@ describe("pack", () => {
   });
 
   it("outputs JSON format", () => {
-    const result = pack(
-      [specA],
-      { format: "json" },
-      undefined,
-      undefined,
-    );
+    const result = pack([specA], { format: "json" }, undefined, undefined);
 
     const parsed = JSON.parse(result.output) as { budget: number; specs: { id: string }[] };
     expect(parsed.budget).toBe(12000);
@@ -151,12 +123,7 @@ describe("pack", () => {
   });
 
   it("returns dry-run stats without output", () => {
-    const result = pack(
-      [specA, specB],
-      { dryRun: true },
-      undefined,
-      undefined,
-    );
+    const result = pack([specA, specB], { dryRun: true }, undefined, undefined);
 
     expect(result.output).toBe("");
     expect(result.stats.specsIncluded).toBe(2);
@@ -175,12 +142,7 @@ describe("pack", () => {
       boilerplate_sections: ["Notes"],
     };
 
-    const result = pack(
-      [specA],
-      {},
-      packConfig,
-      undefined,
-    );
+    const result = pack([specA], {}, packConfig, undefined);
 
     // Should use packConfig.max_tokens as budget
     expect(result.stats.budget).toBe(5000);

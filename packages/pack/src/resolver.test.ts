@@ -59,9 +59,7 @@ describe("scoreSpecs", () => {
   });
 
   it("gives all specs score 1.0 when task contains only stopwords", () => {
-    const specs = new Map([
-      ["prd", makeSpec("prd")],
-    ]);
+    const specs = new Map([["prd", makeSpec("prd")]]);
     const graph = makeGraph(["prd"]);
     const results = scoreSpecs(specs, "the a an is", graph);
     expect(results).toHaveLength(1);
@@ -123,9 +121,7 @@ describe("scoreSpecs", () => {
   });
 
   it("filters stopwords from task", () => {
-    const specs = new Map([
-      ["auth", makeSpec("auth", { tags: ["authentication"] })],
-    ]);
+    const specs = new Map([["auth", makeSpec("auth", { tags: ["authentication"] })]]);
     const graph = makeGraph(["auth"]);
     const results = scoreSpecs(specs, "the authentication", graph);
     expect(results).toHaveLength(1);
@@ -150,10 +146,7 @@ describe("scoreSpecs", () => {
       ["auth", makeSpec("auth", { tags: ["authentication"] })],
       ["neighbor", makeSpec("neighbor", { title: "User Profile" })],
     ]);
-    const graph = makeGraph(
-      ["auth", "neighbor"],
-      [{ from: "auth", to: "neighbor" }],
-    );
+    const graph = makeGraph(["auth", "neighbor"], [{ from: "auth", to: "neighbor" }]);
     const results = scoreSpecs(specs, "authentication", graph);
     const neighborResult = results.find((r) => r.specId === "neighbor");
     // neighbor has no direct match but gets a graph boost
@@ -176,9 +169,7 @@ describe("scoreSpecs", () => {
   });
 
   it("tracks matchedKeywords for each spec", () => {
-    const specs = new Map([
-      ["auth", makeSpec("auth", { tags: ["authentication", "login"] })],
-    ]);
+    const specs = new Map([["auth", makeSpec("auth", { tags: ["authentication", "login"] })]]);
     const graph = makeGraph(["auth"]);
     const results = scoreSpecs(specs, "authentication login", graph);
     expect(results[0]!.matchedKeywords).toContain("authentication");
@@ -204,11 +195,10 @@ describe("scoreSpecsByIds", () => {
       ["prd", makeSpec("prd")],
       ["technical", makeSpec("technical")],
     ]);
-    const graph = makeGraph(
-      ["prd", "technical"],
-      [{ from: "prd", to: "technical" }],
-      { technical: ["prd"], prd: [] },
-    );
+    const graph = makeGraph(["prd", "technical"], [{ from: "prd", to: "technical" }], {
+      technical: ["prd"],
+      prd: [],
+    });
     const results = scoreSpecsByIds(specs, ["technical"], graph);
     const prdResult = results.find((r) => r.specId === "prd");
     expect(prdResult).toBeDefined();
@@ -216,15 +206,11 @@ describe("scoreSpecsByIds", () => {
   });
 
   it("throws for unknown spec IDs", () => {
-    const specs = new Map([
-      ["prd", makeSpec("prd")],
-    ]);
+    const specs = new Map([["prd", makeSpec("prd")]]);
     const graph = makeGraph(["prd"]);
     expect(() => scoreSpecsByIds(specs, ["nonexistent"], graph)).toThrow(
       /Unknown spec: "nonexistent"/,
     );
-    expect(() => scoreSpecsByIds(specs, ["nonexistent"], graph)).toThrow(
-      /Available specs:/,
-    );
+    expect(() => scoreSpecsByIds(specs, ["nonexistent"], graph)).toThrow(/Available specs:/);
   });
 });

@@ -38,15 +38,10 @@ describe("compressSpec", () => {
 
   it("does not collapse non-superseded ADRs", () => {
     const sections = makeSections(["Context", "Decision"]);
-    const result = compressSpec(
-      "adr-002",
-      "adr",
-      "Use React",
-      "accepted",
-      "2025-01-01",
-      sections,
-      { ...defaultOptions, collapseResolvedAdrs: true },
-    );
+    const result = compressSpec("adr-002", "adr", "Use React", "accepted", "2025-01-01", sections, {
+      ...defaultOptions,
+      collapseResolvedAdrs: true,
+    });
 
     expect(result.collapsed).toBe(false);
     expect(result.collapsedSummary).toBeUndefined();
@@ -55,61 +50,34 @@ describe("compressSpec", () => {
 
   it("strips boilerplate sections", () => {
     const sections = makeSections(["Context", "Changelog", "Decision"]);
-    const result = compressSpec(
-      "adr-003",
-      "adr",
-      "Use React",
-      "accepted",
-      undefined,
-      sections,
-      {
-        ...defaultOptions,
-        stripBoilerplate: true,
-        boilerplateSections: ["Changelog"],
-      },
-    );
+    const result = compressSpec("adr-003", "adr", "Use React", "accepted", undefined, sections, {
+      ...defaultOptions,
+      stripBoilerplate: true,
+      boilerplateSections: ["Changelog"],
+    });
 
     expect(result.sections).toHaveLength(2);
-    expect(result.sections.map((s) => s.heading)).toEqual([
-      "Context",
-      "Decision",
-    ]);
+    expect(result.sections.map((s) => s.heading)).toEqual(["Context", "Decision"]);
   });
 
   it("boilerplate matching is case-insensitive", () => {
     const sections = makeSections(["Context", "CHANGELOG", "Decision"]);
-    const result = compressSpec(
-      "adr-004",
-      "adr",
-      "Use React",
-      "accepted",
-      undefined,
-      sections,
-      {
-        ...defaultOptions,
-        stripBoilerplate: true,
-        boilerplateSections: ["changelog"],
-      },
-    );
+    const result = compressSpec("adr-004", "adr", "Use React", "accepted", undefined, sections, {
+      ...defaultOptions,
+      stripBoilerplate: true,
+      boilerplateSections: ["changelog"],
+    });
 
     expect(result.sections).toHaveLength(2);
-    expect(result.sections.map((s) => s.heading)).toEqual([
-      "Context",
-      "Decision",
-    ]);
+    expect(result.sections.map((s) => s.heading)).toEqual(["Context", "Decision"]);
   });
 
   it("collapses sections when spec is stale", () => {
     const sections = makeSections(["", "Context", "Decision"]);
-    const result = compressSpec(
-      "rfc-001",
-      "rfc",
-      "Old RFC",
-      "accepted",
-      "2025-01-01",
-      sections,
-      { ...defaultOptions, stableDays: 30 },
-    );
+    const result = compressSpec("rfc-001", "rfc", "Old RFC", "accepted", "2025-01-01", sections, {
+      ...defaultOptions,
+      stableDays: 30,
+    });
 
     expect(result.collapsed).toBe(false);
     // Preamble should pass through
@@ -126,30 +94,20 @@ describe("compressSpec", () => {
   it("does not collapse when spec is fresh", () => {
     const sections = makeSections(["Context", "Decision"]);
     const today = new Date().toISOString().slice(0, 10);
-    const result = compressSpec(
-      "rfc-002",
-      "rfc",
-      "Fresh RFC",
-      "draft",
-      today,
-      sections,
-      { ...defaultOptions, stableDays: 30 },
-    );
+    const result = compressSpec("rfc-002", "rfc", "Fresh RFC", "draft", today, sections, {
+      ...defaultOptions,
+      stableDays: 30,
+    });
 
     expect(result.sections.every((s) => !s.compressed)).toBe(true);
   });
 
   it("does not collapse when updatedDate is undefined (treat as fresh)", () => {
     const sections = makeSections(["Context", "Decision"]);
-    const result = compressSpec(
-      "rfc-003",
-      "rfc",
-      "No Date RFC",
-      "draft",
-      undefined,
-      sections,
-      { ...defaultOptions, stableDays: 30 },
-    );
+    const result = compressSpec("rfc-003", "rfc", "No Date RFC", "draft", undefined, sections, {
+      ...defaultOptions,
+      stableDays: 30,
+    });
 
     expect(result.sections.every((s) => !s.compressed)).toBe(true);
   });
@@ -174,15 +132,10 @@ describe("compressSpec", () => {
 
   it("preserves preamble sections (empty heading) even when stale", () => {
     const sections = makeSections(["", "Context"]);
-    const result = compressSpec(
-      "rfc-005",
-      "rfc",
-      "Stale RFC",
-      "accepted",
-      "2025-01-01",
-      sections,
-      { ...defaultOptions, stableDays: 30 },
-    );
+    const result = compressSpec("rfc-005", "rfc", "Stale RFC", "accepted", "2025-01-01", sections, {
+      ...defaultOptions,
+      stableDays: 30,
+    });
 
     // Preamble preserved
     expect(result.sections[0]!.heading).toBe("");

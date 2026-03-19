@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateSpec, validateConfig } from "./validator.js";
+import type { SpecType } from "./types.js";
 
 describe("validateSpec", () => {
   it("validates a correct PRD frontmatter", () => {
@@ -24,7 +25,7 @@ describe("validateSpec", () => {
   });
 
   it("rejects unknown spec type", () => {
-    const result = validateSpec("unknown" as any, {});
+    const result = validateSpec("unknown" as SpecType, {});
     expect(result.valid).toBe(false);
     expect(result.errors![0]!.message).toContain("Unknown spec type");
   });

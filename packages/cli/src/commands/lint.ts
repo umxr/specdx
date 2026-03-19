@@ -15,7 +15,7 @@ export interface RunLintOptions {
 
 export async function runLint(options: RunLintOptions): Promise<LintResults> {
   const config = await loadConfig(undefined, options.configDir);
-  const preset = options.preset ?? (config.lint?.extends as any) ?? "recommended";
+  const preset = options.preset ?? config.lint?.extends ?? "recommended";
   const rules = getPreset(preset);
 
   const specs: ParsedSpec[] = [];
@@ -70,11 +70,15 @@ export default defineCommand({
       const results = await runLint({
         configDir: process.cwd(),
         specPath: args.path,
-        preset: args.preset as any,
+        preset: args.preset as "minimal" | "recommended" | "strict" | undefined,
       });
 
       const formatter =
-        args.format === "json" ? formatJson : args.format === "github" ? formatGithub : formatPretty;
+        args.format === "json"
+          ? formatJson
+          : args.format === "github"
+            ? formatGithub
+            : formatPretty;
       console.log(formatter(results.diagnostics));
 
       if (results.hasErrors) process.exit(1);

@@ -7,10 +7,7 @@ import type { CompressedSpec, PackStats } from "../types.js";
  * @param stats - Pack statistics with allocation details.
  * @returns A Markdown string representing the packed context.
  */
-export function formatMarkdown(
-  specs: CompressedSpec[],
-  stats: PackStats,
-): string {
+export function formatMarkdown(specs: CompressedSpec[], stats: PackStats): string {
   const parts: string[] = [];
 
   for (let i = 0; i < specs.length; i++) {

@@ -89,7 +89,15 @@ function parseYamlSpec(filePath: string, raw: string): ParsedSpec {
     validationErrors = result.errors;
   }
 
-  return { filePath, frontmatter, content: "", sections: [], parsedSections: [], valid, validationErrors };
+  return {
+    filePath,
+    frontmatter,
+    content: "",
+    sections: [],
+    parsedSections: [],
+    valid,
+    validationErrors,
+  };
 }
 
 function extractParsedSections(markdown: string): ParsedSection[] {
@@ -97,11 +105,11 @@ function extractParsedSections(markdown: string): ParsedSection[] {
 
   const h2s: { heading: string; startOffset: number; endOffset: number }[] = [];
 
-  visit(tree, "heading", (node: any) => {
+  visit(tree, "heading", (node) => {
     if (node.depth === 2) {
-      const text = node.children
-        .filter((c: any) => c.type === "text")
-        .map((c: any) => c.value)
+      const text = (node.children as Array<{ type: string; value?: string }>)
+        .filter((c) => c.type === "text")
+        .map((c) => c.value ?? "")
         .join("");
       h2s.push({
         heading: text,

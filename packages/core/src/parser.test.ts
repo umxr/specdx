@@ -23,7 +23,7 @@ describe("parseSpec", () => {
     const spec = await parseSpec(join(fixturesDir, "story.yaml"));
     expect(spec.frontmatter.id).toBe("story-001");
     expect(spec.frontmatter.type).toBe("user-story");
-    expect((spec.frontmatter as any).story_id).toBe("US-001");
+    expect(spec.frontmatter["story_id"]).toBe("US-001");
     expect(spec.sections).toEqual([]);
     expect(spec.content).toBe("");
   });
@@ -43,26 +43,18 @@ describe("parseSpec", () => {
       const spec = await parseSpec(join(fixturesDir, "prd.md"));
       expect(spec.parsedSections.length).toBeGreaterThan(0);
 
-      const problemSection = spec.parsedSections.find(
-        (s) => s.heading === "Problem Statement",
-      );
+      const problemSection = spec.parsedSections.find((s) => s.heading === "Problem Statement");
       expect(problemSection).toBeDefined();
-      expect(problemSection!.content).toContain(
-        "Users need a secure way to authenticate.",
-      );
+      expect(problemSection!.content).toContain("Users need a secure way to authenticate.");
       expect(problemSection!.tokens).toBeGreaterThan(0);
 
-      const goalsSection = spec.parsedSections.find(
-        (s) => s.heading === "Goals",
-      );
+      const goalsSection = spec.parsedSections.find((s) => s.heading === "Goals");
       expect(goalsSection).toBeDefined();
       expect(goalsSection!.content).toContain("Secure login flow");
       expect(goalsSection!.tokens).toBeGreaterThan(0);
 
       // sections derived from parsedSections should match
-      const derivedSections = spec.parsedSections
-        .map((s) => s.heading)
-        .filter(Boolean);
+      const derivedSections = spec.parsedSections.map((s) => s.heading).filter(Boolean);
       expect(derivedSections).toEqual(spec.sections);
     });
 

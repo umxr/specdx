@@ -29,10 +29,7 @@ interface JsonOutput {
  * @param stats - Pack statistics with allocation details.
  * @returns A pretty-printed JSON string representing the packed context.
  */
-export function formatJson(
-  specs: CompressedSpec[],
-  stats: PackStats,
-): string {
+export function formatJson(specs: CompressedSpec[], stats: PackStats): string {
   const output: JsonOutput = {
     budget: stats.budget,
     used: stats.used,

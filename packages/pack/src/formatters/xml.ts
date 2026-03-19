@@ -15,10 +15,7 @@ function escapeXml(text: string): string {
  * @param stats - Pack statistics with allocation details.
  * @returns An XML string representing the packed context.
  */
-export function formatXml(
-  specs: CompressedSpec[],
-  stats: PackStats,
-): string {
+export function formatXml(specs: CompressedSpec[], stats: PackStats): string {
   const lines: string[] = [];
 
   lines.push(
@@ -41,12 +38,8 @@ export function formatXml(
         `  <spec id="${escapeXml(spec.specId)}" type="${escapeXml(spec.type)}" relevance="${relevance}" tokens="${tokens}">`,
       );
       for (const section of spec.sections) {
-        const compressedAttr = section.compressed
-          ? ' compressed="true"'
-          : "";
-        lines.push(
-          `    <section name="${escapeXml(section.heading)}"${compressedAttr}>`,
-        );
+        const compressedAttr = section.compressed ? ' compressed="true"' : "";
+        lines.push(`    <section name="${escapeXml(section.heading)}"${compressedAttr}>`);
         lines.push(`      ${escapeXml(section.content)}`);
         lines.push("    </section>");
       }

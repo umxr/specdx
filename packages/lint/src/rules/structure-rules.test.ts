@@ -5,6 +5,7 @@ import { validReferencesRule } from "./valid-references.js";
 import { noCircularDepsRule } from "./no-circular-deps.js";
 import type { LintContext } from "../types.js";
 import type { ParsedSpec } from "@specdx/core";
+import type { ErrorObject } from "ajv";
 
 function makeSpec(overrides: Partial<ParsedSpec> = {}): ParsedSpec {
   return {
@@ -20,6 +21,7 @@ function makeSpec(overrides: Partial<ParsedSpec> = {}): ParsedSpec {
     },
     content: "",
     sections: ["Problem Statement", "Goals", "Non-Goals", "Features", "Success Criteria"],
+    parsedSections: [],
     valid: true,
     validationErrors: null,
     ...overrides,
@@ -36,7 +38,10 @@ describe("valid-frontmatter", () => {
   });
 
   it("reports errors for invalid frontmatter", () => {
-    const spec = makeSpec({ valid: false, validationErrors: [{ message: "missing id" } as any] });
+    const spec = makeSpec({
+      valid: false,
+      validationErrors: [{ message: "missing id" } as ErrorObject],
+    });
     const diags = validFrontmatterRule.run(makeContext(spec));
     expect(diags.length).toBeGreaterThan(0);
     expect(diags[0]!.severity).toBe("error");

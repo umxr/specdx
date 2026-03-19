@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "typecheck": "tsc --build --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist *.tsbuildinfo"
   },

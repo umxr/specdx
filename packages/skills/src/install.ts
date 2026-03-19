@@ -25,9 +25,7 @@ function getSkillSourceDir(): string {
   }
 }
 
-export async function installSkills(
-  projectDir: string,
-): Promise<InstallResult> {
+export async function installSkills(projectDir: string): Promise<InstallResult> {
   const sourceDir = getSkillSourceDir();
   const skillsDir = join(projectDir, ".claude", "skills");
   const installed: string[] = [];

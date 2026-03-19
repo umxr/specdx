@@ -27,11 +27,7 @@ export function compressSpec(
   options: CompressionOptions,
 ): CompressedSpec {
   // 1. Collapse superseded ADRs
-  if (
-    type === "adr" &&
-    status === "superseded" &&
-    options.collapseResolvedAdrs
-  ) {
+  if (type === "adr" && status === "superseded" && options.collapseResolvedAdrs) {
     return {
       specId,
       type,
@@ -43,13 +39,10 @@ export function compressSpec(
   }
 
   // 2. Determine staleness
-  const stale =
-    options.stableDays > 0 && isOlderThanDays(updatedDate, options.stableDays);
+  const stale = options.stableDays > 0 && isOlderThanDays(updatedDate, options.stableDays);
 
   // 3. Process sections
-  const boilerplateSet = new Set(
-    options.boilerplateSections.map((s) => s.toLowerCase()),
-  );
+  const boilerplateSet = new Set(options.boilerplateSections.map((s) => s.toLowerCase()));
 
   const sections: CompressedSection[] = [];
 

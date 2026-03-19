@@ -74,11 +74,7 @@ describe("allocate", () => {
       makeSpec("s2", [sec("Design", "design details here", 50)]),
       makeSpec("s3", [sec("Notes", "extra notes content", 50)]),
     ];
-    const scores = [
-      makeScore("s1", 0.9),
-      makeScore("s2", 0.5),
-      makeScore("s3", 0.2),
-    ];
+    const scores = [makeScore("s1", 0.9), makeScore("s2", 0.5), makeScore("s3", 0.2)];
     // Budget only enough for ~2 specs
     const result = allocate(specs, scores, {
       budget: 100,
