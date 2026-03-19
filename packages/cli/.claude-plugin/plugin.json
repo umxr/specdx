@@ -1,0 +1,6 @@
+{
+  "name": "specdx",
+  "version": "0.2.0",
+  "description": "Spec-driven development skills for Claude Code",
+  "commands": "./dist/skills"
+}

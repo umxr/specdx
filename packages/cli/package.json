@@ -12,7 +12,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    ".claude-plugin",
+    "hooks"
   ],
   "scripts": {
     "build": "tsup",
