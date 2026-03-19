@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@specdx/core": "workspace:*",
+    "@specdx/diff": "workspace:*",
     "@specdx/lint": "workspace:*",
     "@specdx/pack": "workspace:*",
     "@specdx/schema": "workspace:*",

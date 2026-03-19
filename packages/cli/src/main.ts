@@ -11,6 +11,7 @@ const main = defineCommand({
     graph: () => import("./commands/graph.js").then((m) => m.default),
     skills: () => import("./commands/skills.js").then((m) => m.default),
     pack: () => import("./commands/pack.js").then((m) => m.default),
+    diff: () => import("./commands/diff.js").then((m) => m.default),
   },
 });
 
