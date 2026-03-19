@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# SessionStart hook for specdx plugin
+# Detects if the current project uses specdx and injects a lightweight summary.
+
+set -euo pipefail
+
+# Search upward from $PWD for spec.config.yaml
+find_config() {
+    local dir="$PWD"
+    while [ "$dir" != "/" ]; do
+        if [ -f "$dir/spec.config.yaml" ]; then
+            echo "$dir"
+            return 0
+        fi
+        dir="$(dirname "$dir")"
+    done
+    return 1
+}
+
+PROJECT_ROOT="$(find_config 2>/dev/null)" || exit 0
+
+# Escape string for JSON embedding using bash parameter substitution.
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+# Determine specdx invocation: prefer local binary, fall back to npx
+if command -v specdx >/dev/null 2>&1; then
+    SPECDX="specdx"
+elif command -v npx >/dev/null 2>&1; then
+    SPECDX="npx --yes specdx"
+else
+    # No way to run specdx — exit silently
+    exit 0
+fi
+
+# Run validate and graph from the project root; capture output gracefully.
+# Filter npm warn lines (noise from pnpm workspace roots when using npx).
+run_specdx() {
+    (cd "$1" && $SPECDX "${@:2}" 2>&1) | grep -v '^npm warn' || true
+}
+
+validate_out="$(run_specdx "$PROJECT_ROOT" validate)" || validate_out="(validate failed)"
+graph_out="$(run_specdx "$PROJECT_ROOT" graph)" || graph_out="(graph failed)"
+
+# Build a compact summary (target: under 500 tokens)
+summary="<specdx-context>
+Project root: ${PROJECT_ROOT}
+
+Validation:
+${validate_out}
+
+Dependency graph:
+${graph_out}
+</specdx-context>"
+
+session_context="$(escape_for_json "$summary")"
+
+# Output context injection as JSON.
+# Claude Code hooks expect hookSpecificOutput.additionalContext.
+# Cursor hooks expect additional_context.
+# Emit only the field consumed by the current platform.
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+    printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+    printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
+else
+    printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
+fi
+
+exit 0
