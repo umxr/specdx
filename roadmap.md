@@ -341,14 +341,14 @@ AI coding tool integration via opinionated workflow skills. Skills wrap sdx CLI 
 
 ### Phase 2 Exit Criteria
 
-- [ ] `sdx pack` produces token-optimised context payloads
-- [ ] Task-based relevance filtering returns sensible results
-- [ ] Clipboard integration works (`--copy`)
-- [ ] Token budget is respected and reported
-- [ ] At least 3 output formats supported (XML, Markdown, JSON)
+- [x] `sdx pack` produces token-optimised context payloads
+- [x] Task-based relevance filtering returns sensible results
+- [x] Clipboard integration works (`--copy`)
+- [x] Token budget is respected and reported
+- [x] At least 3 output formats supported (XML, Markdown, JSON)
 - [ ] Used daily on at least one real project (Flarecast or NearForm client)
-- [ ] `sdx:start-task` skill loads spec context into Claude Code sessions
-- [ ] `sdx:author-spec` skill guides spec creation with iterative linting
+- [x] `sdx:start-task` skill loads spec context into Claude Code sessions
+- [x] `sdx:author-spec` skill guides spec creation with iterative linting
 
 ---
 

@@ -4,6 +4,22 @@ import { pack, type PackResult } from "@specdx/pack";
 import type { ParsedSpec } from "@specdx/core";
 import { sharedArgs } from "../shared-args.js";
 import { writeFile } from "node:fs/promises";
+import { execSync } from "node:child_process";
+
+function copyToClipboard(text: string): void {
+  const platform = process.platform;
+  let cmd: string;
+  if (platform === "darwin") {
+    cmd = "pbcopy";
+  } else if (platform === "linux") {
+    cmd = "xclip -selection clipboard";
+  } else if (platform === "win32") {
+    cmd = "clip";
+  } else {
+    throw new Error(`Clipboard not supported on platform: ${platform}`);
+  }
+  execSync(cmd, { input: text, stdio: ["pipe", "ignore", "ignore"] });
+}
 
 export interface RunPackOptions {
   configDir: string;
@@ -64,8 +80,12 @@ export default defineCommand({
       default: "xml",
     },
     out: { type: "string", description: "Write output to file instead of stdout" },
+    copy: { type: "boolean", description: "Copy output to system clipboard" },
     full: { type: "boolean", description: "Include all specs without budget trimming" },
-    "dry-run": { type: "boolean", description: "Preview what would be packed without writing output" },
+    "dry-run": {
+      type: "boolean",
+      description: "Preview what would be packed without writing output",
+    },
   },
   async run({ args }) {
     const logger = createLogger({ quiet: args.quiet, verbose: args.verbose });
@@ -73,6 +93,12 @@ export default defineCommand({
     // Validate: --task and --specs are mutually exclusive
     if (args.task && args.specs) {
       console.error("\n  \u2717 --task and --specs are mutually exclusive\n");
+      process.exit(1);
+    }
+
+    // Validate: --copy and --dry-run are mutually exclusive
+    if (args.copy && args["dry-run"]) {
+      console.error("\n  \u2717 --copy and --dry-run are mutually exclusive\n");
       process.exit(1);
     }
 
@@ -119,7 +145,9 @@ export default defineCommand({
           );
         }
         console.log(`\n  Budget: ${stats.used} / ${stats.budget} tokens`);
-        console.log(`  Included: ${stats.specsIncluded} / ${stats.specsIncluded + stats.specsExcluded} specs`);
+        console.log(
+          `  Included: ${stats.specsIncluded} / ${stats.specsIncluded + stats.specsExcluded} specs`,
+        );
         console.log(`  Sections compressed: ${stats.sectionsCompressed}\n`);
         return;
       }
@@ -128,7 +156,12 @@ export default defineCommand({
       if (args.out) {
         await writeFile(args.out, result.output, "utf-8");
         logger.info(`Output written to ${args.out}`);
-      } else {
+      }
+      if (args.copy) {
+        copyToClipboard(result.output);
+        logger.info("Output copied to clipboard");
+      }
+      if (!args.out && !args.copy) {
         process.stdout.write(result.output);
       }
 
