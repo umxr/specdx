@@ -12,3 +12,5 @@ export type {
 export { DEFAULT_DIFF_CONFIG, DiffError } from "./types.js";
 export { diffSpecs } from "./diff-specs.js";
 export { analyzeImpact } from "./impact.js";
+export { checkCrossReferences } from "./cross-refs.js";
+export type { BrokenReference } from "./cross-refs.js";
