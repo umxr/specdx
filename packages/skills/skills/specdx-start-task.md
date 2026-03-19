@@ -1,6 +1,6 @@
 ---
 name: specdx-start-task
-description: Load relevant spec context before starting a coding task. Run this when the user describes work they're about to do, mentions implementing a feature, or asks to start a task. Packs project specs into the session so you have requirements, architecture, and constraints.
+description: Use when the user describes work they're about to do, mentions implementing a feature, asks to start a task, or says 'implement', 'build', 'add', 'fix', or 'refactor'. Loads relevant spec context before coding.
 allowed-tools: Bash(npx specdx *)
 ---
 

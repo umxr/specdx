@@ -1,6 +1,6 @@
 ---
 name: specdx-author-spec
-description: Guided spec authoring with iterative linting. Use when the user wants to create a new spec, write a PRD, document a technical design, record an architecture decision, or add a user story.
+description: Use when the user wants to create a new spec, write a PRD, document a technical design, record an architecture decision, add a user story, or write a test plan. Guides spec authoring with iterative linting.
 allowed-tools: Bash(npx specdx *), Read, Write, Edit
 ---
 
@@ -89,6 +89,20 @@ Common issues:
 | Vague language ("as appropriate", "etc.", "TBD") | Replace with concrete language |
 | Missing required section | Add it, even if minimal |
 | Broken reference | Check the referenced spec ID exists |
+
+<HARD-GATE>
+Do NOT skip the lint step between sections. Run `npx specdx lint --path <file>`
+after every 2-3 sections. Do NOT write the entire spec and lint at the end.
+</HARD-GATE>
+
+## Rationalizations to Resist
+
+| Thought | Reality |
+|---------|---------|
+| "I'll lint at the end, it's faster" | Lint catches issues early. Fixing 1 issue now beats fixing 10 later. |
+| "This section is simple, no need to lint" | Simple sections have frontmatter and reference issues too. |
+| "The user seems in a hurry" | Shipping a broken spec wastes more time than linting. |
+| "I already know the lint rules" | Rules evolve. Run the tool. |
 
 ## Step 6: Register in spec.config.yaml
 
