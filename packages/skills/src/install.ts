@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** Skill directory names — each contains a SKILL.md file */
-export const SKILL_DIRS = ["specdx-start-task", "specdx-author-spec"];
+/** Skill file names (without .md extension) */
+export const SKILL_NAMES = ["specdx-start-task", "specdx-author-spec"];
 
 export interface InstallResult {
   installed: string[];
@@ -27,14 +27,15 @@ function getSkillSourceDir(): string {
 
 export async function installSkills(projectDir: string): Promise<InstallResult> {
   const sourceDir = getSkillSourceDir();
-  const skillsDir = join(projectDir, ".claude", "skills");
+  const commandsDir = join(projectDir, ".claude", "commands");
   const installed: string[] = [];
   const updated: string[] = [];
 
-  for (const skillName of SKILL_DIRS) {
-    const sourcePath = join(sourceDir, skillName, "SKILL.md");
-    const targetDir = join(skillsDir, skillName);
-    const targetPath = join(targetDir, "SKILL.md");
+  await mkdir(commandsDir, { recursive: true });
+
+  for (const skillName of SKILL_NAMES) {
+    const sourcePath = join(sourceDir, `${skillName}.md`);
+    const targetPath = join(commandsDir, `${skillName}.md`);
 
     const content = await readFile(sourcePath, "utf-8");
 
@@ -47,7 +48,6 @@ export async function installSkills(projectDir: string): Promise<InstallResult> 
       // File doesn't exist
     }
 
-    await mkdir(targetDir, { recursive: true });
     await writeFile(targetPath, content, "utf-8");
 
     if (exists) {
