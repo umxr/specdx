@@ -1,22 +1,26 @@
 version: "1.0"
-
 project:
-  name: "specdx"
+  name: "sdx"
   description: "Spec Developer Experience — opinionated tooling for spec-driven development with AI"
-
 specs:
   prd:
-    path: "specs/prd.md"
-    type: "prd"
+    path: specs/prd.md
+    type: prd
     required: true
-  technical:
-    path: "specs/technical-design.md"
-    type: "technical-design"
+  technical-design:
+    path: specs/technical-design.md
+    type: technical-design
     requires: ["prd"]
   test-plan:
-    path: "specs/test-plan.md"
-    type: "test-plan"
-    requires: ["technical"]
-
+    path: specs/test-plan.md
+    type: test-plan
+    requires: ["technical-design"]
+  stories:
+    path: specs/stories/*.md
+    type: user-story
+    requires: ["prd"]
+  adr:
+    path: specs/adr/*.md
+    type: adr
 lint:
-  extends: "strict"
+  extends: "recommended"
