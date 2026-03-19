@@ -410,6 +410,22 @@ The spec-to-spec diffing engine.
 | Skill: `sdx:pre-commit` | Before committing, runs `sdx lint` + `sdx diff` (working tree vs. last commit). LLM interprets drift, suggests whether specs or code need updating. Can also be wired as a Claude Code hook. Depends on 3.1 (`@sdx/diff`) and 3.2 (CLI Integration). | Drift is caught before entering commit history. Developer makes an informed decision. |
 | Skill: `sdx:onboard` | Wraps `sdx explain` + full suite pack + graph + status. LLM walks new developer through the project. | New developer understands the spec landscape within one conversation. |
 | Skill: `sdx:sprint-review` | Wraps `sdx status` + `sdx diff` + `sdx changelog`. LLM produces actionable spec health summary. | Team gets a shareable summary without manually running commands. |
+| Skill: `sdx:plan-from-spec` | Packs relevant specs for a task, then generates a step-by-step implementation plan with file targets, test expectations, and dependency order. Uses subagent prompt templates for structured output. | Developer gets a concrete plan grounded in specs before writing code. |
+
+#### 3.5 — Plugin Distribution & Skill Quality
+
+Inspired by the superpowers plugin architecture. Move from manual `sdx skills install` to automatic discovery, improve skill resilience, and support multiple AI coding platforms.
+
+| Task | Description | Acceptance Criteria |
+|---|---|---|
+| Claude Code plugin manifest | Publish specdx as a Claude Code plugin (`.claude-plugin/plugin.json`). Skills are auto-discovered from the plugin's `skills` directory — no manual `sdx skills install` step needed. | Installing the plugin makes `/specdx-start-task` and `/specdx-author-spec` available automatically. |
+| Session-start hook | Add a hook that detects `spec.config.yaml` in the project and auto-runs `sdx pack` at session start, injecting spec context without requiring `/specdx-start-task`. | Specs are in context from the first message. Falls back silently if no `spec.config.yaml` found. |
+| Description-driven skill discovery | Rewrite skill descriptions to start with "Use when..." triggering conditions so Claude auto-selects the right skill contextually, without requiring slash command invocation. | `specdx-start-task` triggers automatically when user says "implement X" or "build the login flow". |
+| Hard gates and rationalization tables | Add explicit discipline gates to skills (e.g. "Do NOT skip linting between sections" in author-spec) with tables of common rationalizations agents use to bypass the rules. | Skills resist agent shortcuts. Author-spec enforces lint-after-every-2-sections gate. |
+| Supporting reference files alongside skills | Add companion files next to skill `.md` files (e.g. `spec-type-guide.md`, `frontmatter-reference.md`) for heavy reference content that would bloat the main skill file. | Skills stay concise. Reference content is available when needed via Read tool. |
+| Subagent prompt templates | Ship structured prompt templates for spec review subagents (implementer context, spec reviewer, quality reviewer) following superpowers' controller-constructs-prompt pattern. | `sdx:plan-from-spec` and `sdx:review-spec` skills use templates to dispatch focused subagents. |
+| Multi-platform support: Cursor | Add `.cursor-plugin/plugin.json` and Cursor-compatible hooks so specdx skills work in Cursor. Thin loader pointing at the same skill files. | Skills discoverable and functional in Cursor. |
+| Multi-platform support: Gemini CLI | Add Gemini extension manifest (`gemini-extension.json`) with tool mapping for Gemini CLI. | Skills discoverable and functional in Gemini CLI. |
 
 #### 3.5 — Content & Adoption
 
@@ -431,6 +447,10 @@ The spec-to-spec diffing engine.
 - [ ] Used on at least one NearForm client project
 - [ ] Claude Code skills cover pre-commit checks, onboarding, and sprint review workflows
 - [ ] Skills are documented and installable from npm
+- [ ] Published as a Claude Code plugin — skills auto-discovered without manual install
+- [ ] Session-start hook auto-loads spec context in projects with `spec.config.yaml`
+- [ ] Skills work in at least 2 platforms (Claude Code + Cursor or Gemini CLI)
+- [ ] Skills use hard gates and rationalization tables to enforce discipline
 
 ---
 
@@ -468,6 +488,8 @@ Lightweight fallback for developers not using an AI coding tool. The recommended
 | `sdx check --ai` | Opt-in flag that sends spec + code + static analysis results to a single LLM provider (Anthropic only). Lightweight fallback for developers not using an AI coding tool. | Returns assessment for each drift finding. Works with an `ANTHROPIC_API_KEY` env var. |
 | Spec generation suggestions | When drift is detected, output actionable suggestions in a structured format that both humans and skills can consume. | Suggestions are specific. Skills can parse the output. |
 | Skill: `sdx:verify` | After implementing a feature, runs `sdx check`, feeds results + specs + code to the LLM. This is the recommended path for AI-assisted verification — replaces the need for provider abstraction, caching, and cost management. | Developer gets spec-vs-implementation review without configuring API keys or providers. |
+| Skill: `sdx:review-spec` | Dispatches a subagent to review a spec against its type's required sections, quality standards, and cross-references. Uses structured prompt templates to check completeness, clarity, and internal consistency. | Spec author gets actionable feedback without manual review. Subagent reports missing sections, vague language, and broken references. |
+| Skill: `sdx:check-drift` | Compares recent code changes against packed spec context. Flags deviations where implementation contradicts or extends beyond what specs define. Runs automatically as part of `sdx:pre-commit` or on-demand. | Developer is alerted to spec drift before it becomes entrenched. Works without API keys by leveraging the host LLM. |
 
 #### 4.3 — Spec Generation & Maintenance
 
@@ -509,6 +531,8 @@ Tools that help maintain and evolve specs over time.
 - [ ] API route matching works for at least Express, Hono, and Next.js
 - [ ] MCP server is functional and tested with Claude
 - [ ] Skills adapter architecture is documented for community contributions
+- [ ] `sdx:review-spec` provides automated spec quality review via subagent
+- [ ] `sdx:check-drift` detects spec-implementation deviations using host LLM
 - [ ] Spec generation stubs are useful starting points
 - [ ] Conference talk delivered or submitted
 - [ ] npm weekly downloads >500
