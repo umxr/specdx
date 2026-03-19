@@ -45,11 +45,15 @@ export async function parseSpec(filePath: string): Promise<ParsedSpec> {
     throw new ParseError(`Cannot read spec file: ${filePath}`);
   }
 
+  return parseSpecFromString(raw, filePath);
+}
+
+export function parseSpecFromString(content: string, filePath: string): Promise<ParsedSpec> {
   const ext = extname(filePath).toLowerCase();
   if (ext === ".yaml" || ext === ".yml") {
-    return parseYamlSpec(filePath, raw);
+    return Promise.resolve(parseYamlSpec(filePath, content));
   }
-  return parseMarkdownSpec(filePath, raw);
+  return Promise.resolve(parseMarkdownSpec(filePath, content));
 }
 
 function parseMarkdownSpec(filePath: string, raw: string): ParsedSpec {
