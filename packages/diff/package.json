@@ -15,6 +15,11 @@
     "test": "vitest run",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
+  "dependencies": {
+    "@specdx/core": "workspace:*",
+    "@specdx/schema": "workspace:*",
+    "diff": "^7.0.0"
+  },
   "devDependencies": {
     "typescript": "^5.7.0"
   }
