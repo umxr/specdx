@@ -56,7 +56,15 @@
       },
       "additionalProperties": false
     },
-    "diff": { "type": "object" },
+    "diff": {
+      "type": "object",
+      "properties": {
+        "baseline_ref": { "type": "string", "default": "main" },
+        "staleness_threshold_days": { "type": "integer", "minimum": 1, "default": 14 },
+        "ignore_paths": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
     "ci": { "type": "object" }
   },
   "required": ["version", "specs"],

@@ -89,6 +89,10 @@ export interface SdxConfig {
     ignore?: string[];
   };
   pack?: PackConfig;
-  diff?: Record<string, unknown>;
+  diff?: {
+    baseline_ref?: string;
+    staleness_threshold_days?: number;
+    ignore_paths?: string[];
+  };
   ci?: Record<string, unknown>;
 }
