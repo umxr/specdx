@@ -12,6 +12,7 @@ const main = defineCommand({
     skills: () => import("./commands/skills.js").then((m) => m.default),
     pack: () => import("./commands/pack.js").then((m) => m.default),
     diff: () => import("./commands/diff.js").then((m) => m.default),
+    status: () => import("./commands/status.js").then((m) => m.default),
   },
 });
 
