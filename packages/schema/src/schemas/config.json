@@ -20,7 +20,8 @@
           "path": { "type": "string" },
           "type": { "type": "string", "enum": ["prd", "technical-design", "user-story", "test-plan", "adr", "api-contract"] },
           "required": { "type": "boolean", "default": false },
-          "requires": { "type": "array", "items": { "type": "string" } }
+          "requires": { "type": "array", "items": { "type": "string" } },
+          "owner": { "type": "string" }
         },
         "required": ["path", "type"],
         "additionalProperties": false
@@ -29,7 +30,7 @@
     "lint": {
       "type": "object",
       "properties": {
-        "extends": { "type": "string", "enum": ["minimal", "recommended", "strict"] },
+        "extends": { "type": "string" },
         "rules": { "type": "object" },
         "ignore": { "type": "array", "items": { "type": "string" } }
       },

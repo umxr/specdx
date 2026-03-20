@@ -64,6 +64,7 @@ export interface SpecEntry {
   type: SpecType;
   required?: boolean;
   requires?: string[];
+  owner?: string;
 }
 
 export interface PackCompressionConfig {
@@ -84,7 +85,7 @@ export interface SdxConfig {
   project?: { name?: string; description?: string };
   specs: Record<string, SpecEntry>;
   lint?: {
-    extends?: "minimal" | "recommended" | "strict";
+    extends?: string;
     rules?: Record<string, unknown>;
     ignore?: string[];
   };
