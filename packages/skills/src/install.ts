@@ -13,6 +13,9 @@ export const SKILL_NAMES = [
   "specdx-sprint-review",
   "specdx-plan-from-spec",
   "specdx-onboard",
+  "specdx-verify",
+  "specdx-review-spec",
+  "specdx-check-drift",
 ];
 
 export interface InstallResult {
