@@ -427,7 +427,16 @@ Inspired by the superpowers plugin architecture. Move from manual `sdx skills in
 | Multi-platform support: Cursor | Add `.cursor-plugin/plugin.json` and Cursor-compatible hooks so specdx skills work in Cursor. Thin loader pointing at the same skill files. | Skills discoverable and functional in Cursor. |
 | Multi-platform support: Gemini CLI | Add Gemini extension manifest (`gemini-extension.json`) with tool mapping for Gemini CLI. | Skills discoverable and functional in Gemini CLI. |
 
-#### 3.5 — Content & Adoption
+#### 3.6 — Implementation Readiness (Inspired by BMAD)
+
+Inspired by the BMAD methodology's readiness gate and phased workflow. Validates coherence across specs before implementation begins.
+
+| Task | Description | Acceptance Criteria |
+|---|---|---|
+| `sdx ready` command | Validates the spec suite is ready for implementation: all required specs exist, no broken references, no stale downstream specs, all PRD features have corresponding user stories (if stories are configured). Composes `sdx lint`, `sdx status`, and story-coverage checks. | Clear pass/fail verdict with actionable items. Integrates with CI. |
+| Step-file pattern for skills | Refactor complex skills (e.g. `specdx-author-spec`) into sequential step files loaded one at a time, following BMAD's micro-file architecture. Prevents context bloat in long workflows. Each step tracks progress in frontmatter. | Author-spec skill broken into step-01-frontmatter, step-02-sections, step-03-lint steps. Resumable if interrupted. |
+
+#### 3.7 — Content & Adoption
 
 | Task | Description | Acceptance Criteria |
 |---|---|---|
@@ -491,7 +500,18 @@ Lightweight fallback for developers not using an AI coding tool. The recommended
 | Skill: `sdx:review-spec` | Dispatches a subagent to review a spec against its type's required sections, quality standards, and cross-references. Uses structured prompt templates to check completeness, clarity, and internal consistency. | Spec author gets actionable feedback without manual review. Subagent reports missing sections, vague language, and broken references. |
 | Skill: `sdx:check-drift` | Compares recent code changes against packed spec context. Flags deviations where implementation contradicts or extends beyond what specs define. Runs automatically as part of `sdx:pre-commit` or on-demand. | Developer is alerted to spec drift before it becomes entrenched. Works without API keys by leveraging the host LLM. |
 
-#### 4.3 — Spec Generation & Maintenance
+#### 4.3 — New Spec Types & Methodology (Inspired by BMAD)
+
+Extend the spec type system to support fuller agile workflows, inspired by BMAD's phased methodology.
+
+| Task | Description | Acceptance Criteria |
+|---|---|---|
+| Spec type: `epic` | Add `epic` as a new spec type that groups related user stories. Sits between PRD and user-stories in the dependency chain. Required sections: Overview, Stories, Acceptance Criteria, Dependencies. | Epics validate, lint, and appear in dependency graph between PRD and stories. `sdx pack` includes epic context. |
+| Spec type: `quick-spec` | Lightweight spec type for bug fixes and small features that don't need full PRD/technical-design ceremony. Required sections: Intent, Boundaries, Tasks. Target: 900-1300 tokens. Inspired by BMAD's tech-spec quick flow. | Quick specs validate with minimal required sections. `sdx init --template quick` scaffolds one. |
+| Spec type: `project-context` | A "constitution" spec loaded by all skills and always included at highest priority in `sdx pack`. Contains: Technology Stack, Critical Implementation Rules, Coding Patterns. Inspired by BMAD's `project-context.md`. | Pack always includes project-context first. Skills reference it for implementation decisions. |
+| Multi-layer spec review | Extend `sdx:review-spec` skill with three review passes inspired by BMAD: (1) completeness review — missing sections, vague language, (2) consistency review — terminology drift, naming conflicts across specs, (3) adversarial review — forced problem-finding, edge cases. Each pass is a separate subagent dispatch. | Three distinct review reports with different perspectives. Issues categorised by review layer. |
+
+#### 4.4 — Spec Generation & Maintenance
 
 Tools that help maintain and evolve specs over time.
 
@@ -512,6 +532,7 @@ Tools that help maintain and evolve specs over time.
 | Slack notifications | Post spec health updates to a Slack channel (daily digest or on-change) | Configurable, useful for team awareness |
 | Dashboard | Web-based dashboard showing spec health across multiple projects | Deployable as a standalone app or embedded in existing tools |
 | Skills adapter architecture | Document how to write adapter layers for Cursor rules, Codex plugins, Windsurf, etc. Claude Code ships first; interface defined so community can contribute adapters. | Adapter guide with at least one worked example. Community can follow it to add a new tool. |
+| Methodology modules | Evolve `sdx init --template` into a full module system inspired by BMAD. Modules are publishable npm packages that include: spec type definitions, templates, skills, lint presets, and workflow configuration. Community members can publish methodology modules (e.g. `@specdx/module-api-first`, `@specdx/module-bmad`). | `sdx init --module @specdx/module-bmad` installs a complete methodology. Modules discoverable on npm. |
 
 #### 4.5 — Advanced Lint Rules
 
@@ -534,6 +555,9 @@ Tools that help maintain and evolve specs over time.
 - [ ] `sdx:review-spec` provides automated spec quality review via subagent
 - [ ] `sdx:check-drift` detects spec-implementation deviations using host LLM
 - [ ] Spec generation stubs are useful starting points
+- [ ] `epic`, `quick-spec`, and `project-context` spec types implemented
+- [ ] Multi-layer spec review (completeness, consistency, adversarial) working
+- [ ] Methodology module system supports community-published modules
 - [ ] Conference talk delivered or submitted
 - [ ] npm weekly downloads >500
 
