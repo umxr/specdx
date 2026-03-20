@@ -15,6 +15,7 @@ const main = defineCommand({
     status: () => import("./commands/status.js").then((m) => m.default),
     explain: () => import("./commands/explain.js").then((m) => m.default),
     changelog: () => import("./commands/changelog.js").then((m) => m.default),
+    check: () => import("./commands/check.js").then((m) => m.default),
     ready: () => import("./commands/ready.js").then((m) => m.default),
   },
 });
