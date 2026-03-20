@@ -3,9 +3,9 @@ id: prd
 type: prd
 title: "Product Requirements — sdx"
 status: approved
-version: "1.0"
+version: "1.1"
 created: "2026-03-17"
-updated: "2026-03-19"
+updated: "2026-03-20"
 authors: ["umar"]
 tags: ["spec-driven-development", "cli", "toolchain"]
 ---
