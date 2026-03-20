@@ -4,3 +4,4 @@ export { runPack } from "./commands/pack.js";
 export { runDiff } from "./commands/diff.js";
 export { runStatus } from "./commands/status.js";
 export { runChangelog } from "./commands/changelog.js";
+export { runExplain } from "./commands/explain.js";
