@@ -15,6 +15,7 @@ export default defineConfig([
     external: [
       "ajv", "ajv-formats", "gray-matter", "yaml", "unified", "remark-parse",
       "unist-util-visit", "tinyglobby", "js-tiktoken", "consola", "citty", "ts-morph",
+      "@anthropic-ai/sdk",
     ],
     onSuccess: async () => {
       cpSync("../skills/skills", "./dist/skills", { recursive: true });
@@ -32,6 +33,7 @@ export default defineConfig([
     external: [
       "ajv", "ajv-formats", "gray-matter", "yaml", "unified", "remark-parse",
       "unist-util-visit", "tinyglobby", "js-tiktoken", "consola", "citty", "ts-morph",
+      "@anthropic-ai/sdk",
     ],
   },
 ]);

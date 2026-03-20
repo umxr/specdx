@@ -11,6 +11,7 @@ export default defineCommand({
     ...sharedArgs,
     spec: { type: "string", description: "Check a specific spec by ID" },
     framework: { type: "string", description: "Framework override: express, hono, nextjs" },
+    ai: { type: "boolean", description: "Use AI to assess findings (requires ANTHROPIC_API_KEY)" },
   },
   async run({ args }) {
     const logger = createLogger({ quiet: args.quiet, verbose: args.verbose });
@@ -37,6 +38,37 @@ export default defineCommand({
 
     logger.debug(`Checking ${specs.length} specs...`);
     const result = await runCheck(specs, configDir, checkConfig);
+
+    // AI analysis (opt-in)
+    if (args.ai) {
+      const { analyzeWithAi } = await import("@specdx/check");
+      const aiResult = await analyzeWithAi(result.findings, args.spec ?? "full suite check");
+
+      if (args.format === "json") {
+        console.log(JSON.stringify({ ...result, ai: aiResult }, null, 2));
+      } else {
+        console.log(`\n  sdx check --ai — ${result.score.overall}% coverage\n`);
+        console.log(`  AI Assessment: ${aiResult.summary}\n`);
+
+        for (const assessment of aiResult.assessments) {
+          const finding = result.findings[assessment.findingIndex];
+          if (!finding) continue;
+          const icon = assessment.isRealIssue ? "✗" : "✓";
+          const label = assessment.isRealIssue ? "REAL" : "FALSE POSITIVE";
+          console.log(`    ${icon} [${label}] ${finding.expected}`);
+          console.log(`      ${assessment.reasoning}`);
+          if (assessment.suggestedFix) {
+            console.log(`      Fix: ${assessment.suggestedFix}`);
+          }
+        }
+        console.log();
+      }
+
+      if (aiResult.assessments.some((a) => a.isRealIssue)) {
+        process.exit(1);
+      }
+      return;
+    }
 
     if (args.format === "json") {
       console.log(JSON.stringify(result, null, 2));
