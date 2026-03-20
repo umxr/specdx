@@ -81,6 +81,24 @@
         }
       },
       "additionalProperties": false
+    },
+    "check": {
+      "type": "object",
+      "properties": {
+        "framework": {
+          "type": "string",
+          "enum": ["auto", "express", "hono", "nextjs"]
+        },
+        "routes_dir": { "type": "string" },
+        "app_dir": { "type": "string" },
+        "types_dir": { "type": "string" },
+        "tests_dir": { "type": "string" },
+        "ignore": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": ["version", "specs"],

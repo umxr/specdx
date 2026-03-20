@@ -101,4 +101,12 @@ export interface SdxConfig {
     update_badge?: boolean;
     trigger_paths?: string[];
   };
+  check?: {
+    framework?: "auto" | "express" | "hono" | "nextjs";
+    routes_dir?: string;
+    app_dir?: string;
+    types_dir?: string;
+    tests_dir?: string;
+    ignore?: string[];
+  };
 }
