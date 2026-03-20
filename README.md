@@ -4,6 +4,7 @@
 
 [![npm version](https://img.shields.io/npm/v/specdx)](https://www.npmjs.com/package/specdx)
 [![license](https://img.shields.io/npm/l/specdx)](LICENSE)
+[![spec health](https://img.shields.io/badge/spec_health-passing-brightgreen)](https://github.com/umxr/specdx/actions/workflows/specs.yml)
 
 ---
 

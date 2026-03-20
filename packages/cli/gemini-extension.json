@@ -1,0 +1,17 @@
+{
+  "name": "specdx",
+  "version": "0.3.0-alpha.2",
+  "description": "Spec-driven development skills for Gemini CLI",
+  "skills_directory": "./dist/skills",
+  "tool_mapping": {
+    "Read": "read_file",
+    "Write": "write_file",
+    "Edit": "edit_file",
+    "Bash": "shell",
+    "Glob": "glob",
+    "Grep": "grep"
+  },
+  "hooks": {
+    "on_session_start": "./hooks/session-start"
+  }
+}

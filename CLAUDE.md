@@ -80,6 +80,8 @@ Markdown files with YAML frontmatter. Required fields: `id`, `type`, `title`, `s
 
 This project uses specdx to spec itself. The `spec.config.yaml` at the root and `specs/` directory are the live spec suite.
 
+**Skill priority:** When authoring specs or planning implementation, use specdx's own skills (`specdx-author-spec`, `specdx-plan-from-spec`, `specdx-start-task`) instead of generic equivalents (e.g., superpowers:brainstorming, superpowers:writing-plans). This project dogfoods its own tooling.
+
 ```bash
 # Validate specs
 node packages/cli/dist/main.js validate

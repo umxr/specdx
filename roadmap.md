@@ -447,19 +447,19 @@ Inspired by the BMAD methodology's readiness gate and phased workflow. Validates
 
 ### Phase 3 Exit Criteria
 
-- [ ] `sdx diff` detects spec changes and downstream impact
-- [ ] GitHub Action runs lint + diff on PRs and posts formatted comments
-- [ ] CI can block merges on spec health failures
-- [ ] Spec health badge in repo README
-- [ ] `sdx status` gives a useful overview for standups
+- [x] `sdx diff` detects spec changes and downstream impact
+- [x] GitHub Action runs lint + diff on PRs and posts formatted comments
+- [x] CI can block merges on spec health failures
+- [x] Spec health badge in repo README
+- [x] `sdx status` gives a useful overview for standups
 - [ ] Blog post published
 - [ ] Used on at least one NearForm client project
-- [ ] Claude Code skills cover pre-commit checks, onboarding, and sprint review workflows
-- [ ] Skills are documented and installable from npm
-- [ ] Published as a Claude Code plugin — skills auto-discovered without manual install
-- [ ] Session-start hook auto-loads spec context in projects with `spec.config.yaml`
-- [ ] Skills work in at least 2 platforms (Claude Code + Cursor or Gemini CLI)
-- [ ] Skills use hard gates and rationalization tables to enforce discipline
+- [x] Claude Code skills cover pre-commit checks, onboarding, and sprint review workflows
+- [x] Skills are documented and installable from npm
+- [x] Published as a Claude Code plugin — skills auto-discovered without manual install
+- [x] Session-start hook auto-loads spec context in projects with `spec.config.yaml`
+- [x] Skills work in at least 2 platforms (Claude Code + Cursor or Gemini CLI)
+- [x] Skills use hard gates and rationalization tables to enforce discipline
 
 ---
 
