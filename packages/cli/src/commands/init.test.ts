@@ -43,4 +43,24 @@ describe("scaffoldProject", () => {
     const files = await readdir(join(tempDir, "specs"));
     expect(files).toContain("api-contract.md");
   });
+
+  it("scaffolds a quick-spec project", async () => {
+    await scaffoldProject({ projectName: "quick-project", template: "quick", targetDir: tempDir });
+    const files = await readdir(join(tempDir, "specs"));
+    expect(files).toContain("quick-spec.md");
+    const content = await readFile(join(tempDir, "specs/quick-spec.md"), "utf-8");
+    expect(content).toContain("type: quick-spec");
+    expect(content).toContain("## Intent");
+    expect(content).toContain("## Boundaries");
+    expect(content).toContain("## Tasks");
+  });
+
+  it("scaffolds a context project", async () => {
+    await scaffoldProject({ projectName: "ctx-project", template: "context", targetDir: tempDir });
+    const files = await readdir(join(tempDir, "specs"));
+    expect(files).toContain("project-context.md");
+    const content = await readFile(join(tempDir, "specs/project-context.md"), "utf-8");
+    expect(content).toContain("type: project-context");
+    expect(content).toContain("## Technology Stack");
+  });
 });

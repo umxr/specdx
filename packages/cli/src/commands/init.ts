@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { REQUIRED_SECTIONS } from "@specdx/schema";
 
-export type Template = "lightweight" | "bmad" | "api-first";
+export type Template = "lightweight" | "bmad" | "api-first" | "quick" | "context";
 
 interface ScaffoldOptions {
   projectName: string;
@@ -29,12 +29,16 @@ const TEMPLATE_SPECS: Record<
     { filename: "api-contract.md", type: "api-contract" },
     { filename: "test-plan.md", type: "test-plan" },
   ],
+  quick: [{ filename: "quick-spec.md", type: "quick-spec" }],
+  context: [{ filename: "project-context.md", type: "project-context" }],
 };
 
 const TEMPLATE_EXTRA_DIRS: Record<Template, string[]> = {
   lightweight: [],
   bmad: ["specs/stories", "specs/adr"],
   "api-first": [],
+  quick: [],
+  context: [],
 };
 
 function specIdFromFilename(filename: string): string {
@@ -145,7 +149,7 @@ export default defineCommand({
   },
   async run({ args }) {
     const { name, template, dir } = args;
-    const validTemplates: Template[] = ["lightweight", "bmad", "api-first"];
+    const validTemplates: Template[] = ["lightweight", "bmad", "api-first", "quick", "context"];
     if (!validTemplates.includes(template as Template)) {
       console.error(`Unknown template: ${template}. Choose from: ${validTemplates.join(", ")}`);
       process.exit(1);
