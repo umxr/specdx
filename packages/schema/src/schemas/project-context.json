@@ -1,0 +1,14 @@
+{
+  "$id": "project-context",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "allOf": [
+    { "$ref": "base-spec" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "project-context" }
+      },
+      "required": ["type"]
+    }
+  ]
+}

@@ -9,6 +9,9 @@ import userStorySchema from "./schemas/user-story.json" with { type: "json" };
 import testPlanSchema from "./schemas/test-plan.json" with { type: "json" };
 import adrSchema from "./schemas/adr.json" with { type: "json" };
 import apiContractSchema from "./schemas/api-contract.json" with { type: "json" };
+import epicSchema from "./schemas/epic.json" with { type: "json" };
+import quickSpecSchema from "./schemas/quick-spec.json" with { type: "json" };
+import projectContextSchema from "./schemas/project-context.json" with { type: "json" };
 
 // addFormats is CJS-only; access via the namespace default at runtime
 // The type cast is needed because TypeScript's NodeNext resolution exposes
@@ -34,6 +37,9 @@ const specValidators: Record<string, ReturnType<typeof ajv.compile>> = {
   "test-plan": ajv.compile(testPlanSchema),
   adr: ajv.compile(adrSchema),
   "api-contract": ajv.compile(apiContractSchema),
+  epic: ajv.compile(epicSchema),
+  "quick-spec": ajv.compile(quickSpecSchema),
+  "project-context": ajv.compile(projectContextSchema),
 };
 
 const configValidator = ajv.compile(configSchema);

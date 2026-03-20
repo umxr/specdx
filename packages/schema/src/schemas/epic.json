@@ -1,0 +1,16 @@
+{
+  "$id": "epic",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "allOf": [
+    { "$ref": "base-spec" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "epic" },
+        "epic_id": { "type": "string", "minLength": 1 },
+        "priority": { "type": "string", "enum": ["critical", "high", "medium", "low"] }
+      },
+      "required": ["type", "epic_id", "priority"]
+    }
+  ]
+}

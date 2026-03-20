@@ -4,7 +4,7 @@
   "type": "object",
   "properties": {
     "id": { "type": "string", "minLength": 1 },
-    "type": { "type": "string", "enum": ["prd", "technical-design", "user-story", "test-plan", "adr", "api-contract"] },
+    "type": { "type": "string", "enum": ["prd", "technical-design", "user-story", "test-plan", "adr", "api-contract", "epic", "quick-spec", "project-context"] },
     "title": { "type": "string", "minLength": 1 },
     "status": { "type": "string", "enum": ["draft", "review", "approved", "superseded"] },
     "version": { "type": "string" },

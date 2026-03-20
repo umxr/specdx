@@ -29,6 +29,65 @@ describe("validateSpec", () => {
     expect(result.valid).toBe(false);
     expect(result.errors![0]!.message).toContain("Unknown spec type");
   });
+
+  it("validates a valid epic spec", () => {
+    const result = validateSpec("epic", {
+      id: "epic-001",
+      type: "epic",
+      title: "User Auth Epic",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-15",
+      authors: ["umar"],
+      epic_id: "EPIC-1",
+      priority: "high",
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeNull();
+  });
+
+  it("rejects an epic missing epic_id", () => {
+    const result = validateSpec("epic", {
+      id: "epic-001",
+      type: "epic",
+      title: "User Auth Epic",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-15",
+      authors: ["umar"],
+      priority: "high",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).not.toBeNull();
+  });
+
+  it("validates a valid quick-spec", () => {
+    const result = validateSpec("quick-spec", {
+      id: "qs-001",
+      type: "quick-spec",
+      title: "Quick Feature Spec",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-15",
+      authors: ["umar"],
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeNull();
+  });
+
+  it("validates a valid project-context", () => {
+    const result = validateSpec("project-context", {
+      id: "pc-001",
+      type: "project-context",
+      title: "Project Context",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-15",
+      authors: ["umar"],
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeNull();
+  });
 });
 
 describe("validateConfig", () => {
