@@ -18,6 +18,8 @@ const main = defineCommand({
     check: () => import("./commands/check.js").then((m) => m.default),
     ready: () => import("./commands/ready.js").then((m) => m.default),
     update: () => import("./commands/update.js").then((m) => m.default),
+    generate: () => import("./commands/generate.js").then((m) => m.default),
+    migrate: () => import("./commands/migrate.js").then((m) => m.default),
   },
 });
 
