@@ -26,7 +26,7 @@ async function run(): Promise<void> {
     // Resolve and parse all specs
     // resolveGlob returns absolute paths, so no need to join with workingDir again
     const specs = [];
-    for (const [_key, entry] of Object.entries(config.specs)) {
+    for (const [, entry] of Object.entries(config.specs)) {
       const paths = await resolveGlob(entry.path, workingDir);
       for (const p of paths) {
         specs.push(await parseSpec(p));
