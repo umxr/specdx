@@ -1,0 +1,56 @@
+---
+name: specdx-pre-commit
+description: "Use when the user is about to commit, mentions committing, or says 'let's commit', 'ready to commit', 'wrap up', or 'commit this'. Checks spec health and flags drift before committing."
+allowed-tools: Bash(npx specdx *)
+---
+
+# Pre-Commit Spec Check
+
+Run spec health checks before committing to catch drift early.
+
+<HARD-GATE>
+Do NOT skip the diff step. Even if the user says "just commit", run the checks and surface the results before proceeding. Silent skipping leads to undetected spec drift.
+</HARD-GATE>
+
+## Workflow
+
+### Step 1: Lint
+
+```bash
+npx specdx lint
+```
+
+If lint errors are found, report them and ask the user to fix before committing.
+
+### Step 2: Diff
+
+```bash
+npx specdx diff
+```
+
+If the command fails (e.g. no git history), skip this step and note it.
+
+### Step 3: Present results
+
+**If no spec changes detected:**
+> "No spec changes — safe to commit."
+
+**If changes detected, present a summary:**
+- Which specs changed and what sections were modified
+- Downstream specs that may need updating (with staleness scores)
+- Whether any downstream specs are flagged as stale
+
+### Step 4: Ask the user
+
+> "Do you want to update downstream specs before committing, or proceed as-is?"
+
+Respect the user's decision either way.
+
+## Rationalizations to Resist
+
+| Thought | Reality |
+|---------|---------|
+| "The user just wants to commit quickly" | A 5-second check prevents hours of drift debugging. |
+| "There are no spec files in the diff" | Code changes can still drift from specs. Run the check. |
+| "I already ran lint earlier" | Specs may have changed since. Run it again. |
+| "The diff command failed, so skip everything" | Report the lint results at minimum. |
