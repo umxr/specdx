@@ -12,6 +12,7 @@ export const SKILL_NAMES = [
   "specdx-pre-commit",
   "specdx-sprint-review",
   "specdx-plan-from-spec",
+  "specdx-onboard",
 ];
 
 export interface InstallResult {

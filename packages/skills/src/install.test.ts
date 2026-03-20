@@ -24,13 +24,14 @@ describe("installSkills", () => {
     expect(SKILL_NAMES).toContain("specdx-pre-commit");
     expect(SKILL_NAMES).toContain("specdx-sprint-review");
     expect(SKILL_NAMES).toContain("specdx-plan-from-spec");
-    expect(SKILL_NAMES).toHaveLength(5);
+    expect(SKILL_NAMES).toContain("specdx-onboard");
+    expect(SKILL_NAMES).toHaveLength(6);
   });
 
   it("creates skill files in .claude/commands/", async () => {
     const result = await installSkills(targetDir);
 
-    expect(result.installed).toHaveLength(5);
+    expect(result.installed).toHaveLength(6);
     expect(result.updated).toHaveLength(0);
     expect(result.installed).toContain("specdx-start-task");
     expect(result.installed).toContain("specdx-author-spec");
@@ -83,12 +84,12 @@ describe("installSkills", () => {
 
   it("reports 'updated' on second install", async () => {
     const first = await installSkills(targetDir);
-    expect(first.installed).toHaveLength(5);
+    expect(first.installed).toHaveLength(6);
     expect(first.updated).toHaveLength(0);
 
     const second = await installSkills(targetDir);
     expect(second.installed).toHaveLength(0);
-    expect(second.updated).toHaveLength(5);
+    expect(second.updated).toHaveLength(6);
   });
 
   it("overwrites modified files and reports as updated", async () => {
