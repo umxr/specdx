@@ -14,3 +14,5 @@ export type {
 
 export { runCheck } from "./check.js";
 export { detectFramework } from "./detect-framework.js";
+export { analyzeWithAi } from "./ai.js";
+export type { AiAssessment, AiCheckResult } from "./types.js";

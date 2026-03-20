@@ -69,3 +69,17 @@ export interface CheckConfig {
   tests_dir?: string;
   ignore?: string[];
 }
+
+export interface AiAssessment {
+  findingIndex: number;
+  isRealIssue: boolean;
+  confidence: "high" | "medium" | "low";
+  reasoning: string;
+  suggestedFix?: string;
+}
+
+export interface AiCheckResult {
+  findings: Finding[];
+  assessments: AiAssessment[];
+  summary: string;
+}

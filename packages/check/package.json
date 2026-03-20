@@ -20,15 +20,20 @@
     "@specdx/core": "workspace:*"
   },
   "peerDependencies": {
-    "ts-morph": ">=24.0.0"
+    "ts-morph": ">=24.0.0",
+    "@anthropic-ai/sdk": ">=0.30.0"
   },
   "peerDependenciesMeta": {
     "ts-morph": {
+      "optional": true
+    },
+    "@anthropic-ai/sdk": {
       "optional": true
     }
   },
   "devDependencies": {
     "ts-morph": "^24.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "@anthropic-ai/sdk": "^0.52.0"
   }
 }
