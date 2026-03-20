@@ -1,6 +1,5 @@
 import { defineCommand } from "citty";
 import { loadConfig, parseSpec, resolveGlob, createLogger } from "@specdx/core";
-import { REQUIRED_SECTIONS } from "@specdx/schema";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -96,9 +95,6 @@ export async function generateTestPlan(
   const storyRefs = storiesBySpec.map((s) => `  - id: "${s.storyId}"\n    relationship: "related-to"`);
 
   const totalTestCases = storiesBySpec.reduce((sum, s) => sum + s.cases.length, 0);
-
-  // Use REQUIRED_SECTIONS to get the canonical section names for test-plan
-  const _requiredSections = REQUIRED_SECTIONS["test-plan"];
 
   // Build frontmatter
   const authorsYaml =
