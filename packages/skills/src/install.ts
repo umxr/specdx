@@ -6,7 +6,13 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /** Skill file names (without .md extension) */
-export const SKILL_NAMES = ["specdx-start-task", "specdx-author-spec"];
+export const SKILL_NAMES = [
+  "specdx-start-task",
+  "specdx-author-spec",
+  "specdx-pre-commit",
+  "specdx-sprint-review",
+  "specdx-plan-from-spec",
+];
 
 export interface InstallResult {
   installed: string[];
