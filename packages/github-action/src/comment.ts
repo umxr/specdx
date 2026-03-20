@@ -21,9 +21,7 @@ export function formatComment(
   // Diff section
   if (
     diffResult &&
-    (diffResult.diffs.length > 0 ||
-      diffResult.added.length > 0 ||
-      diffResult.removed.length > 0)
+    (diffResult.diffs.length > 0 || diffResult.added.length > 0 || diffResult.removed.length > 0)
   ) {
     lines.push(
       `**Changes:** ${diffResult.diffs.length} modified, ${diffResult.added.length} added, ${diffResult.removed.length} removed\n`,
@@ -34,8 +32,7 @@ export function formatComment(
       lines.push("| Spec | Sections Modified |");
       lines.push("|------|-------------------|");
       for (const diff of diffResult.diffs) {
-        const sections =
-          diff.sections.map((s) => s.heading).join(", ") || "frontmatter only";
+        const sections = diff.sections.map((s) => s.heading).join(", ") || "frontmatter only";
         lines.push(`| ${diff.specId} | ${sections} |`);
       }
       lines.push("");

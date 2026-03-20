@@ -64,7 +64,9 @@ async function run(): Promise<void> {
 
     // Summary output
     const errors = lintResults.diagnostics.filter((d: Diagnostic) => d.severity === "error").length;
-    const warnings = lintResults.diagnostics.filter((d: Diagnostic) => d.severity === "warn").length;
+    const warnings = lintResults.diagnostics.filter(
+      (d: Diagnostic) => d.severity === "warn",
+    ).length;
     core.info(`Lint: ${errors} errors, ${warnings} warnings, ${specs.length} specs checked`);
 
     if (diffResult) {
@@ -75,7 +77,9 @@ async function run(): Promise<void> {
 
     // Check if we should fail
     const blockOn = config.ci?.block_on ?? ["error"];
-    const shouldFail = lintResults.diagnostics.some((d: Diagnostic) => blockOn.includes(d.severity));
+    const shouldFail = lintResults.diagnostics.some((d: Diagnostic) =>
+      blockOn.includes(d.severity),
+    );
 
     if (shouldFail) {
       core.setFailed(`Spec health check failed: ${errors} error(s), ${warnings} warning(s)`);

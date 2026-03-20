@@ -32,8 +32,6 @@ export async function resolvePreset(
     const mod = (await import(name)) as { default?: Record<string, unknown> };
     return (mod.default ?? mod) as Record<string, unknown>;
   } catch {
-    throw new ConfigError(
-      `Could not resolve preset "${name}" as a local file or npm package`,
-    );
+    throw new ConfigError(`Could not resolve preset "${name}" as a local file or npm package`);
   }
 }

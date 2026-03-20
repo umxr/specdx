@@ -10,8 +10,7 @@ export function diffSpecs(before: ParsedSpec, after: ParsedSpec): SpecDiff {
   const parts: string[] = [];
   if (frontmatter.length > 0) parts.push(`${frontmatter.length} field(s) changed`);
   if (sections.length > 0) parts.push(`${sections.length} section(s) changed`);
-  const summary =
-    parts.length > 0 ? `${specId}: ${parts.join(", ")}` : `${specId}: no changes`;
+  const summary = parts.length > 0 ? `${specId}: ${parts.join(", ")}` : `${specId}: no changes`;
 
   return { specId, filePath: after.filePath, frontmatter, sections, summary };
 }
@@ -43,10 +42,7 @@ function diffFrontmatter(
   return changes;
 }
 
-function diffSections(
-  before: ParsedSection[],
-  after: ParsedSection[],
-): SectionChange[] {
+function diffSections(before: ParsedSection[], after: ParsedSection[]): SectionChange[] {
   const changes: SectionChange[] = [];
 
   const beforeMap = new Map<string, ParsedSection>();
