@@ -1,0 +1,36 @@
+name: Spec Health
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "spec.config.yaml"
+      - "specs/**"
+
+jobs:
+  spec-health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Validate specs
+        run: node packages/cli/dist/main.js validate
+
+      - name: Lint specs
+        run: node packages/cli/dist/main.js lint
+
+      - name: Spec status
+        run: node packages/cli/dist/main.js status
+
+      - name: Spec diff
+        run: node packages/cli/dist/main.js diff --base origin/main
+        continue-on-error: true
