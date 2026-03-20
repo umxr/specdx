@@ -11,3 +11,5 @@ export type {
   SpecTestCase,
   CheckConfig,
 } from "./types.js";
+
+export { runCheck } from "./check.js";

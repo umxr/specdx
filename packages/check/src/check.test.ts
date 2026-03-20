@@ -1,0 +1,313 @@
+import { describe, it, expect } from "vitest";
+import { join } from "node:path";
+import { runCheck } from "./check.js";
+import type { ParsedSpec } from "@specdx/core";
+
+/** Helper to build a minimal ParsedSpec with the given frontmatter and content. */
+function makeSpec(
+  overrides: Partial<ParsedSpec["frontmatter"]> & { type: string; id: string },
+  content: string,
+): ParsedSpec {
+  return {
+    filePath: `/fake/${overrides.id}.md`,
+    frontmatter: {
+      id: overrides.id,
+      type: overrides.type as ParsedSpec["frontmatter"]["type"],
+      title: overrides.title ?? overrides.id,
+      status: "approved" as const,
+      version: "1.0.0",
+      created: "2026-01-01",
+      authors: ["test"],
+      ...overrides,
+    },
+    content,
+    sections: [],
+    parsedSections: [],
+    valid: true,
+    validationErrors: null,
+  };
+}
+
+const FIXTURES_DIR = join(import.meta.dirname, "..", "test", "fixtures");
+
+describe("runCheck", () => {
+  it("returns 100% score and empty findings when no specs match check categories", async () => {
+    const specs: ParsedSpec[] = [
+      makeSpec({ id: "prd-001", type: "prd" }, "# Some PRD\n\nJust a product doc."),
+      makeSpec({ id: "story-001", type: "user-story" }, "# A user story\n\nAs a user..."),
+    ];
+
+    const result = await runCheck(specs, FIXTURES_DIR);
+
+    expect(result.findings).toHaveLength(0);
+    expect(result.score.overall).toBe(100);
+    expect(result.summary).toContain("100%");
+    expect(result.summary).toContain("0 errors");
+    expect(result.summary).toContain("0 warnings");
+  });
+
+  it("returns 100% score when specs array is empty", async () => {
+    const result = await runCheck([], FIXTURES_DIR);
+
+    expect(result.findings).toHaveLength(0);
+    expect(result.score.overall).toBe(100);
+  });
+
+  it("reports missing routes for api-contract spec when project has no matching routes", async () => {
+    const spec = makeSpec(
+      { id: "api-001", type: "api-contract" },
+      [
+        "## Endpoints",
+        "",
+        "### GET /api/widgets",
+        "List all widgets",
+        "",
+        "### POST /api/widgets",
+        "Create a widget",
+      ].join("\n"),
+    );
+
+    // Point to an empty dir — no route files will be found
+    const emptyDir = join(FIXTURES_DIR, "nextjs-app", "api", "posts");
+    const result = await runCheck([spec], emptyDir, { framework: "express" });
+
+    const missing = result.findings.filter((f) => f.type === "missing" && f.category === "route");
+    expect(missing).toHaveLength(2);
+    expect(missing[0]!.expected).toContain("GET /api/widgets");
+    expect(missing[1]!.expected).toContain("POST /api/widgets");
+    expect(result.score.overall).toBe(0);
+    expect(result.score.byCategory["routes"]).toEqual({ matched: 0, total: 2 });
+  });
+
+  it("reports missing types for technical-design spec against empty project", async () => {
+    const spec = makeSpec(
+      { id: "td-001", type: "technical-design" },
+      [
+        "## Data Model",
+        "",
+        "### Widget",
+        "- `id`: string",
+        "- `name`: string",
+        "- `color?`: string",
+      ].join("\n"),
+    );
+
+    // Point to a dir with no type files
+    const emptyDir = join(FIXTURES_DIR, "nextjs-app", "api", "posts");
+    const result = await runCheck([spec], emptyDir);
+
+    const missing = result.findings.filter((f) => f.type === "missing" && f.category === "type");
+    expect(missing).toHaveLength(1);
+    expect(missing[0]!.expected).toContain("Widget");
+    // typeTotal = 3 fields, but only 1 "missing type" finding → matched = max(0, 3-1) = 2
+    expect(result.score.byCategory["types"]!.total).toBe(3);
+  });
+
+  it("reports missing tests for test-plan spec against empty project", async () => {
+    const spec = makeSpec(
+      { id: "tp-001", type: "test-plan" },
+      [
+        "## Test Cases",
+        "",
+        "### Unit Tests",
+        "- should validate widget name",
+        "- should reject empty name",
+      ].join("\n"),
+    );
+
+    const emptyDir = join(FIXTURES_DIR, "nextjs-app", "api", "posts");
+    const result = await runCheck([spec], emptyDir);
+
+    const missing = result.findings.filter((f) => f.type === "missing" && f.category === "test");
+    expect(missing).toHaveLength(2);
+    expect(result.score.byCategory["tests"]).toEqual({ matched: 0, total: 2 });
+  });
+
+  it("matches express routes from fixtures against an api-contract spec", async () => {
+    const spec = makeSpec(
+      { id: "api-002", type: "api-contract" },
+      [
+        "## Endpoints",
+        "",
+        "### GET /api/users",
+        "List users",
+        "",
+        "### POST /api/users",
+        "Create user",
+        "",
+        "### GET /api/users/:id",
+        "Get single user",
+        "",
+        "### DELETE /api/users/:id",
+        "Delete user",
+      ].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    const missing = result.findings.filter((f) => f.type === "missing" && f.category === "route");
+    // Express fixture has GET /users, POST /users, GET /users/:id, DELETE /users/:id, PUT /users/:id/profile
+    // All 4 spec endpoints should be matched (under /api prefix from app.use)
+    expect(missing).toHaveLength(0);
+
+    const extra = result.findings.filter((f) => f.type === "extra" && f.category === "route");
+    // At least PUT /api/users/:id/profile from express-app.ts is extra.
+    // The extractor also picks up routes from hono-app.ts in the same fixtures dir.
+    expect(extra.length).toBeGreaterThanOrEqual(1);
+    expect(extra.some((f) => f.actual?.includes("PUT"))).toBe(true);
+  });
+
+  it("matches types from fixtures against a technical-design spec", async () => {
+    const spec = makeSpec(
+      { id: "td-002", type: "technical-design" },
+      [
+        "## Data Model",
+        "",
+        "### User",
+        "- `id`: string",
+        "- `name`: string",
+        "- `email`: string",
+        "- `role`: string",
+        "- `createdAt`: Date",
+        "",
+        "### Post",
+        "- `id`: string",
+        "- `title`: string",
+        "- `content`: string",
+        "- `authorId`: string",
+        "- `publishedAt?`: Date",
+      ].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR);
+
+    // All types and fields should be matched from the fixtures/types.ts file
+    const missing = result.findings.filter((f) => f.type === "missing" && f.category === "type");
+    expect(missing).toHaveLength(0);
+    expect(result.score.byCategory["types"]!.total).toBe(10); // 5 User fields + 5 Post fields
+  });
+
+  it("matches tests from fixtures against a test-plan spec", async () => {
+    const spec = makeSpec(
+      { id: "tp-002", type: "test-plan" },
+      [
+        "## Test Cases",
+        "",
+        "### UserService",
+        "- should create a new user",
+        "- should list all users",
+        "",
+        "### PostService",
+        "- should create a post",
+      ].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR);
+
+    const missing = result.findings.filter((f) => f.type === "missing" && f.category === "test");
+    // All 3 spec test cases have matches in sample-tests.ts
+    expect(missing).toHaveLength(0);
+    expect(result.score.byCategory["tests"]!.total).toBe(3);
+  });
+
+  it("handles mixed spec types in a single run", async () => {
+    const apiSpec = makeSpec(
+      { id: "api-003", type: "api-contract" },
+      [
+        "## Endpoints",
+        "",
+        "### GET /api/users",
+        "List users",
+      ].join("\n"),
+    );
+
+    const designSpec = makeSpec(
+      { id: "td-003", type: "technical-design" },
+      [
+        "## Data Model",
+        "",
+        "### User",
+        "- `id`: string",
+        "- `name`: string",
+      ].join("\n"),
+    );
+
+    const testSpec = makeSpec(
+      { id: "tp-003", type: "test-plan" },
+      [
+        "## Test Cases",
+        "",
+        "- should create a new user",
+      ].join("\n"),
+    );
+
+    const result = await runCheck([apiSpec, designSpec, testSpec], FIXTURES_DIR, {
+      framework: "express",
+    });
+
+    // All three categories should have been checked
+    expect(result.score.byCategory["routes"]).toBeDefined();
+    expect(result.score.byCategory["types"]).toBeDefined();
+    expect(result.score.byCategory["tests"]).toBeDefined();
+
+    expect(result.score.byCategory["routes"]!.total).toBe(1);
+    expect(result.score.byCategory["types"]!.total).toBe(2);
+    expect(result.score.byCategory["tests"]!.total).toBe(1);
+  });
+
+  it("respects framework config to use only the specified extractor", async () => {
+    const spec = makeSpec(
+      { id: "api-004", type: "api-contract" },
+      [
+        "## Endpoints",
+        "",
+        "### GET /api/users",
+        "List users",
+      ].join("\n"),
+    );
+
+    // With nextjs framework, it won't find Express routes
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "nextjs" });
+    const missing = result.findings.filter((f) => f.type === "missing" && f.category === "route");
+
+    // Next.js extractor looks in app/ dir, won't match the Express fixture routes
+    expect(missing).toHaveLength(1);
+    expect(missing[0]!.expected).toContain("GET /api/users");
+  });
+
+  it("includes spec id in all findings", async () => {
+    const spec = makeSpec(
+      { id: "api-unique-id", type: "api-contract" },
+      [
+        "## Endpoints",
+        "",
+        "### GET /nonexistent/route",
+        "A missing endpoint",
+      ].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    for (const finding of result.findings) {
+      expect(finding.specId).toBe("api-unique-id");
+    }
+  });
+
+  it("summary string includes score, errors, and warnings", async () => {
+    const spec = makeSpec(
+      { id: "api-005", type: "api-contract" },
+      [
+        "## Endpoints",
+        "",
+        "### GET /nowhere",
+        "Does not exist",
+      ].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    expect(result.summary).toMatch(/\d+% implementation coverage/);
+    expect(result.summary).toMatch(/\d+ errors/);
+    expect(result.summary).toMatch(/\d+ warnings/);
+  });
+});
