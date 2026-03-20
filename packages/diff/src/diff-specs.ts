@@ -60,7 +60,7 @@ function diffSections(
   }
 
   // Removed sections: in before but not in after
-  for (const [heading, _section] of beforeMap) {
+  for (const [heading] of beforeMap) {
     if (!afterMap.has(heading)) {
       changes.push({ heading, type: "removed" });
     }

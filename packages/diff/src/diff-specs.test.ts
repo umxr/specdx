@@ -53,7 +53,6 @@ describe("diffSpecs", () => {
   });
 
   it("detects removed frontmatter field", async () => {
-    const modified = basePrd.replace('authors: ["alice"]\ntags: ["auth"]', 'authors: ["alice"]');
     const withTags = basePrd.replace('authors: ["alice"]', 'authors: ["alice"]\ntags: ["auth"]');
     const before = await parseSpecFromString(withTags, "specs/prd.md");
     const after = await parseSpecFromString(basePrd, "specs/prd.md");

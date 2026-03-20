@@ -100,7 +100,7 @@ export function analyzeImpact(
     const filePath = spec?.filePath ?? `specs/${specId}.md`;
 
     // 5. Staleness formula
-    let staleness = 0;
+    let staleness: number;
     if (lastUpdated) {
       const daysSinceUpdate = daysBetween(lastUpdated);
       staleness = clamp(
