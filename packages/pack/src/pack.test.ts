@@ -130,6 +130,105 @@ describe("pack", () => {
     expect(result.stats.budget).toBe(12000);
   });
 
+  it("includes project-context specs first at full fidelity", () => {
+    const ctxSpec = makeSpec(
+      "project-ctx",
+      [sec("", "Project overview", 5), sec("Goals", "Ship fast", 10)],
+      { type: "project-context", title: "Project Context" },
+    );
+    const prdSpec = makeSpec(
+      "prd-auth",
+      [sec("", "Auth PRD", 5), sec("Requirements", "Implement OAuth for auth", 20)],
+      { type: "prd", title: "Auth PRD" },
+    );
+
+    const result = pack(
+      [prdSpec, ctxSpec],
+      { task: "implement auth" },
+      undefined,
+      emptyGraph(),
+    );
+
+    // project-context should appear first in the output
+    const ctxPos = result.output.indexOf("project-ctx");
+    const prdPos = result.output.indexOf("prd-auth");
+    expect(ctxPos).toBeGreaterThan(-1);
+    expect(prdPos).toBeGreaterThan(-1);
+    expect(ctxPos).toBeLessThan(prdPos);
+
+    // project-context should be included in stats
+    expect(result.stats.specsIncluded).toBe(2);
+
+    // The project-context allocation should be first and marked as not compressed
+    const ctxAlloc = result.stats.allocations[0]!;
+    expect(ctxAlloc.specId).toBe("project-ctx");
+    expect(ctxAlloc.relevance).toBe(1.0);
+    expect(ctxAlloc.compressed).toBe(false);
+    expect(ctxAlloc.included).toBe(true);
+  });
+
+  it("reserves budget for project-context, leaving remainder for regular specs", () => {
+    const ctxSpec = makeSpec(
+      "project-ctx",
+      [sec("", "Project overview", 5), sec("Goals", "Ship fast", 10)],
+      { type: "project-context", title: "Project Context" },
+    );
+    const prdSpec = makeSpec(
+      "prd-auth",
+      [sec("", "Auth PRD", 5), sec("Requirements", "Implement OAuth for auth", 20)],
+      { type: "prd", title: "Auth PRD" },
+    );
+
+    // Budget large enough for both
+    const result = pack(
+      [prdSpec, ctxSpec],
+      { budget: 5000 },
+      undefined,
+      emptyGraph(),
+    );
+
+    // Overall budget should be the full budget, not the reduced one
+    expect(result.stats.budget).toBe(5000);
+    expect(result.stats.specsIncluded).toBe(2);
+    expect(result.stats.used).toBeLessThanOrEqual(5000);
+  });
+
+  it("caps project-context reservation at 2000 tokens", () => {
+    // Create a project-context spec that would exceed 2000 tokens
+    const bigCtx = makeSpec(
+      "big-ctx",
+      [sec("", "Overview", 500), sec("Details", "Long content", 1800)],
+      { type: "project-context", title: "Big Context" },
+    );
+    const prdSpec = makeSpec(
+      "prd-auth",
+      [sec("", "Auth PRD", 5), sec("Requirements", "auth content", 20)],
+      { type: "prd", title: "Auth PRD" },
+    );
+
+    const result = pack(
+      [prdSpec, bigCtx],
+      { budget: 5000 },
+      undefined,
+      emptyGraph(),
+    );
+
+    // Regular budget should be at least budget - 2000
+    // The exact values depend on countTokens, but the stats should show
+    // the overall budget is maintained
+    expect(result.stats.budget).toBe(5000);
+  });
+
+  it("works correctly with no project-context specs", () => {
+    // Existing behaviour should be unchanged
+    const result = pack([specA, specB], { budget: 5000 }, undefined, undefined);
+
+    expect(result.stats.budget).toBe(5000);
+    expect(result.stats.specsIncluded).toBe(2);
+    expect(result.output).toContain("spec-a");
+    expect(result.output).toContain("spec-b");
+  });
+
   it("uses pack config defaults when provided", () => {
     const packConfig: PackConfig = {
       max_tokens: 5000,

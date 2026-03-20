@@ -1,6 +1,6 @@
 import type { ParsedSpec, DependencyGraph } from "@specdx/core";
 import type { PackConfig } from "@specdx/schema";
-import type { PackOptions, PackResult, CompressionOptions } from "./types.js";
+import type { PackOptions, PackResult, CompressionOptions, CompressedSpec, RelevanceScore } from "./types.js";
 import { scoreSpecs, scoreSpecsByIds } from "./resolver.js";
 import { allocate } from "./allocator.js";
 import { formatXml } from "./formatters/xml.js";
@@ -76,40 +76,91 @@ export function pack(
   const compression = buildCompressionOptions(packConfig);
   const resolvedGraph = graph ?? emptyGraph();
 
-  // 2. Build spec map for resolver
-  const specMap = new Map<string, ParsedSpec>();
+  // 2. Extract project-context specs and reserve budget
+  const projectContextSpecs: ParsedSpec[] = [];
+  const regularSpecs: ParsedSpec[] = [];
   for (const spec of specs) {
+    if (spec.frontmatter.type === "project-context") {
+      projectContextSpecs.push(spec);
+    } else {
+      regularSpecs.push(spec);
+    }
+  }
+
+  let reservedTokens = 0;
+  let reservedCompressed: CompressedSpec[] = [];
+  if (projectContextSpecs.length > 0) {
+    const maxReserved = Math.min(budget, 2000);
+    const ctxScores: RelevanceScore[] = projectContextSpecs.map((s) => ({
+      specId: s.frontmatter.id,
+      score: 1.0,
+      rawScore: 1.0,
+      matchedKeywords: [],
+      graphBoosted: false,
+    }));
+    const ctxResult = allocate(projectContextSpecs, ctxScores, {
+      budget: maxReserved,
+      full: true,
+      compression,
+    });
+    reservedCompressed = ctxResult.specs;
+    reservedTokens = ctxResult.stats.used;
+  }
+
+  const regularBudget = Math.max(0, budget - reservedTokens);
+
+  // 3. Build spec map for resolver (regular specs only)
+  const specMap = new Map<string, ParsedSpec>();
+  for (const spec of regularSpecs) {
     specMap.set(spec.frontmatter.id, spec);
   }
 
-  // 3. Stage 1 - Resolve
+  // 4. Stage 1 - Resolve
   const scores = options.specs
     ? scoreSpecsByIds(specMap, options.specs, resolvedGraph)
     : scoreSpecs(specMap, options.task, resolvedGraph);
 
-  // 4. Stage 2 - Allocate
-  const { specs: compressedSpecs, stats } = allocate(specs, scores, {
-    budget,
+  // 5. Stage 2 - Allocate
+  const { specs: compressedSpecs, stats } = allocate(regularSpecs, scores, {
+    budget: regularBudget,
     full,
     compression,
   });
 
-  // 5. Dry run: return stats without output
+  // 6. Combine project-context and regular specs
+  const allCompressed = [...reservedCompressed, ...compressedSpecs];
+
+  // Update stats to include reserved specs
+  stats.budget = budget;
+  stats.used += reservedTokens;
+  stats.specsIncluded += reservedCompressed.length;
+  for (const ctx of reservedCompressed) {
+    stats.allocations.unshift({
+      specId: ctx.specId,
+      type: ctx.type,
+      relevance: 1.0,
+      tokens: reservedTokens,
+      compressed: false,
+      included: true,
+    });
+  }
+
+  // 7. Dry run: return stats without output
   if (options.dryRun) {
     return { output: "", stats };
   }
 
-  // 6. Stage 3 - Format
+  // 8. Stage 3 - Format
   let output: string;
   switch (format) {
     case "markdown":
-      output = formatMarkdown(compressedSpecs, stats);
+      output = formatMarkdown(allCompressed, stats);
       break;
     case "json":
-      output = formatJson(compressedSpecs, stats);
+      output = formatJson(allCompressed, stats);
       break;
     default:
-      output = formatXml(compressedSpecs, stats);
+      output = formatXml(allCompressed, stats);
       break;
   }
 
