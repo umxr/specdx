@@ -1,0 +1,9 @@
+name: "specdx"
+description: "Lint and diff specs on pull requests"
+inputs:
+  working-directory:
+    description: "Directory containing spec.config.yaml"
+    default: "."
+runs:
+  using: "node20"
+  main: "dist/main.js"
