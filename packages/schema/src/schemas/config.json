@@ -65,7 +65,22 @@
       },
       "additionalProperties": false
     },
-    "ci": { "type": "object" }
+    "ci": {
+      "type": "object",
+      "properties": {
+        "block_on": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["error", "warn", "info"] }
+        },
+        "post_comment": { "type": "boolean", "default": true },
+        "update_badge": { "type": "boolean", "default": true },
+        "trigger_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "required": ["version", "specs"],
   "additionalProperties": false

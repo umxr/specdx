@@ -94,5 +94,10 @@ export interface SdxConfig {
     staleness_threshold_days?: number;
     ignore_paths?: string[];
   };
-  ci?: Record<string, unknown>;
+  ci?: {
+    block_on?: ("error" | "warn" | "info")[];
+    post_comment?: boolean;
+    update_badge?: boolean;
+    trigger_paths?: string[];
+  };
 }
