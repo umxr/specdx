@@ -1,0 +1,17 @@
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  posts     Post[]
+}
+
+model Post {
+  id          String    @id @default(uuid())
+  title       String
+  content     String
+  authorId    String
+  publishedAt DateTime?
+  author      User      @relation(fields: [authorId], references: [id])
+}
