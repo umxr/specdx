@@ -5,6 +5,9 @@ export const SPEC_TYPES = [
   "test-plan",
   "adr",
   "api-contract",
+  "epic",
+  "quick-spec",
+  "project-context",
 ] as const;
 export type SpecType = (typeof SPEC_TYPES)[number];
 
@@ -51,13 +54,30 @@ export interface ApiContractSpec extends BaseSpec {
   type: "api-contract";
 }
 
+export interface EpicSpec extends BaseSpec {
+  type: "epic";
+  epic_id: string;
+  priority: "critical" | "high" | "medium" | "low";
+}
+
+export interface QuickSpecSpec extends BaseSpec {
+  type: "quick-spec";
+}
+
+export interface ProjectContextSpec extends BaseSpec {
+  type: "project-context";
+}
+
 export type Spec =
   | PrdSpec
   | TechnicalDesignSpec
   | UserStorySpec
   | TestPlanSpec
   | AdrSpec
-  | ApiContractSpec;
+  | ApiContractSpec
+  | EpicSpec
+  | QuickSpecSpec
+  | ProjectContextSpec;
 
 export interface SpecEntry {
   path: string;

@@ -12,6 +12,9 @@ describe("types", () => {
       "test-plan",
       "adr",
       "api-contract",
+      "epic",
+      "quick-spec",
+      "project-context",
     ]);
   });
 
@@ -64,6 +67,9 @@ describe("sections", () => {
       "test-plan",
       "adr",
       "api-contract",
+      "epic",
+      "quick-spec",
+      "project-context",
     ] as const) {
       expect(REQUIRED_SECTIONS[type]).toBeDefined();
       expect(REQUIRED_SECTIONS[type]!.length).toBeGreaterThan(0);
