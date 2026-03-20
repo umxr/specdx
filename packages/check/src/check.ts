@@ -12,6 +12,7 @@ import { matchRoutes } from "./matchers/routes.js";
 import { matchTypes } from "./matchers/types.js";
 import { matchTests } from "./matchers/tests.js";
 import { computeScore } from "./score.js";
+import { detectFramework } from "./detect-framework.js";
 
 /**
  * Run implementation checks across all specs and return findings, score, and summary.
@@ -84,8 +85,9 @@ export async function runCheck(
 /**
  * Extract routes from the project based on framework config.
  *
- * In "auto" mode, tries all extractors and merges the results.
- * Task 16 will refine auto-detection to read package.json.
+ * In "auto" mode, reads package.json to detect the framework first.
+ * If a framework is detected, only that extractor is used.
+ * If no framework is detected, falls back to trying all extractors and merging results.
  */
 async function extractRoutes(
   projectDir: string,
@@ -103,7 +105,19 @@ async function extractRoutes(
     return extractNextjsRoutes(projectDir, config.app_dir);
   }
 
-  // auto: try all extractors and merge results
+  // auto: detect from package.json first
+  const detected = await detectFramework(projectDir);
+  if (detected === "express") {
+    return extractExpressRoutes(projectDir, config.routes_dir);
+  }
+  if (detected === "hono") {
+    return extractHonoRoutes(projectDir, config.routes_dir);
+  }
+  if (detected === "nextjs") {
+    return extractNextjsRoutes(projectDir, config.app_dir);
+  }
+
+  // fallback: try all extractors and merge results
   const [express, hono, nextjs] = await Promise.all([
     extractExpressRoutes(projectDir, config.routes_dir),
     extractHonoRoutes(projectDir, config.routes_dir),

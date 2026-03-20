@@ -13,3 +13,4 @@ export type {
 } from "./types.js";
 
 export { runCheck } from "./check.js";
+export { detectFramework } from "./detect-framework.js";
