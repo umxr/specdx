@@ -72,14 +72,14 @@ describe("installSkills", () => {
     expect(content).toContain("npx specdx pack");
   });
 
-  it("specdx-author-spec references specdx lint command", async () => {
+  it("specdx-author-spec is a step-file dispatcher", async () => {
     await installSkills(targetDir);
 
     const content = await readFile(
       join(targetDir, ".claude", "commands", "specdx-author-spec.md"),
       "utf-8",
     );
-    expect(content).toContain("npx specdx lint");
+    expect(content).toContain("step-01-frontmatter.md");
   });
 
   it("reports 'updated' on second install", async () => {

@@ -49,15 +49,14 @@ async function walkAppDir(
 
   for (const entry of entries) {
     const fullPath = join(dir, entry);
-    let isDir = false;
+    let entryStat;
     try {
-      const s = await stat(fullPath);
-      isDir = s.isDirectory();
+      entryStat = await stat(fullPath);
     } catch {
       continue;
     }
 
-    if (isDir) {
+    if (entryStat.isDirectory()) {
       const pathSegment = segmentToPath(entry);
       // Route groups are transparent — continue with the same prefix
       const childPrefix = pathSegment === "" ? pathPrefix : `${pathPrefix}/${pathSegment}`;
