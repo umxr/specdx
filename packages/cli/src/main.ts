@@ -17,6 +17,7 @@ const main = defineCommand({
     changelog: () => import("./commands/changelog.js").then((m) => m.default),
     check: () => import("./commands/check.js").then((m) => m.default),
     ready: () => import("./commands/ready.js").then((m) => m.default),
+    update: () => import("./commands/update.js").then((m) => m.default),
   },
 });
 
