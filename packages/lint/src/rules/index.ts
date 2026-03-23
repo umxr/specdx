@@ -10,6 +10,7 @@ import { terminologyRule } from "./terminology.js";
 import { edgeCaseCoverageRule } from "./edge-case-coverage.js";
 import { namingConventionsRule } from "./naming-conventions.js";
 import { threatCoverageRule } from "./threat-coverage.js";
+import { ambiguityScoreAiRule } from "./ambiguity-score-ai.js";
 import type { LintRule } from "../types.js";
 
 export const structureRules: LintRule[] = [
@@ -28,6 +29,7 @@ export const contentRules: LintRule[] = [
   edgeCaseCoverageRule,
   namingConventionsRule,
   threatCoverageRule,
+  ambiguityScoreAiRule,
 ];
 
 export const allBuiltinRules: LintRule[] = [...structureRules, ...contentRules];
@@ -45,4 +47,5 @@ export {
   edgeCaseCoverageRule,
   namingConventionsRule,
   threatCoverageRule,
+  ambiguityScoreAiRule,
 };
