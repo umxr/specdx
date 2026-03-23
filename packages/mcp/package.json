@@ -1,0 +1,31 @@
+{
+  "name": "@specdx/mcp",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@specdx/schema": "workspace:*",
+    "@specdx/core": "workspace:*",
+    "@specdx/lint": "workspace:*",
+    "@specdx/pack": "workspace:*",
+    "@specdx/diff": "workspace:*",
+    "@specdx/check": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.27.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
