@@ -4,7 +4,15 @@ import type { ParsedSpec } from "@specdx/core";
 
 const makeSpec = (id: string, content: string, type = "prd"): ParsedSpec => ({
   filePath: `specs/${id}.md`,
-  frontmatter: { id, type, title: id, status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+  frontmatter: {
+    id,
+    type,
+    title: id,
+    status: "draft",
+    version: "1.0",
+    created: "2026-01-01",
+    authors: ["dev"],
+  },
   content,
   sections: [],
   parsedSections: [],
@@ -16,7 +24,11 @@ describe("terminologyRule", () => {
   it("warns when similar terms are used across specs", () => {
     const specs = [
       makeSpec("prd", "The user profile allows editing personal details."),
-      makeSpec("tech", "The UserProfile component renders the user-profile page.", "technical-design"),
+      makeSpec(
+        "tech",
+        "The UserProfile component renders the user-profile page.",
+        "technical-design",
+      ),
     ];
     const result = terminologyRule.run({ spec: specs[0]!, allSpecs: specs });
     expect(result.length).toBeGreaterThanOrEqual(1);

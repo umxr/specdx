@@ -6,10 +6,7 @@ interface SpecTotals {
   tests: number;
 }
 
-export function computeScore(
-  findings: Finding[],
-  totals: SpecTotals,
-): ImplementationScore {
+export function computeScore(findings: Finding[], totals: SpecTotals): ImplementationScore {
   // Count missing findings per category (only "missing" and "mismatch" reduce the score, not "extra")
   const missingByCategory: Record<string, number> = { route: 0, type: 0, test: 0 };
 

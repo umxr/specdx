@@ -9,12 +9,8 @@ describe("extractNextjsRoutes", () => {
     const routes = await extractNextjsRoutes(fixtureDir, "nextjs-app");
     expect(routes.length).toBeGreaterThanOrEqual(5);
 
-    expect(routes).toContainEqual(
-      expect.objectContaining({ method: "GET", path: "/api/users" }),
-    );
-    expect(routes).toContainEqual(
-      expect.objectContaining({ method: "POST", path: "/api/users" }),
-    );
+    expect(routes).toContainEqual(expect.objectContaining({ method: "GET", path: "/api/users" }));
+    expect(routes).toContainEqual(expect.objectContaining({ method: "POST", path: "/api/users" }));
     expect(routes).toContainEqual(
       expect.objectContaining({ method: "GET", path: "/api/users/:id", params: ["id"] }),
     );

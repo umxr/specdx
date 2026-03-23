@@ -89,10 +89,7 @@ export async function runCheck(
  * If a framework is detected, only that extractor is used.
  * If no framework is detected, falls back to trying all extractors and merging results.
  */
-async function extractRoutes(
-  projectDir: string,
-  config: CheckConfig,
-): Promise<ExtractedRoute[]> {
+async function extractRoutes(projectDir: string, config: CheckConfig): Promise<ExtractedRoute[]> {
   const framework = config.framework ?? "auto";
 
   if (framework === "express") {

@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import { namingConventionsRule } from "./naming-conventions.js";
 import type { ParsedSpec } from "@specdx/core";
 
-const makeSpec = (overrides: Partial<ParsedSpec> & { frontmatter: Record<string, unknown> }): ParsedSpec => ({
+const makeSpec = (
+  overrides: Partial<ParsedSpec> & { frontmatter: Record<string, unknown> },
+): ParsedSpec => ({
   filePath: "specs/test.md",
   content: "",
   sections: [],
@@ -16,7 +18,15 @@ describe("consistency/naming-conventions", () => {
   describe("PRD feature ID pattern", () => {
     it("passes when all features use **F<N>**: pattern", () => {
       const spec = makeSpec({
-        frontmatter: { id: "prd-001", type: "prd", title: "Test PRD", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "prd-001",
+          type: "prd",
+          title: "Test PRD",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "## Features\n\n- **F1**: Authentication\n- **F2**: Dashboard\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -25,7 +35,15 @@ describe("consistency/naming-conventions", () => {
 
     it("warns when PRD features are missing **F<N>**: pattern", () => {
       const spec = makeSpec({
-        frontmatter: { id: "prd-001", type: "prd", title: "Test PRD", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "prd-001",
+          type: "prd",
+          title: "Test PRD",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "## Features\n\n- Authentication flow\n- Dashboard view\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -39,7 +57,15 @@ describe("consistency/naming-conventions", () => {
 
     it("warns only for bullets without the pattern (mixed)", () => {
       const spec = makeSpec({
-        frontmatter: { id: "prd-001", type: "prd", title: "Test PRD", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "prd-001",
+          type: "prd",
+          title: "Test PRD",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "## Features\n\n- **F1**: Authentication\n- Dashboard view without ID\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -49,7 +75,15 @@ describe("consistency/naming-conventions", () => {
 
     it("ignores PRDs with no Features section", () => {
       const spec = makeSpec({
-        frontmatter: { id: "prd-001", type: "prd", title: "Test PRD", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "prd-001",
+          type: "prd",
+          title: "Test PRD",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "## Overview\n\nThis is a PRD.\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -58,7 +92,15 @@ describe("consistency/naming-conventions", () => {
 
     it("stops checking Features section at the next ## heading", () => {
       const spec = makeSpec({
-        frontmatter: { id: "prd-001", type: "prd", title: "Test PRD", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "prd-001",
+          type: "prd",
+          title: "Test PRD",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "## Features\n\n- **F1**: Auth\n\n## Constraints\n\n- No camelCase here\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -69,7 +111,15 @@ describe("consistency/naming-conventions", () => {
   describe("user-story ID prefix", () => {
     it("passes when user-story ID starts with 'story-'", () => {
       const spec = makeSpec({
-        frontmatter: { id: "story-001", type: "user-story", title: "Login story", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "story-001",
+          type: "user-story",
+          title: "Login story",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "As a user I want to log in.",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -78,7 +128,15 @@ describe("consistency/naming-conventions", () => {
 
     it("warns when user-story ID does not start with 'story-'", () => {
       const spec = makeSpec({
-        frontmatter: { id: "us-001", type: "user-story", title: "Login story", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "us-001",
+          type: "user-story",
+          title: "Login story",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "As a user I want to log in.",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -91,7 +149,15 @@ describe("consistency/naming-conventions", () => {
 
     it("warns when user-story ID has no prefix at all", () => {
       const spec = makeSpec({
-        frontmatter: { id: "login-flow", type: "user-story", title: "Login story", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "login-flow",
+          type: "user-story",
+          title: "Login story",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "As a user I want to log in.",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -103,8 +169,17 @@ describe("consistency/naming-conventions", () => {
   describe("api-contract endpoint casing", () => {
     it("passes when all endpoint paths use kebab-case", () => {
       const spec = makeSpec({
-        frontmatter: { id: "api-001", type: "api-contract", title: "User API", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
-        content: "### GET /api/user-profiles\n\nReturns all user profiles.\n\n### POST /api/auth-tokens\n\nCreates a token.\n",
+        frontmatter: {
+          id: "api-001",
+          type: "api-contract",
+          title: "User API",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
+        content:
+          "### GET /api/user-profiles\n\nReturns all user profiles.\n\n### POST /api/auth-tokens\n\nCreates a token.\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
       expect(diags).toHaveLength(0);
@@ -112,7 +187,15 @@ describe("consistency/naming-conventions", () => {
 
     it("warns when endpoint path segments use camelCase", () => {
       const spec = makeSpec({
-        frontmatter: { id: "api-001", type: "api-contract", title: "User API", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "api-001",
+          type: "api-contract",
+          title: "User API",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "### GET /api/userProfiles\n\nReturns all user profiles.\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -126,7 +209,15 @@ describe("consistency/naming-conventions", () => {
 
     it("warns for each camelCase endpoint separately", () => {
       const spec = makeSpec({
-        frontmatter: { id: "api-001", type: "api-contract", title: "User API", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "api-001",
+          type: "api-contract",
+          title: "User API",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content:
           "### GET /api/userProfiles\n\nGet profiles.\n\n### DELETE /api/authTokens\n\nDelete token.\n",
       });
@@ -140,7 +231,15 @@ describe("consistency/naming-conventions", () => {
   describe("non-applicable spec types are skipped", () => {
     it("skips adr specs", () => {
       const spec = makeSpec({
-        frontmatter: { id: "adr-001", type: "adr", title: "Some Decision", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "adr-001",
+          type: "adr",
+          title: "Some Decision",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "## Features\n\n- No F<N> here\n\n### GET /api/camelCasePath\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });
@@ -149,7 +248,15 @@ describe("consistency/naming-conventions", () => {
 
     it("skips test-plan specs", () => {
       const spec = makeSpec({
-        frontmatter: { id: "tp-001", type: "test-plan", title: "Test Plan", status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+        frontmatter: {
+          id: "tp-001",
+          type: "test-plan",
+          title: "Test Plan",
+          status: "draft",
+          version: "1.0",
+          created: "2026-01-01",
+          authors: ["dev"],
+        },
         content: "## Features\n\n- No F<N> here\n\n### GET /api/camelCasePath\n",
       });
       const diags = namingConventionsRule.run({ spec, allSpecs: [spec] });

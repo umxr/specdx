@@ -213,32 +213,17 @@ describe("runCheck", () => {
   it("handles mixed spec types in a single run", async () => {
     const apiSpec = makeSpec(
       { id: "api-003", type: "api-contract" },
-      [
-        "## Endpoints",
-        "",
-        "### GET /api/users",
-        "List users",
-      ].join("\n"),
+      ["## Endpoints", "", "### GET /api/users", "List users"].join("\n"),
     );
 
     const designSpec = makeSpec(
       { id: "td-003", type: "technical-design" },
-      [
-        "## Data Model",
-        "",
-        "### User",
-        "- `id`: string",
-        "- `name`: string",
-      ].join("\n"),
+      ["## Data Model", "", "### User", "- `id`: string", "- `name`: string"].join("\n"),
     );
 
     const testSpec = makeSpec(
       { id: "tp-003", type: "test-plan" },
-      [
-        "## Test Cases",
-        "",
-        "- should create a new user",
-      ].join("\n"),
+      ["## Test Cases", "", "- should create a new user"].join("\n"),
     );
 
     const result = await runCheck([apiSpec, designSpec, testSpec], FIXTURES_DIR, {
@@ -258,12 +243,7 @@ describe("runCheck", () => {
   it("respects framework config to use only the specified extractor", async () => {
     const spec = makeSpec(
       { id: "api-004", type: "api-contract" },
-      [
-        "## Endpoints",
-        "",
-        "### GET /api/users",
-        "List users",
-      ].join("\n"),
+      ["## Endpoints", "", "### GET /api/users", "List users"].join("\n"),
     );
 
     // With nextjs framework, it won't find Express routes
@@ -278,12 +258,7 @@ describe("runCheck", () => {
   it("includes spec id in all findings", async () => {
     const spec = makeSpec(
       { id: "api-unique-id", type: "api-contract" },
-      [
-        "## Endpoints",
-        "",
-        "### GET /nonexistent/route",
-        "A missing endpoint",
-      ].join("\n"),
+      ["## Endpoints", "", "### GET /nonexistent/route", "A missing endpoint"].join("\n"),
     );
 
     const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
@@ -296,12 +271,7 @@ describe("runCheck", () => {
   it("summary string includes score, errors, and warnings", async () => {
     const spec = makeSpec(
       { id: "api-005", type: "api-contract" },
-      [
-        "## Endpoints",
-        "",
-        "### GET /nowhere",
-        "Does not exist",
-      ].join("\n"),
+      ["## Endpoints", "", "### GET /nowhere", "Does not exist"].join("\n"),
     );
 
     const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });

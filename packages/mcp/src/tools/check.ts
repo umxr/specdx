@@ -21,9 +21,7 @@ export async function handleCheck(params: {
 
   const checkConfig = {
     ...config.check,
-    ...(params.framework
-      ? { framework: params.framework as "express" | "hono" | "nextjs" }
-      : {}),
+    ...(params.framework ? { framework: params.framework as "express" | "hono" | "nextjs" } : {}),
   };
 
   const result = await runCheck(specs, configDir, checkConfig);

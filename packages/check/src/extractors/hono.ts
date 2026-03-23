@@ -25,9 +25,7 @@ export async function extractHonoRoutes(
   try {
     tsMorph = await import("ts-morph");
   } catch {
-    throw new Error(
-      "ts-morph is required for route extraction. Install it: pnpm add -D ts-morph",
-    );
+    throw new Error("ts-morph is required for route extraction. Install it: pnpm add -D ts-morph");
   }
 
   const { Project, SyntaxKind } = tsMorph;

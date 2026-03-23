@@ -42,7 +42,8 @@ export async function extractPrismaModels(projectDir: string): Promise<Extracted
       const optional = fieldMatch[3] === "?";
 
       // Skip relation fields (type references another model or is array)
-      if (line.includes("@relation") || prismaType.endsWith("[]") || line.trim().endsWith("[]")) continue;
+      if (line.includes("@relation") || prismaType.endsWith("[]") || line.trim().endsWith("[]"))
+        continue;
       // Also skip if the type is not a known Prisma scalar (it's a relation)
       if (!PRISMA_TYPE_MAP[prismaType] && /^[A-Z]/.test(prismaType)) continue;
 

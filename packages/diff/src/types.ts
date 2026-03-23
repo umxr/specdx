@@ -71,4 +71,3 @@ export class DiffError extends Error {
     this.name = "DiffError";
   }
 }
-

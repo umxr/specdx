@@ -7,9 +7,7 @@ export const singleProjectContextRule: LintRule = {
   run(context) {
     if (context.spec.frontmatter.type !== "project-context") return [];
 
-    const contextSpecs = context.allSpecs.filter(
-      (s) => s.frontmatter.type === "project-context",
-    );
+    const contextSpecs = context.allSpecs.filter((s) => s.frontmatter.type === "project-context");
 
     if (contextSpecs.length > 1) {
       return [

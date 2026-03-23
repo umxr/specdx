@@ -20,8 +20,18 @@ Deletes a user.
 `;
     const result = parseEndpoints(content);
     expect(result).toHaveLength(4);
-    expect(result[0]).toEqual({ method: "GET", path: "/api/users", params: [], description: "Returns a list of users." });
-    expect(result[2]).toEqual({ method: "GET", path: "/api/users/:id", params: ["id"], description: "Returns a single user by ID." });
+    expect(result[0]).toEqual({
+      method: "GET",
+      path: "/api/users",
+      params: [],
+      description: "Returns a list of users.",
+    });
+    expect(result[2]).toEqual({
+      method: "GET",
+      path: "/api/users/:id",
+      params: ["id"],
+      description: "Returns a single user by ID.",
+    });
   });
 
   it("returns empty array when no Endpoints section", () => {

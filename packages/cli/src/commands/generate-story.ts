@@ -22,7 +22,10 @@ function slugify(text: string): string {
     .slice(0, 40);
 }
 
-function detectStoriesDir(configDir: string, config: Awaited<ReturnType<typeof loadConfig>>): string {
+function detectStoriesDir(
+  configDir: string,
+  config: Awaited<ReturnType<typeof loadConfig>>,
+): string {
   for (const entry of Object.values(config.specs)) {
     if (entry.type === "user-story") {
       // Use the directory portion of the glob path

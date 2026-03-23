@@ -41,10 +41,7 @@ describe("edgeCaseCoverageRule", () => {
   });
 
   it("warns when test-plan has no edge case coverage", () => {
-    const spec = makeSpec(
-      "test-plan",
-      "## Test Cases\n\n- User can log in\n- User can sign up",
-    );
+    const spec = makeSpec("test-plan", "## Test Cases\n\n- User can log in\n- User can sign up");
     const result = edgeCaseCoverageRule.run({ spec, allSpecs: [spec] });
     expect(result.length).toBeGreaterThanOrEqual(1);
   });

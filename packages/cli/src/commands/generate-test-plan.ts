@@ -92,20 +92,17 @@ export async function generateTestPlan(
   const allAuthors = Array.from(new Set(storiesBySpec.flatMap((s) => s.authors)));
 
   // Build references to all stories
-  const storyRefs = storiesBySpec.map((s) => `  - id: "${s.storyId}"\n    relationship: "related-to"`);
+  const storyRefs = storiesBySpec.map(
+    (s) => `  - id: "${s.storyId}"\n    relationship: "related-to"`,
+  );
 
   const totalTestCases = storiesBySpec.reduce((sum, s) => sum + s.cases.length, 0);
 
   // Build frontmatter
   const authorsYaml =
-    allAuthors.length > 0
-      ? `[${allAuthors.map((a) => `"${a}"`).join(", ")}]`
-      : '["generated"]';
+    allAuthors.length > 0 ? `[${allAuthors.map((a) => `"${a}"`).join(", ")}]` : '["generated"]';
 
-  const refsYaml =
-    storyRefs.length > 0
-      ? `\nreferences:\n${storyRefs.join("\n")}`
-      : "";
+  const refsYaml = storyRefs.length > 0 ? `\nreferences:\n${storyRefs.join("\n")}` : "";
 
   const frontmatter = [
     "---",
@@ -139,8 +136,7 @@ export async function generateTestPlan(
     })
     .join("\n\n");
 
-  const testCasesBody =
-    storiesBySpec.length > 0 ? testCaseBlocks : "_No user stories found._";
+  const testCasesBody = storiesBySpec.length > 0 ? testCaseBlocks : "_No user stories found._";
 
   // ## Coverage Matrix
   const matrixHeader = "| Story | Test Cases |";

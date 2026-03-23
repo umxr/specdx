@@ -142,7 +142,9 @@ export default defineCommand({
         .map(([k, v]) => `${v} ${k}`)
         .join(", ")}`,
     );
-    console.log(`    Lint: ${result.lintHealth.errors} errors, ${result.lintHealth.warnings} warnings`);
+    console.log(
+      `    Lint: ${result.lintHealth.errors} errors, ${result.lintHealth.warnings} warnings`,
+    );
 
     if (result.staleSpecs.length > 0) {
       console.log(

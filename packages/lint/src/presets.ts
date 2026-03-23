@@ -10,6 +10,8 @@ export function getPreset(name: string): LintRule[] {
     case "strict":
       return allBuiltinRules.map((rule) => ({ ...rule, severity: "error" as const }));
     default:
-      throw new Error(`Unknown preset: "${name}". Use "minimal", "recommended", or "strict", or resolve external presets via resolvePreset() from @specdx/core.`);
+      throw new Error(
+        `Unknown preset: "${name}". Use "minimal", "recommended", or "strict", or resolve external presets via resolvePreset() from @specdx/core.`,
+      );
   }
 }

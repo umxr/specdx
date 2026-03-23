@@ -24,12 +24,20 @@ export async function runReady(): Promise<ReadyResult> {
   const checks: ReadyCheck[] = [];
 
   // Resolve and parse all specs
-  const specs: { spec: ParsedSpec; key: string; entry: { path: string; required?: boolean; owner?: string } }[] = [];
+  const specs: {
+    spec: ParsedSpec;
+    key: string;
+    entry: { path: string; required?: boolean; owner?: string };
+  }[] = [];
   for (const [key, entry] of Object.entries(config.specs)) {
     const paths = await resolveGlob(entry.path, configDir);
     for (const p of paths) {
       const spec = await parseSpec(p);
-      specs.push({ spec, key, entry: entry as { path: string; required?: boolean; owner?: string } });
+      specs.push({
+        spec,
+        key,
+        entry: entry as { path: string; required?: boolean; owner?: string },
+      });
     }
   }
 
@@ -178,7 +186,9 @@ export default defineCommand({
 
     const failCount = result.checks.filter((c) => !c.passed).length;
     if (failCount > 0) {
-      console.log(`\n  Verdict: NOT READY — ${failCount} issue${failCount > 1 ? "s" : ""} to resolve\n`);
+      console.log(
+        `\n  Verdict: NOT READY — ${failCount} issue${failCount > 1 ? "s" : ""} to resolve\n`,
+      );
     } else {
       console.log(`\n  Verdict: READY\n`);
     }

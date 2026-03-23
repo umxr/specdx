@@ -142,12 +142,7 @@ describe("pack", () => {
       { type: "prd", title: "Auth PRD" },
     );
 
-    const result = pack(
-      [prdSpec, ctxSpec],
-      { task: "implement auth" },
-      undefined,
-      emptyGraph(),
-    );
+    const result = pack([prdSpec, ctxSpec], { task: "implement auth" }, undefined, emptyGraph());
 
     // project-context should appear first in the output
     const ctxPos = result.output.indexOf("project-ctx");
@@ -180,12 +175,7 @@ describe("pack", () => {
     );
 
     // Budget large enough for both
-    const result = pack(
-      [prdSpec, ctxSpec],
-      { budget: 5000 },
-      undefined,
-      emptyGraph(),
-    );
+    const result = pack([prdSpec, ctxSpec], { budget: 5000 }, undefined, emptyGraph());
 
     // Overall budget should be the full budget, not the reduced one
     expect(result.stats.budget).toBe(5000);
@@ -206,12 +196,7 @@ describe("pack", () => {
       { type: "prd", title: "Auth PRD" },
     );
 
-    const result = pack(
-      [prdSpec, bigCtx],
-      { budget: 5000 },
-      undefined,
-      emptyGraph(),
-    );
+    const result = pack([prdSpec, bigCtx], { budget: 5000 }, undefined, emptyGraph());
 
     // Regular budget should be at least budget - 2000
     // The exact values depend on countTokens, but the stats should show

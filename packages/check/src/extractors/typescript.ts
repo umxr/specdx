@@ -23,9 +23,7 @@ export async function extractTypeScriptTypes(
   try {
     tsMorph = await import("ts-morph");
   } catch {
-    throw new Error(
-      "ts-morph is required for type extraction. Install it: pnpm add -D ts-morph",
-    );
+    throw new Error("ts-morph is required for type extraction. Install it: pnpm add -D ts-morph");
   }
 
   const { Project, SyntaxKind } = tsMorph;

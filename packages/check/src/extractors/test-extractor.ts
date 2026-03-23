@@ -26,9 +26,7 @@ export async function extractTestDescriptions(
   try {
     tsMorph = await import("ts-morph");
   } catch {
-    throw new Error(
-      "ts-morph is required for test extraction. Install it: pnpm add -D ts-morph",
-    );
+    throw new Error("ts-morph is required for test extraction. Install it: pnpm add -D ts-morph");
   }
 
   const { Project, SyntaxKind } = tsMorph;

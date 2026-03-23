@@ -1,6 +1,12 @@
 import type { ParsedSpec, DependencyGraph } from "@specdx/core";
 import type { PackConfig } from "@specdx/schema";
-import type { PackOptions, PackResult, CompressionOptions, CompressedSpec, RelevanceScore } from "./types.js";
+import type {
+  PackOptions,
+  PackResult,
+  CompressionOptions,
+  CompressedSpec,
+  RelevanceScore,
+} from "./types.js";
 import { scoreSpecs, scoreSpecsByIds } from "./resolver.js";
 import { allocate } from "./allocator.js";
 import { formatXml } from "./formatters/xml.js";

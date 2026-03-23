@@ -4,7 +4,15 @@ import type { ParsedSpec } from "@specdx/core";
 
 const makeSpec = (id: string, type: string): ParsedSpec => ({
   filePath: `specs/${id}.md`,
-  frontmatter: { id, type, title: id, status: "draft", version: "1.0", created: "2026-01-01", authors: ["dev"] },
+  frontmatter: {
+    id,
+    type,
+    title: id,
+    status: "draft",
+    version: "1.0",
+    created: "2026-01-01",
+    authors: ["dev"],
+  },
   content: "",
   sections: [],
   parsedSections: [],

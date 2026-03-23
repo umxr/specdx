@@ -1,9 +1,6 @@
 import type { Finding, AiAssessment, AiCheckResult } from "./types.js";
 
-export async function analyzeWithAi(
-  findings: Finding[],
-  context: string,
-): Promise<AiCheckResult> {
+export async function analyzeWithAi(findings: Finding[], context: string): Promise<AiCheckResult> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     throw new Error(

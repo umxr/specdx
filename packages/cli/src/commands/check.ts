@@ -79,7 +79,9 @@ export default defineCommand({
       for (const [category, stats] of Object.entries(result.score.byCategory)) {
         if (stats.total === 0) continue;
         console.log(`  ${category} (${stats.matched}/${stats.total}):`);
-        const categoryFindings = result.findings.filter((f) => f.category === category.replace(/s$/, ""));
+        const categoryFindings = result.findings.filter(
+          (f) => f.category === category.replace(/s$/, ""),
+        );
         for (const f of categoryFindings) {
           const icon = f.type === "extra" ? "ℹ" : f.severity === "error" ? "✗" : "⚠";
           const detail = f.actual ? ` — ${f.actual}` : "";

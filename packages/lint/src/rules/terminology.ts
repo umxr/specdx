@@ -31,7 +31,8 @@ function extractCompoundTerms(content: string): string[] {
 
 export const terminologyRule: LintRule = {
   id: "consistency/terminology",
-  description: "Detects terminology drift (e.g., user-profile vs UserProfile vs user profile) across specs",
+  description:
+    "Detects terminology drift (e.g., user-profile vs UserProfile vs user profile) across specs",
   severity: "warn",
   run(context) {
     // Only run on the first spec to avoid duplicate diagnostics
