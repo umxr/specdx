@@ -9,6 +9,7 @@ import { singleProjectContextRule } from "./single-project-context.js";
 import { terminologyRule } from "./terminology.js";
 import { edgeCaseCoverageRule } from "./edge-case-coverage.js";
 import { namingConventionsRule } from "./naming-conventions.js";
+import { threatCoverageRule } from "./threat-coverage.js";
 import type { LintRule } from "../types.js";
 
 export const structureRules: LintRule[] = [
@@ -25,6 +26,7 @@ export const contentRules: LintRule[] = [
   noVagueLanguageRule,
   terminologyRule,
   edgeCaseCoverageRule,
+  namingConventionsRule,
 ];
 
 export const allBuiltinRules: LintRule[] = [...structureRules, ...contentRules];
@@ -40,4 +42,5 @@ export {
   singleProjectContextRule,
   terminologyRule,
   edgeCaseCoverageRule,
+  namingConventionsRule,
 };
