@@ -15,7 +15,7 @@ sdx with custom lint rules, how to add new spec type schemas, and the PR process
 ### Clone and install
 
 ```bash
-git clone https://github.com/yourusername/sdx.git
+git clone https://github.com/umxr/specdx.git
 cd sdx
 pnpm install
 ```

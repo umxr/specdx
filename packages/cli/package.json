@@ -1,7 +1,36 @@
 {
   "name": "specdx",
   "version": "0.4.0-alpha.2",
+  "description": "Spec-driven development toolchain. Validate, lint, pack, and ship specs for LLM-assisted workflows.",
   "type": "module",
+  "license": "MIT",
+  "author": "Umar Gora (https://github.com/umxr)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/umxr/specdx.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/umxr/specdx#readme",
+  "bugs": {
+    "url": "https://github.com/umxr/specdx/issues"
+  },
+  "keywords": [
+    "spec",
+    "specification",
+    "prd",
+    "technical-design",
+    "api-contract",
+    "lint",
+    "validation",
+    "llm",
+    "ai",
+    "context-packing",
+    "spec-driven-development",
+    "claude-code"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "bin": {
     "specdx": "./dist/main.js"
   },

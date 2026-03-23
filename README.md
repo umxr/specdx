@@ -179,7 +179,7 @@ metadata; the body is human-readable content.
 | Field | Type | Description |
 |---|---|---|
 | `id` | string | Unique identifier within the spec suite |
-| `type` | enum | `prd`, `technical-design`, `user-story`, `test-plan`, `adr`, `api-contract` |
+| `type` | enum | `prd`, `technical-design`, `user-story`, `test-plan`, `adr`, `api-contract`, `epic`, `quick-spec`, `project-context` |
 | `title` | string | Human-readable title |
 | `status` | enum | `draft`, `review`, `approved`, `superseded` |
 | `version` | string | Semantic version (e.g. `"1.0"`) |
