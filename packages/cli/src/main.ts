@@ -20,6 +20,7 @@ const main = defineCommand({
     update: () => import("./commands/update.js").then((m) => m.default),
     generate: () => import("./commands/generate.js").then((m) => m.default),
     migrate: () => import("./commands/migrate.js").then((m) => m.default),
+    mcp: () => import("./commands/mcp.js").then((m) => m.default),
   },
 });
 
