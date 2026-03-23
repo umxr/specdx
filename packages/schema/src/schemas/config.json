@@ -18,7 +18,7 @@
         "type": "object",
         "properties": {
           "path": { "type": "string" },
-          "type": { "type": "string", "enum": ["prd", "technical-design", "user-story", "test-plan", "adr", "api-contract"] },
+          "type": { "type": "string", "enum": ["prd", "technical-design", "user-story", "test-plan", "adr", "api-contract", "epic", "quick-spec", "project-context"] },
           "required": { "type": "boolean", "default": false },
           "requires": { "type": "array", "items": { "type": "string" } },
           "owner": { "type": "string" }
