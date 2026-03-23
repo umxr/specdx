@@ -546,17 +546,17 @@ Tools that help maintain and evolve specs over time.
 
 ### Phase 4 Exit Criteria
 
-- [ ] `sdx check` detects drift between specs and code (static analysis)
-- [ ] `sdx check --ai` provides single-provider LLM-assisted analysis as fallback (opt-in)
-- [ ] `sdx:verify` skill provides AI-assisted spec review within AI coding tools (recommended path)
-- [ ] API route matching works for at least Express, Hono, and Next.js
-- [ ] MCP server is functional and tested with Claude
+- [x] `sdx check` detects drift between specs and code (static analysis)
+- [x] `sdx check --ai` provides single-provider LLM-assisted analysis as fallback (opt-in)
+- [x] `sdx:verify` skill provides AI-assisted spec review within AI coding tools (recommended path)
+- [x] API route matching works for at least Express, Hono, and Next.js
+- [x] MCP server is functional and tested with Claude
 - [ ] Skills adapter architecture is documented for community contributions
-- [ ] `sdx:review-spec` provides automated spec quality review via subagent
-- [ ] `sdx:check-drift` detects spec-implementation deviations using host LLM
-- [ ] Spec generation stubs are useful starting points
-- [ ] `epic`, `quick-spec`, and `project-context` spec types implemented
-- [ ] Multi-layer spec review (completeness, consistency, adversarial) working
+- [x] `sdx:review-spec` provides automated spec quality review via subagent
+- [x] `sdx:check-drift` detects spec-implementation deviations using host LLM
+- [x] Spec generation stubs are useful starting points
+- [x] `epic`, `quick-spec`, and `project-context` spec types implemented
+- [x] Multi-layer spec review (completeness, consistency, adversarial) working
 - [ ] Methodology module system supports community-published modules
 - [ ] Conference talk delivered or submitted
 - [ ] npm weekly downloads >500
