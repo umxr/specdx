@@ -27,6 +27,7 @@ export const contentRules: LintRule[] = [
   terminologyRule,
   edgeCaseCoverageRule,
   namingConventionsRule,
+  threatCoverageRule,
 ];
 
 export const allBuiltinRules: LintRule[] = [...structureRules, ...contentRules];
@@ -43,4 +44,5 @@ export {
   terminologyRule,
   edgeCaseCoverageRule,
   namingConventionsRule,
+  threatCoverageRule,
 };
