@@ -47,7 +47,7 @@ packages/cli/tsup.config.ts               # MODIFY: add @specdx/mcp to noExterna
 - Create: `packages/mcp/vitest.config.ts`
 - Create: `packages/mcp/src/index.ts`
 
-- [ ] **Step 1: Create package.json**
+- [x] **Step 1: Create package.json**
 
 ```json
 {
@@ -83,7 +83,7 @@ packages/cli/tsup.config.ts               # MODIFY: add @specdx/mcp to noExterna
 }
 ```
 
-- [ ] **Step 2: Create tsconfig.json**
+- [x] **Step 2: Create tsconfig.json**
 
 ```json
 {
@@ -107,7 +107,7 @@ packages/cli/tsup.config.ts               # MODIFY: add @specdx/mcp to noExterna
 }
 ```
 
-- [ ] **Step 3: Create vitest.config.ts**
+- [x] **Step 3: Create vitest.config.ts**
 
 ```typescript
 import { mergeConfig } from "vitest/config";
@@ -116,19 +116,19 @@ import shared from "../../vitest.shared.js";
 export default mergeConfig(shared, {});
 ```
 
-- [ ] **Step 4: Create src/index.ts (placeholder)**
+- [x] **Step 4: Create src/index.ts (placeholder)**
 
 ```typescript
 export { createMcpServer } from "./server.js";
 ```
 
-- [ ] **Step 5: Install dependencies**
+- [x] **Step 5: Install dependencies**
 
 ```bash
 pnpm install
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/mcp/
@@ -150,7 +150,7 @@ Each tool is a thin wrapper that calls existing programmatic APIs.
 - `packages/mcp/src/tools/diff.ts`
 - `packages/mcp/src/tools/graph.ts`
 
-- [ ] **Step 1: Create validate tool**
+- [x] **Step 1: Create validate tool**
 
 `packages/mcp/src/tools/validate.ts`:
 
@@ -175,7 +175,7 @@ export async function handleValidate(params: { configPath?: string }): Promise<s
 }
 ```
 
-- [ ] **Step 2: Create lint tool**
+- [x] **Step 2: Create lint tool**
 
 `packages/mcp/src/tools/lint.ts`:
 
@@ -218,7 +218,7 @@ export async function handleLint(params: { preset?: string; specPath?: string })
 }
 ```
 
-- [ ] **Step 3: Create pack tool**
+- [x] **Step 3: Create pack tool**
 
 `packages/mcp/src/tools/pack.ts`:
 
@@ -265,7 +265,7 @@ export async function handlePack(params: {
 }
 ```
 
-- [ ] **Step 4: Create status tool**
+- [x] **Step 4: Create status tool**
 
 `packages/mcp/src/tools/status.ts`:
 
@@ -343,7 +343,7 @@ export async function handleStatus(): Promise<string> {
 }
 ```
 
-- [ ] **Step 5: Create check tool**
+- [x] **Step 5: Create check tool**
 
 `packages/mcp/src/tools/check.ts`:
 
@@ -376,7 +376,7 @@ export async function handleCheck(params: { framework?: string; specId?: string 
 }
 ```
 
-- [ ] **Step 6: Create diff tool**
+- [x] **Step 6: Create diff tool**
 
 `packages/mcp/src/tools/diff.ts`:
 
@@ -404,7 +404,7 @@ export async function handleDiff(params: { base?: string; head?: string }): Prom
 }
 ```
 
-- [ ] **Step 7: Create graph tool**
+- [x] **Step 7: Create graph tool**
 
 `packages/mcp/src/tools/graph.ts`:
 
@@ -440,7 +440,7 @@ export async function handleGraph(params: { format?: string }): Promise<string> 
 }
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/mcp/src/tools/
@@ -458,7 +458,7 @@ Wire all tools into an MCP server using `@modelcontextprotocol/sdk`.
 - Create: `packages/mcp/src/server.test.ts`
 - Modify: `packages/mcp/src/index.ts`
 
-- [ ] **Step 1: Write test**
+- [x] **Step 1: Write test**
 
 `packages/mcp/src/server.test.ts`:
 
@@ -476,7 +476,7 @@ describe("createMcpServer", () => {
 
 (Full integration tests would require spawning the server on stdio — unit test just verifies the server object is created. Real testing is via smoke test in Task 5.)
 
-- [ ] **Step 2: Implement server.ts**
+- [x] **Step 2: Implement server.ts**
 
 `packages/mcp/src/server.ts`:
 
@@ -581,19 +581,19 @@ export function createMcpServer(): McpServer {
 
 **IMPORTANT:** The `@modelcontextprotocol/sdk` uses `zod` for parameter schemas. Add `zod` as a dependency in `packages/mcp/package.json`. Check if zod is already available in the monorepo — if not, add it.
 
-- [ ] **Step 3: Update index.ts**
+- [x] **Step 3: Update index.ts**
 
 ```typescript
 export { createMcpServer } from "./server.js";
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 pnpm --filter @specdx/mcp test
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/mcp/src/
@@ -612,15 +612,15 @@ Create `sdx mcp` command that starts the MCP server on stdio.
 - Modify: `packages/cli/tsup.config.ts`
 - Modify: `packages/cli/package.json`
 
-- [ ] **Step 1: Add @specdx/mcp to CLI dependencies**
+- [x] **Step 1: Add @specdx/mcp to CLI dependencies**
 
 In `packages/cli/package.json`, add `"@specdx/mcp": "workspace:*"` to `devDependencies`.
 
-- [ ] **Step 2: Update tsup.config.ts**
+- [x] **Step 2: Update tsup.config.ts**
 
 Add `"@specdx/mcp"` to both `noExternal` arrays. Add `"@modelcontextprotocol/sdk"` and `"zod"` to both `external` arrays.
 
-- [ ] **Step 3: Create mcp command**
+- [x] **Step 3: Create mcp command**
 
 `packages/cli/src/commands/mcp.ts`:
 
@@ -641,17 +641,17 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 4: Register in main.ts**
+- [x] **Step 4: Register in main.ts**
 
 Add to subCommands: `mcp: () => import("./commands/mcp.js").then((m) => m.default),`
 
-- [ ] **Step 5: Build and test**
+- [x] **Step 5: Build and test**
 
 ```bash
 pnpm install && pnpm build && pnpm --filter specdx test
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/cli/
@@ -662,25 +662,25 @@ git commit -m "feat(cli): add sdx mcp command to start MCP server"
 
 ## Task 5: Final Integration
 
-- [ ] **Step 1: Build all packages**
+- [x] **Step 1: Build all packages**
 
 ```bash
 pnpm build
 ```
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 ```bash
 pnpm test
 ```
 
-- [ ] **Step 3: Typecheck and lint**
+- [x] **Step 3: Typecheck and lint**
 
 ```bash
 pnpm typecheck && pnpm lint:code
 ```
 
-- [ ] **Step 4: Smoke test MCP server**
+- [x] **Step 4: Smoke test MCP server**
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | node packages/cli/dist/main.js mcp
@@ -688,7 +688,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":
 
 This should return a JSON-RPC response with server capabilities. The server will hang waiting for more input — that's expected (it's a stdio server). Kill with Ctrl-C.
 
-- [ ] **Step 5: Commit any fixes**
+- [x] **Step 5: Commit any fixes**
 
 ```bash
 git add -A

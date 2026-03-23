@@ -36,7 +36,7 @@ packages/lint/src/rules/index.ts                        # MODIFY: register 5 new
 - Create: `packages/lint/src/rules/naming-conventions.ts`
 - Create: `packages/lint/src/rules/naming-conventions.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -113,9 +113,9 @@ describe("namingConventionsRule", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement naming-conventions rule**
+- [x] **Step 3: Implement naming-conventions rule**
 
 Key logic:
 - For `prd` specs: check `## Features` section for bullet points. Each feature should match `**F\d+**:`. Warn if features exist but don't follow the pattern.
@@ -123,9 +123,9 @@ Key logic:
 - For `api-contract` specs: check `## Endpoints` section for paths containing camelCase segments (regex: `/\/[a-z]+[A-Z]/`). Warn per endpoint.
 - Skip other spec types.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/lint/src/rules/naming-conventions.*
@@ -140,7 +140,7 @@ git commit -m "feat(lint): add consistency/naming-conventions rule"
 - Create: `packages/lint/src/rules/terminology.ts`
 - Create: `packages/lint/src/rules/terminology.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -189,9 +189,9 @@ describe("terminologyRule", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement terminology rule**
+- [x] **Step 3: Implement terminology rule**
 
 Key logic:
 - Only run on the first spec in `allSpecs` (to avoid duplicate diagnostics)
@@ -209,9 +209,9 @@ function editDistance(a: string, b: string): number {
 
 Extract terms: split on whitespace and punctuation, find sequences of 2+ words that appear as compounds (e.g., "user profile", "user-profile", "UserProfile"). Normalize: lowercase, strip hyphens.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/lint/src/rules/terminology.*
@@ -226,7 +226,7 @@ git commit -m "feat(lint): add consistency/terminology rule"
 - Create: `packages/lint/src/rules/edge-case-coverage.ts`
 - Create: `packages/lint/src/rules/edge-case-coverage.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -277,18 +277,18 @@ describe("edgeCaseCoverageRule", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement edge-case-coverage rule**
+- [x] **Step 3: Implement edge-case-coverage rule**
 
 Key logic:
 - Only applies to `user-story` and `test-plan` specs
 - Check content for keywords: `error`, `invalid`, `empty`, `timeout`, `fails`, `failure`, `boundary`, `edge case`, `null`, `undefined`, `reject`, `unauthorized`, `forbidden`, `404`, `500`
 - If none found, emit a warning: "No error states or edge cases mentioned. Consider adding error handling, boundary conditions, or failure mode scenarios."
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/lint/src/rules/edge-case-coverage.*
@@ -303,7 +303,7 @@ git commit -m "feat(lint): add completeness/edge-case-coverage rule"
 - Create: `packages/lint/src/rules/threat-coverage.ts`
 - Create: `packages/lint/src/rules/threat-coverage.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -353,9 +353,9 @@ describe("threatCoverageRule", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement threat-coverage rule**
+- [x] **Step 3: Implement threat-coverage rule**
 
 Key logic:
 - Only runs on `technical-design` specs
@@ -364,9 +364,9 @@ Key logic:
 - For each threat, check if the technical design content mentions related keywords (extract 2-3 key terms from each threat description)
 - If a threat has no corresponding mention in the technical design, warn
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/lint/src/rules/threat-coverage.*
@@ -381,7 +381,7 @@ git commit -m "feat(lint): add security/threat-coverage rule"
 - Create: `packages/lint/src/rules/ambiguity-score-ai.ts`
 - Create: `packages/lint/src/rules/ambiguity-score-ai.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```typescript
 import { describe, it, expect, vi } from "vitest";
@@ -421,9 +421,9 @@ describe("ambiguityScoreAiRule", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement ambiguity-score-ai rule**
+- [x] **Step 3: Implement ambiguity-score-ai rule**
 
 **Important design note:** The `LintRule` interface has a synchronous `run()` method — it returns `Diagnostic[]`, not `Promise<Diagnostic[]>`. The Anthropic API requires async calls. Options:
 
@@ -455,9 +455,9 @@ export const ambiguityScoreAiRule: LintRule = {
 };
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/lint/src/rules/ambiguity-score-ai.*
@@ -471,7 +471,7 @@ git commit -m "feat(lint): add clarity/ambiguity-score-ai rule (placeholder for 
 **Files:**
 - Modify: `packages/lint/src/rules/index.ts`
 
-- [ ] **Step 1: Add imports and register rules**
+- [x] **Step 1: Add imports and register rules**
 
 In `packages/lint/src/rules/index.ts`, add:
 
@@ -502,13 +502,13 @@ Add to named exports:
   ambiguityScoreAiRule,
 ```
 
-- [ ] **Step 2: Run lint package tests**
+- [x] **Step 2: Run lint package tests**
 
 ```bash
 pnpm --filter @specdx/lint test
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/lint/src/rules/index.ts
@@ -519,32 +519,32 @@ git commit -m "feat(lint): register 5 new advanced lint rules"
 
 ## Task 7: Final Integration
 
-- [ ] **Step 1: Build all packages**
+- [x] **Step 1: Build all packages**
 
 ```bash
 pnpm build
 ```
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 ```bash
 pnpm test
 ```
 
-- [ ] **Step 3: Typecheck and lint**
+- [x] **Step 3: Typecheck and lint**
 
 ```bash
 pnpm typecheck && pnpm lint:code
 ```
 
-- [ ] **Step 4: Smoke test — run lint with new rules**
+- [x] **Step 4: Smoke test — run lint with new rules**
 
 ```bash
 node packages/cli/dist/main.js lint
 node packages/cli/dist/main.js lint --preset strict
 ```
 
-- [ ] **Step 5: Commit any fixes**
+- [x] **Step 5: Commit any fixes**
 
 ```bash
 git add -A

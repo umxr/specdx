@@ -44,7 +44,7 @@ packages/cli/src/commands/init.test.ts          # MODIFY: add tests for new temp
 - Modify: `packages/schema/src/sections.ts`
 - Modify: `packages/schema/src/index.ts`
 
-- [ ] **Step 1: Add new types to SPEC_TYPES array**
+- [x] **Step 1: Add new types to SPEC_TYPES array**
 
 In `packages/schema/src/types.ts`, add `"epic"`, `"quick-spec"`, `"project-context"` to the `SPEC_TYPES` array:
 
@@ -62,7 +62,7 @@ export const SPEC_TYPES = [
 ] as const;
 ```
 
-- [ ] **Step 2: Add type interfaces**
+- [x] **Step 2: Add type interfaces**
 
 After the existing `ApiContractSpec` interface, add:
 
@@ -97,7 +97,7 @@ export type Spec =
   | ProjectContextSpec;
 ```
 
-- [ ] **Step 3: Add required sections**
+- [x] **Step 3: Add required sections**
 
 In `packages/schema/src/sections.ts`, add entries for the 3 new types:
 
@@ -110,7 +110,7 @@ export const REQUIRED_SECTIONS: Record<SpecType, string[]> = {
 };
 ```
 
-- [ ] **Step 4: Export new types from index.ts**
+- [x] **Step 4: Export new types from index.ts**
 
 In `packages/schema/src/index.ts`, add to the export block:
 
@@ -120,13 +120,13 @@ In `packages/schema/src/index.ts`, add to the export block:
   type ProjectContextSpec,
 ```
 
-- [ ] **Step 5: Run schema tests**
+- [x] **Step 5: Run schema tests**
 
 ```bash
 pnpm --filter @specdx/schema test
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/schema/src/
@@ -144,11 +144,11 @@ git commit -m "feat(schema): add epic, quick-spec, and project-context spec type
 - Modify: `packages/schema/src/schemas/base-spec.json`
 - Modify: `packages/schema/src/validator.ts` (if it loads schemas by name)
 
-- [ ] **Step 1: Update base-spec.json type enum**
+- [x] **Step 1: Update base-spec.json type enum**
 
 In `packages/schema/src/schemas/base-spec.json`, find the `type` property's `enum` array and add `"epic"`, `"quick-spec"`, `"project-context"`. Read the file first to see the exact structure.
 
-- [ ] **Step 2: Create epic.json**
+- [x] **Step 2: Create epic.json**
 
 ```json
 {
@@ -169,7 +169,7 @@ In `packages/schema/src/schemas/base-spec.json`, find the `type` property's `enu
 }
 ```
 
-- [ ] **Step 3: Create quick-spec.json**
+- [x] **Step 3: Create quick-spec.json**
 
 ```json
 {
@@ -188,7 +188,7 @@ In `packages/schema/src/schemas/base-spec.json`, find the `type` property's `enu
 }
 ```
 
-- [ ] **Step 4: Create project-context.json**
+- [x] **Step 4: Create project-context.json**
 
 ```json
 {
@@ -207,7 +207,7 @@ In `packages/schema/src/schemas/base-spec.json`, find the `type` property's `enu
 }
 ```
 
-- [ ] **Step 5: Register new schemas in validator**
+- [x] **Step 5: Register new schemas in validator**
 
 In `packages/schema/src/validator.ts`, add three imports after the existing schema imports (line 11):
 
@@ -225,7 +225,7 @@ Then add three entries to the `specValidators` record (after line 36):
   "project-context": ajv.compile(projectContextSchema),
 ```
 
-- [ ] **Step 6: Write validation tests**
+- [x] **Step 6: Write validation tests**
 
 Add tests to the existing schema test file (read it first to see the pattern) that validate:
 - A valid epic spec passes validation
@@ -233,13 +233,13 @@ Add tests to the existing schema test file (read it first to see the pattern) th
 - A valid project-context passes validation
 - An epic missing `epic_id` fails validation
 
-- [ ] **Step 7: Run tests**
+- [x] **Step 7: Run tests**
 
 ```bash
 pnpm --filter @specdx/schema test
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/schema/src/schemas/ packages/schema/src/validator.ts
@@ -255,7 +255,7 @@ git commit -m "feat(schema): add JSON schemas for epic, quick-spec, project-cont
 - Create: `packages/lint/src/rules/single-project-context.test.ts`
 - Modify: `packages/lint/src/rules/index.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/lint/src/rules/single-project-context.test.ts`:
 
@@ -323,13 +323,13 @@ describe("singleProjectContextRule", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 pnpm --filter @specdx/lint test
 ```
 
-- [ ] **Step 3: Implement the rule**
+- [x] **Step 3: Implement the rule**
 
 `packages/lint/src/rules/single-project-context.ts`:
 
@@ -363,7 +363,7 @@ export const singleProjectContextRule: LintRule = {
 };
 ```
 
-- [ ] **Step 4: Register the rule**
+- [x] **Step 4: Register the rule**
 
 In `packages/lint/src/rules/index.ts`:
 
@@ -371,13 +371,13 @@ In `packages/lint/src/rules/index.ts`:
 2. Add to `structureRules` array: `singleProjectContextRule,`
 3. Add to the named exports at the bottom
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 ```bash
 pnpm --filter @specdx/lint test
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/lint/src/rules/
@@ -391,7 +391,7 @@ git commit -m "feat(lint): add single-project-context rule"
 **Files:**
 - Modify: `packages/pack/src/index.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Add a test to the existing pack test file that verifies project-context specs are always included first and get reserved token allocation. Read the existing test file first to understand the pattern.
 
@@ -400,9 +400,9 @@ The test should verify:
 - It appears first in the output
 - It reduces the available budget for other specs
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement project-context reservation in pack()**
+- [x] **Step 3: Implement project-context reservation in pack()**
 
 In `packages/pack/src/index.ts`, modify the `pack()` function:
 
@@ -477,13 +477,13 @@ stats.used += reservedTokens;
 stats.specsIncluded += reservedCompressed.length;
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 pnpm --filter @specdx/pack test
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/pack/src/
@@ -498,7 +498,7 @@ git commit -m "feat(pack): reserve token allocation for project-context specs"
 - Modify: `packages/cli/src/commands/init.ts`
 - Modify: `packages/cli/src/commands/init.test.ts`
 
-- [ ] **Step 1: Add new templates**
+- [x] **Step 1: Add new templates**
 
 In `packages/cli/src/commands/init.ts`:
 
@@ -524,7 +524,7 @@ In `packages/cli/src/commands/init.ts`:
 
 4. Update the `validTemplates` array in the `run()` function to include `"quick"` and `"context"`.
 
-- [ ] **Step 2: Write tests**
+- [x] **Step 2: Write tests**
 
 Add to `packages/cli/src/commands/init.test.ts`:
 
@@ -550,13 +550,13 @@ it("scaffolds a context project", async () => {
 });
 ```
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 ```bash
 pnpm build && pnpm --filter specdx test
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/cli/src/commands/init.ts packages/cli/src/commands/init.test.ts
@@ -567,38 +567,38 @@ git commit -m "feat(cli): add quick and context init templates for new spec type
 
 ## Task 6: Full Integration Test + Cleanup
 
-- [ ] **Step 1: Build all packages**
+- [x] **Step 1: Build all packages**
 
 ```bash
 pnpm build
 ```
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 ```bash
 pnpm test
 ```
 
-- [ ] **Step 3: Run typecheck and lint**
+- [x] **Step 3: Run typecheck and lint**
 
 ```bash
 pnpm typecheck && pnpm lint:code
 ```
 
-- [ ] **Step 4: Smoke test — create a project-context spec**
+- [x] **Step 4: Smoke test — create a project-context spec**
 
 ```bash
 node packages/cli/dist/main.js init --name test-ctx --template context --dir /tmp/sdx-ctx-test
 node packages/cli/dist/main.js validate --dir /tmp/sdx-ctx-test
 ```
 
-- [ ] **Step 5: Smoke test — lint with project-context**
+- [x] **Step 5: Smoke test — lint with project-context**
 
 ```bash
 node packages/cli/dist/main.js lint --dir /tmp/sdx-ctx-test
 ```
 
-- [ ] **Step 6: Commit final changes (if any fixes needed)**
+- [x] **Step 6: Commit final changes (if any fixes needed)**
 
 ```bash
 git add -A

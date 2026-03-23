@@ -82,7 +82,7 @@ packages/cli/tsup.config.ts              # MODIFY: add @specdx/check to noExtern
 - Create: `packages/check/src/index.ts`
 - Create: `packages/check/src/types.ts`
 
-- [ ] **Step 1: Create package.json**
+- [x] **Step 1: Create package.json**
 
 ```json
 {
@@ -121,7 +121,7 @@ packages/cli/tsup.config.ts              # MODIFY: add @specdx/check to noExtern
 }
 ```
 
-- [ ] **Step 2: Create tsconfig.json**
+- [x] **Step 2: Create tsconfig.json**
 
 ```json
 {
@@ -141,7 +141,7 @@ packages/cli/tsup.config.ts              # MODIFY: add @specdx/check to noExtern
 }
 ```
 
-- [ ] **Step 3: Create vitest.config.ts**
+- [x] **Step 3: Create vitest.config.ts**
 
 ```typescript
 import { mergeConfig } from "vitest/config";
@@ -150,7 +150,7 @@ import shared from "../../vitest.shared.js";
 export default mergeConfig(shared, {});
 ```
 
-- [ ] **Step 4: Create src/types.ts**
+- [x] **Step 4: Create src/types.ts**
 
 ```typescript
 export interface CheckResult {
@@ -226,7 +226,7 @@ export interface CheckConfig {
 }
 ```
 
-- [ ] **Step 5: Create src/index.ts (empty exports for now)**
+- [x] **Step 5: Create src/index.ts (empty exports for now)**
 
 ```typescript
 export type {
@@ -244,14 +244,14 @@ export type {
 } from "./types.js";
 ```
 
-- [ ] **Step 6: Install dependencies and verify build**
+- [x] **Step 6: Install dependencies and verify build**
 
 ```bash
 cd packages/check && pnpm install
 pnpm build
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/check/
@@ -268,7 +268,7 @@ Parse spec content to extract endpoints, type definitions, and test cases from m
 - Create: `packages/check/src/spec-parsers.ts`
 - Create: `packages/check/src/spec-parsers.test.ts`
 
-- [ ] **Step 1: Write failing tests for spec parsers**
+- [x] **Step 1: Write failing tests for spec parsers**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -356,14 +356,14 @@ describe("parseTestCases", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 pnpm --filter @specdx/check test
 ```
 Expected: FAIL — functions not defined.
 
-- [ ] **Step 3: Implement spec parsers**
+- [x] **Step 3: Implement spec parsers**
 
 ```typescript
 import type { SpecEndpoint, SpecTypeDefinition, SpecTestCase, HttpMethod } from "./types.js";
@@ -457,14 +457,14 @@ export function parseTestCases(content: string): SpecTestCase[] {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 pnpm --filter @specdx/check test
 ```
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/check/src/spec-parsers.ts packages/check/src/spec-parsers.test.ts
@@ -481,7 +481,7 @@ git commit -m "feat(check): add spec section parsers for endpoints, types, test 
 - Create: `packages/check/src/extractors/express.test.ts`
 - Create: `packages/check/test/fixtures/express-app.ts`
 
-- [ ] **Step 1: Create shared extractor types**
+- [x] **Step 1: Create shared extractor types**
 
 `packages/check/src/extractors/types.ts`:
 ```typescript
@@ -494,7 +494,7 @@ export interface RouteExtractor {
 export type { ExtractedRoute, ExtractedType, ExtractedTest };
 ```
 
-- [ ] **Step 2: Create Express fixture**
+- [x] **Step 2: Create Express fixture**
 
 `packages/check/test/fixtures/express-app.ts`:
 ```typescript
@@ -528,7 +528,7 @@ app.use("/api", router);
 export default app;
 ```
 
-- [ ] **Step 3: Write failing test for Express extractor**
+- [x] **Step 3: Write failing test for Express extractor**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -561,14 +561,14 @@ describe("extractExpressRoutes", () => {
 });
 ```
 
-- [ ] **Step 4: Run test to verify it fails**
+- [x] **Step 4: Run test to verify it fails**
 
 ```bash
 pnpm --filter @specdx/check test
 ```
 Expected: FAIL
 
-- [ ] **Step 5: Implement Express extractor**
+- [x] **Step 5: Implement Express extractor**
 
 `packages/check/src/extractors/express.ts`:
 ```typescript
@@ -671,14 +671,14 @@ export async function extractExpressRoutes(
 }
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 ```bash
 pnpm --filter @specdx/check test
 ```
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/check/src/extractors/ packages/check/test/
@@ -694,7 +694,7 @@ git commit -m "feat(check): add Express route extractor with ts-morph AST parsin
 - Create: `packages/check/src/extractors/hono.test.ts`
 - Create: `packages/check/test/fixtures/hono-app.ts`
 
-- [ ] **Step 1: Create Hono fixture**
+- [x] **Step 1: Create Hono fixture**
 
 `packages/check/test/fixtures/hono-app.ts`:
 ```typescript
@@ -713,7 +713,7 @@ app.route("/api/users", users);
 export default app;
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -734,9 +734,9 @@ describe("extractHonoRoutes", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
-- [ ] **Step 4: Implement Hono extractor**
+- [x] **Step 4: Implement Hono extractor**
 
 Hono uses the same `app.get("/path", handler)` pattern as Express, plus `app.route("/prefix", subApp)` for mounting. The implementation is structurally identical to the Express extractor — same AST walk for HTTP method calls, same mount prefix tracking but looking for `.route()` instead of `.use()`.
 
@@ -848,9 +848,9 @@ export async function extractHonoRoutes(
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/check/src/extractors/hono.* packages/check/test/fixtures/hono-app.ts
@@ -868,7 +868,7 @@ git commit -m "feat(check): add Hono route extractor"
 - Create: `packages/check/test/fixtures/nextjs-app/api/users/[id]/route.ts`
 - Create: `packages/check/test/fixtures/nextjs-app/api/posts/route.ts`
 
-- [ ] **Step 1: Create Next.js fixtures**
+- [x] **Step 1: Create Next.js fixtures**
 
 `packages/check/test/fixtures/nextjs-app/api/users/route.ts`:
 ```typescript
@@ -899,7 +899,7 @@ export async function GET() {
 }
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -933,9 +933,9 @@ describe("extractNextjsRoutes", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
-- [ ] **Step 4: Implement Next.js extractor**
+- [x] **Step 4: Implement Next.js extractor**
 
 This is file-system based — no ts-morph needed for directory walking, only for detecting exported HTTP method functions.
 
@@ -1046,9 +1046,9 @@ async function detectExportedMethods(filePath: string): Promise<HttpMethod[]> {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/check/src/extractors/nextjs.* packages/check/test/fixtures/nextjs-app/
@@ -1064,7 +1064,7 @@ git commit -m "feat(check): add Next.js App Router route extractor"
 - Create: `packages/check/src/extractors/typescript.test.ts`
 - Create: `packages/check/test/fixtures/types.ts`
 
-- [ ] **Step 1: Create TypeScript fixture**
+- [x] **Step 1: Create TypeScript fixture**
 
 `packages/check/test/fixtures/types.ts`:
 ```typescript
@@ -1087,7 +1087,7 @@ export interface Post {
 export type UserRole = "admin" | "user";
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -1115,15 +1115,15 @@ describe("extractTypeScriptTypes", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
-- [ ] **Step 4: Implement TypeScript type extractor**
+- [x] **Step 4: Implement TypeScript type extractor**
 
 `packages/check/src/extractors/typescript.ts` — uses ts-morph to find `interface` and `type` (object-like) declarations, extracts field names, types, and optional markers.
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/check/src/extractors/typescript.* packages/check/test/fixtures/types.ts
@@ -1139,7 +1139,7 @@ git commit -m "feat(check): add TypeScript type/interface extractor"
 - Create: `packages/check/src/extractors/zod.test.ts`
 - Create: `packages/check/test/fixtures/zod-schemas.ts`
 
-- [ ] **Step 1: Create Zod fixture**
+- [x] **Step 1: Create Zod fixture**
 
 `packages/check/test/fixtures/zod-schemas.ts`:
 ```typescript
@@ -1162,7 +1162,7 @@ export const PostSchema = z.object({
 });
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -1189,15 +1189,15 @@ describe("extractZodSchemas", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
-- [ ] **Step 4: Implement Zod extractor**
+- [x] **Step 4: Implement Zod extractor**
 
 Uses ts-morph to find `z.object({...})` calls. Strips `Schema`/`schema` suffix from variable name. Maps `z.string()` → `string`, `z.number()` → `number`, `z.date()` → `Date`, `z.boolean()` → `boolean`, `z.enum([...])` → union. Detects `.optional()` chaining.
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/check/src/extractors/zod.* packages/check/test/fixtures/zod-schemas.ts
@@ -1213,7 +1213,7 @@ git commit -m "feat(check): add Zod schema extractor"
 - Create: `packages/check/src/extractors/prisma.test.ts`
 - Create: `packages/check/test/fixtures/schema.prisma`
 
-- [ ] **Step 1: Create Prisma fixture**
+- [x] **Step 1: Create Prisma fixture**
 
 `packages/check/test/fixtures/schema.prisma`:
 ```prisma
@@ -1236,7 +1236,7 @@ model Post {
 }
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -1274,9 +1274,9 @@ describe("extractPrismaModels", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
-- [ ] **Step 4: Implement Prisma extractor (regex-based, no ts-morph)**
+- [x] **Step 4: Implement Prisma extractor (regex-based, no ts-morph)**
 
 `packages/check/src/extractors/prisma.ts`:
 ```typescript
@@ -1341,9 +1341,9 @@ export async function extractPrismaModels(projectDir: string): Promise<Extracted
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/check/src/extractors/prisma.* packages/check/test/fixtures/schema.prisma
@@ -1358,7 +1358,7 @@ git commit -m "feat(check): add Prisma model extractor (regex-based)"
 - Create: `packages/check/src/matchers/routes.ts`
 - Create: `packages/check/src/matchers/routes.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -1409,9 +1409,9 @@ describe("matchRoutes", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement route matcher**
+- [x] **Step 3: Implement route matcher**
 
 `packages/check/src/matchers/routes.ts`:
 ```typescript
@@ -1472,9 +1472,9 @@ export function matchRoutes(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/check/src/matchers/routes.*
@@ -1489,19 +1489,19 @@ git commit -m "feat(check): add route matcher (spec endpoints vs code routes)"
 - Create: `packages/check/src/matchers/types.ts`
 - Create: `packages/check/src/matchers/types.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Test fuzzy name matching (User vs UserModel), field comparison (missing/extra/mismatched fields), optional detection.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement type matcher**
+- [x] **Step 3: Implement type matcher**
 
 Normalise type names (lowercase, strip suffixes: Schema, Model, Type, Interface). For each spec type, find best-matching code type. Compare field by field. Report missing/extra/mismatched fields.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/check/src/matchers/types.*
@@ -1517,7 +1517,7 @@ git commit -m "feat(check): add type matcher (spec data model vs code types)"
 - Create: `packages/check/src/matchers/tests.test.ts`
 - Create: `packages/check/test/fixtures/sample.test.ts`
 
-- [ ] **Step 1: Create test fixture**
+- [x] **Step 1: Create test fixture**
 
 `packages/check/test/fixtures/sample.test.ts`:
 ```typescript
@@ -1528,23 +1528,23 @@ describe("UserService", () => {
 });
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 Test Jaccard similarity matching between spec test case descriptions and actual test descriptions.
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
-- [ ] **Step 4: Implement test matcher with Jaccard similarity**
+- [x] **Step 4: Implement test matcher with Jaccard similarity**
 
 Extract test descriptions from code using ts-morph (find `it()` / `test()` / `describe()` string literals). Normalise words (lowercase, remove punctuation). Compute Jaccard similarity = |intersection| / |union|. Threshold: 0.4.
 
-- [ ] **Step 5: Write test extractor**
+- [x] **Step 5: Write test extractor**
 
 `packages/check/src/extractors/test-extractor.ts` — uses ts-morph to find `it()`, `test()`, and `describe()` calls and extract their string descriptions.
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/check/src/matchers/tests.* packages/check/src/extractors/test-extractor.* packages/check/test/fixtures/sample.test.ts
@@ -1559,7 +1559,7 @@ git commit -m "feat(check): add test coverage matcher with Jaccard similarity"
 - Create: `packages/check/src/score.ts`
 - Create: `packages/check/src/score.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -1593,13 +1593,13 @@ describe("computeScore", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement scorer**
+- [x] **Step 3: Implement scorer**
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/check/src/score.*
@@ -1614,13 +1614,13 @@ git commit -m "feat(check): add implementation completeness scorer"
 - Create: `packages/check/src/check.ts`
 - Create: `packages/check/src/check.test.ts`
 
-- [ ] **Step 1: Write failing integration test**
+- [x] **Step 1: Write failing integration test**
 
 Uses fixture files to run a full check: parse specs → extract routes/types → match → score. Test with mock ParsedSpec objects containing the right section content.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement orchestrator**
+- [x] **Step 3: Implement orchestrator**
 
 `packages/check/src/check.ts`:
 ```typescript
@@ -1646,11 +1646,11 @@ export async function runCheck(
 }
 ```
 
-- [ ] **Step 4: Update src/index.ts with all exports**
+- [x] **Step 4: Update src/index.ts with all exports**
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/check/src/check.* packages/check/src/index.ts
@@ -1665,7 +1665,7 @@ git commit -m "feat(check): add check orchestrator that runs all matchers"
 - Modify: `packages/schema/src/types.ts`
 - Modify: `packages/schema/src/schemas/config.json`
 
-- [ ] **Step 1: Add CheckConfig to SdxConfig type**
+- [x] **Step 1: Add CheckConfig to SdxConfig type**
 
 In `packages/schema/src/types.ts`, add the `check` field to `SdxConfig`:
 ```typescript
@@ -1679,17 +1679,17 @@ check?: {
 };
 ```
 
-- [ ] **Step 2: Add check block to config JSON schema**
+- [x] **Step 2: Add check block to config JSON schema**
 
 In `packages/schema/src/schemas/config.json`, add the `check` property alongside `lint`, `pack`, `diff`, `ci`.
 
-- [ ] **Step 3: Run schema tests to verify nothing breaks**
+- [x] **Step 3: Run schema tests to verify nothing breaks**
 
 ```bash
 pnpm --filter @specdx/schema test
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/schema/src/types.ts packages/schema/src/schemas/config.json
@@ -1706,11 +1706,11 @@ git commit -m "feat(schema): add check config to SdxConfig"
 - Modify: `packages/cli/src/main.ts`
 - Modify: `packages/cli/tsup.config.ts`
 
-- [ ] **Step 1: Add @specdx/check to tsup.config.ts noExternal**
+- [x] **Step 1: Add @specdx/check to tsup.config.ts noExternal**
 
 In both entry configs in `packages/cli/tsup.config.ts`, add `"@specdx/check"` to the `noExternal` arrays. Also add `"ts-morph"` to the `external` arrays (so it's not bundled — lazy-loaded at runtime).
 
-- [ ] **Step 2: Create check command**
+- [x] **Step 2: Create check command**
 
 `packages/cli/src/commands/check.ts`:
 ```typescript
@@ -1780,28 +1780,28 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 3: Register check command in main.ts**
+- [x] **Step 3: Register check command in main.ts**
 
 Add to subCommands: `check: () => import("./commands/check.js").then((m) => m.default),`
 
-- [ ] **Step 4: Write CLI integration test**
+- [x] **Step 4: Write CLI integration test**
 
 Test `runCheck` with a temp directory containing a spec + Express routes. Verify it returns findings.
 
-- [ ] **Step 5: Build and test full suite**
+- [x] **Step 5: Build and test full suite**
 
 ```bash
 pnpm build && pnpm test && pnpm typecheck && pnpm lint:code
 ```
 
-- [ ] **Step 6: Smoke test the CLI**
+- [x] **Step 6: Smoke test the CLI**
 
 ```bash
 node packages/cli/dist/main.js check --help
 node packages/cli/dist/main.js check --format json
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/cli/
@@ -1816,23 +1816,23 @@ git commit -m "feat(cli): add sdx check command for spec-to-implementation analy
 - Create: `packages/check/src/detect-framework.ts`
 - Create: `packages/check/src/detect-framework.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Test reading package.json to detect framework from dependencies.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement framework detection**
+- [x] **Step 3: Implement framework detection**
 
 Read `package.json` from project root. Check `dependencies` and `devDependencies` for `express`, `hono`, `next`. Return the first match or `null`.
 
-- [ ] **Step 4: Wire into check orchestrator**
+- [x] **Step 4: Wire into check orchestrator**
 
 Update `check.ts` to call `detectFramework()` when `config.framework` is `"auto"` or undefined.
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/check/src/detect-framework.*
@@ -1843,18 +1843,18 @@ git commit -m "feat(check): add framework auto-detection from package.json"
 
 ## Task 17: Final Integration + Cleanup
 
-- [ ] **Step 1: Update packages/check/src/index.ts with all public exports**
+- [x] **Step 1: Update packages/check/src/index.ts with all public exports**
 
 Export: `runCheck`, `CheckResult`, `Finding`, `ImplementationScore`, `CheckConfig`, all extractors, all matchers, `computeScore`.
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 ```bash
 pnpm build && pnpm test && pnpm typecheck && pnpm lint:code
 ```
 Expected: all pass, 230+ tests total.
 
-- [ ] **Step 3: Run sdx check on sdx itself (smoke test)**
+- [x] **Step 3: Run sdx check on sdx itself (smoke test)**
 
 ```bash
 node packages/cli/dist/main.js check
@@ -1862,7 +1862,7 @@ node packages/cli/dist/main.js check
 
 This won't find routes/types (sdx is a CLI tool, not an API), but should run without errors and report 0 findings or info-level findings.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add -A

@@ -38,7 +38,7 @@ packages/cli/tsup.config.ts                              # MODIFY: add @anthropi
 **Files:**
 - Create: `packages/skills/skills/specdx-verify.md`
 
-- [ ] **Step 1: Create the skill file**
+- [x] **Step 1: Create the skill file**
 
 `packages/skills/skills/specdx-verify.md`:
 
@@ -115,11 +115,11 @@ Do NOT skip Step 1. Always run `npx specdx check` before reviewing. Do not rely 
 | "The user didn't ask for verification" | If you just finished implementing, verify. It's part of the job. |
 ```
 
-- [ ] **Step 2: Verify skill has correct frontmatter**
+- [x] **Step 2: Verify skill has correct frontmatter**
 
 Check: `name`, `description` (starts with "Use when"), `allowed-tools` are set.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-verify.md
@@ -135,7 +135,7 @@ git commit -m "feat(skills): add specdx-verify skill for spec-to-implementation 
 - Create: `packages/skills/templates/consistency-reviewer.md`
 - Create: `packages/skills/templates/adversarial-reviewer.md`
 
-- [ ] **Step 1: Create consistency-reviewer template**
+- [x] **Step 1: Create consistency-reviewer template**
 
 `packages/skills/templates/consistency-reviewer.md`:
 
@@ -173,7 +173,7 @@ You are reviewing a spec for consistency with the rest of the spec suite.
 - **Recommendations**: Prioritized list of consistency fixes
 ```
 
-- [ ] **Step 2: Create adversarial-reviewer template**
+- [x] **Step 2: Create adversarial-reviewer template**
 
 `packages/skills/templates/adversarial-reviewer.md`:
 
@@ -211,7 +211,7 @@ Approach this spec assuming it has problems. Your job is to find them.
 - **Minor observations** (nice to have, not blocking): list
 ```
 
-- [ ] **Step 3: Create review-spec skill**
+- [x] **Step 3: Create review-spec skill**
 
 `packages/skills/skills/specdx-review-spec.md`:
 
@@ -295,7 +295,7 @@ Do NOT skip any of the three review passes. Each catches different classes of pr
 | "I can combine the passes into one review" | Separate passes with different prompts catch more. |
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-review-spec.md packages/skills/templates/consistency-reviewer.md packages/skills/templates/adversarial-reviewer.md
@@ -309,7 +309,7 @@ git commit -m "feat(skills): add specdx-review-spec skill with multi-layer revie
 **Files:**
 - Create: `packages/skills/skills/specdx-check-drift.md`
 
-- [ ] **Step 1: Create the skill file**
+- [x] **Step 1: Create the skill file**
 
 `packages/skills/skills/specdx-check-drift.md`:
 
@@ -387,7 +387,7 @@ For each drift:
 | "I'll check drift later" | Drift compounds. Check now. |
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-check-drift.md
@@ -402,21 +402,21 @@ git commit -m "feat(skills): add specdx-check-drift skill for drift detection"
 - Modify: `packages/skills/src/install.ts` (if it has a SKILL_NAMES constant)
 - Modify: `packages/skills/src/install.test.ts` (update skill count)
 
-- [ ] **Step 1: Check if SKILL_NAMES needs updating**
+- [x] **Step 1: Check if SKILL_NAMES needs updating**
 
 Read `packages/skills/src/install.ts` to see if there's a hardcoded list of skill names or if skills are discovered from the filesystem.
 
-- [ ] **Step 2: Update skill count in tests**
+- [x] **Step 2: Update skill count in tests**
 
 Read `packages/skills/src/install.test.ts`. If tests assert a specific number of installed skills (e.g., `expect(first.installed).toHaveLength(6)`), update the count to include the 3 new skills (6 → 9). Note: `spec-type-reference.md` is a reference file, not a skill — check if it's counted.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 ```bash
 pnpm --filter @specdx/skills test
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/skills/
@@ -434,7 +434,7 @@ git commit -m "feat(skills): register verify, review-spec, check-drift skills"
 - Modify: `packages/check/src/index.ts`
 - Modify: `packages/check/package.json`
 
-- [ ] **Step 1: Add AiAssessment type**
+- [x] **Step 1: Add AiAssessment type**
 
 In `packages/check/src/types.ts`, add after the existing `CheckConfig` interface:
 
@@ -454,7 +454,7 @@ export interface AiCheckResult {
 }
 ```
 
-- [ ] **Step 2: Add @anthropic-ai/sdk as optional peer dependency**
+- [x] **Step 2: Add @anthropic-ai/sdk as optional peer dependency**
 
 In `packages/check/package.json`, add to `peerDependencies`:
 
@@ -470,7 +470,7 @@ And to `peerDependenciesMeta`:
 }
 ```
 
-- [ ] **Step 3: Write failing test**
+- [x] **Step 3: Write failing test**
 
 `packages/check/src/ai.test.ts`:
 
@@ -527,13 +527,13 @@ describe("analyzeWithAi", () => {
 });
 ```
 
-- [ ] **Step 4: Run test to verify it fails**
+- [x] **Step 4: Run test to verify it fails**
 
 ```bash
 pnpm --filter @specdx/check test
 ```
 
-- [ ] **Step 5: Implement AI analysis module**
+- [x] **Step 5: Implement AI analysis module**
 
 `packages/check/src/ai.ts`:
 
@@ -613,7 +613,7 @@ Only output the JSON array, no other text.`;
 }
 ```
 
-- [ ] **Step 6: Export from index.ts**
+- [x] **Step 6: Export from index.ts**
 
 Add to `packages/check/src/index.ts`:
 
@@ -622,13 +622,13 @@ export { analyzeWithAi } from "./ai.js";
 export type { AiAssessment, AiCheckResult } from "./types.js";
 ```
 
-- [ ] **Step 7: Run tests**
+- [x] **Step 7: Run tests**
 
 ```bash
 pnpm --filter @specdx/check test
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/check/
@@ -643,11 +643,11 @@ git commit -m "feat(check): add AI-assisted analysis with Anthropic API"
 - Modify: `packages/cli/src/commands/check.ts`
 - Modify: `packages/cli/tsup.config.ts`
 
-- [ ] **Step 1: Add @anthropic-ai/sdk to tsup external**
+- [x] **Step 1: Add @anthropic-ai/sdk to tsup external**
 
 In `packages/cli/tsup.config.ts`, add `"@anthropic-ai/sdk"` to both `external` arrays (alongside `ts-morph`, `ajv`, etc.). This ensures the SDK is not bundled — it's lazy-loaded.
 
-- [ ] **Step 2: Add --ai flag to check command**
+- [x] **Step 2: Add --ai flag to check command**
 
 In `packages/cli/src/commands/check.ts`, add the `ai` arg:
 
@@ -699,13 +699,13 @@ After the `runCheck()` call and before the format output, add:
 
 Place this block right after `const result = await runCheck(...)` and before the existing `if (args.format === "json")` block.
 
-- [ ] **Step 3: Build and test**
+- [x] **Step 3: Build and test**
 
 ```bash
 pnpm build && pnpm --filter specdx test
 ```
 
-- [ ] **Step 4: Smoke test**
+- [x] **Step 4: Smoke test**
 
 ```bash
 node packages/cli/dist/main.js check --help
@@ -713,7 +713,7 @@ node packages/cli/dist/main.js check --help
 
 Verify `--ai` flag appears in help output.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/cli/src/commands/check.ts packages/cli/tsup.config.ts
@@ -724,25 +724,25 @@ git commit -m "feat(cli): add --ai flag to sdx check for LLM-assisted analysis"
 
 ## Task 7: Final Integration
 
-- [ ] **Step 1: Build all packages**
+- [x] **Step 1: Build all packages**
 
 ```bash
 pnpm build
 ```
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 ```bash
 pnpm test
 ```
 
-- [ ] **Step 3: Typecheck and lint**
+- [x] **Step 3: Typecheck and lint**
 
 ```bash
 pnpm typecheck && pnpm lint:code
 ```
 
-- [ ] **Step 4: Verify skills are bundled into CLI dist**
+- [x] **Step 4: Verify skills are bundled into CLI dist**
 
 ```bash
 ls packages/cli/dist/skills/specdx-verify.md
@@ -752,7 +752,7 @@ ls packages/cli/dist/skills/specdx-check-drift.md
 
 All three should exist.
 
-- [ ] **Step 5: Commit any fixes**
+- [x] **Step 5: Commit any fixes**
 
 ```bash
 git add -A

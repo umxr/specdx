@@ -21,7 +21,7 @@
 - Create: `packages/cli/hooks/hooks.json`
 - Modify: `packages/cli/package.json`
 
-- [ ] **Step 1: Create plugin manifest**
+- [x] **Step 1: Create plugin manifest**
 
 Create `packages/cli/.claude-plugin/plugin.json`:
 ```json
@@ -33,7 +33,7 @@ Create `packages/cli/.claude-plugin/plugin.json`:
 }
 ```
 
-- [ ] **Step 2: Create hooks definition**
+- [x] **Step 2: Create hooks definition**
 
 Create `packages/cli/hooks/hooks.json`:
 ```json
@@ -47,14 +47,14 @@ Create `packages/cli/hooks/hooks.json`:
 }
 ```
 
-- [ ] **Step 3: Update package.json files array**
+- [x] **Step 3: Update package.json files array**
 
 In `packages/cli/package.json`, add `.claude-plugin` and `hooks` to the `files` array:
 ```json
 "files": ["dist", ".claude-plugin", "hooks"]
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/cli/.claude-plugin packages/cli/hooks/hooks.json packages/cli/package.json
@@ -68,7 +68,7 @@ git commit -m "feat(cli): add Claude Code plugin manifest and hooks definition"
 **Files:**
 - Create: `packages/cli/hooks/session-start`
 
-- [ ] **Step 1: Write the session-start script**
+- [x] **Step 1: Write the session-start script**
 
 Create `packages/cli/hooks/session-start` (bash script). Reference the superpowers implementation at `/Users/umar/Desktop/Work/superpowers/hooks/session-start` for the JSON output format.
 
@@ -109,13 +109,13 @@ summary="${summary//$'\t'/\\t}"
 echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"$summary\"}}"
 ```
 
-- [ ] **Step 2: Make it executable**
+- [x] **Step 2: Make it executable**
 
 ```bash
 chmod +x packages/cli/hooks/session-start
 ```
 
-- [ ] **Step 3: Test manually**
+- [x] **Step 3: Test manually**
 
 ```bash
 cd /Users/umar/Desktop/Projects/varley-sanity-audit && bash /Users/umar/Desktop/Work/sdx/packages/cli/hooks/session-start
@@ -123,7 +123,7 @@ cd /Users/umar/Desktop/Projects/varley-sanity-audit && bash /Users/umar/Desktop/
 
 Expected: JSON output with project info. Then test in a dir without `spec.config.yaml` — expected: no output.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/cli/hooks/session-start
@@ -138,21 +138,21 @@ git commit -m "feat(cli): add session-start hook for auto-detecting specdx proje
 - Modify: `packages/skills/skills/specdx-start-task.md`
 - Modify: `packages/skills/skills/specdx-author-spec.md`
 
-- [ ] **Step 1: Update specdx-start-task description**
+- [x] **Step 1: Update specdx-start-task description**
 
 In `packages/skills/skills/specdx-start-task.md`, change the `description` frontmatter field to:
 ```yaml
 description: "Use when the user describes work they're about to do, mentions implementing a feature, asks to start a task, or says 'implement', 'build', 'add', 'fix', or 'refactor'. Loads relevant spec context before coding."
 ```
 
-- [ ] **Step 2: Update specdx-author-spec description**
+- [x] **Step 2: Update specdx-author-spec description**
 
 In `packages/skills/skills/specdx-author-spec.md`, change the `description` frontmatter field to:
 ```yaml
 description: "Use when the user wants to create a new spec, write a PRD, document a technical design, record an architecture decision, add a user story, or write a test plan. Guides spec authoring with iterative linting."
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-start-task.md packages/skills/skills/specdx-author-spec.md
@@ -166,7 +166,7 @@ git commit -m "feat(skills): use description-driven trigger conditions for auto-
 **Files:**
 - Modify: `packages/skills/skills/specdx-author-spec.md`
 
-- [ ] **Step 1: Add hard gate and rationalization table**
+- [x] **Step 1: Add hard gate and rationalization table**
 
 In `packages/skills/skills/specdx-author-spec.md`, add after the step 5 lint section:
 
@@ -186,7 +186,7 @@ after every 2-3 sections. Do NOT write the entire spec and lint at the end.
 | "I already know the lint rules" | Rules evolve. Run the tool. |
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-author-spec.md
@@ -200,7 +200,7 @@ git commit -m "feat(skills): add hard gates and rationalization tables to author
 **Files:**
 - Create: `packages/skills/skills/spec-type-reference.md`
 
-- [ ] **Step 1: Create reference file**
+- [x] **Step 1: Create reference file**
 
 Create `packages/skills/skills/spec-type-reference.md` with a table of all spec types, their required sections, and frontmatter fields. Pull data from `REQUIRED_SECTIONS` in `packages/schema/src/types.ts`.
 
@@ -242,7 +242,7 @@ references:
 ```
 ```
 
-- [ ] **Step 2: Verify it gets copied into dist**
+- [x] **Step 2: Verify it gets copied into dist**
 
 ```bash
 pnpm --filter specdx build && ls packages/cli/dist/skills/spec-type-reference.md
@@ -250,7 +250,7 @@ pnpm --filter specdx build && ls packages/cli/dist/skills/spec-type-reference.md
 
 Expected: file exists in dist/skills/.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/skills/skills/spec-type-reference.md
@@ -264,11 +264,11 @@ git commit -m "feat(skills): add spec-type-reference companion file"
 **Files:**
 - Create: `docs/other-platforms.md`
 
-- [ ] **Step 1: Write documentation**
+- [x] **Step 1: Write documentation**
 
 Create `docs/other-platforms.md` documenting how to manually set up specdx skills in Cursor and Gemini CLI. Cover: where to copy skill files, how to configure hooks, expected behaviour.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add -f docs/other-platforms.md
@@ -286,7 +286,7 @@ git commit -m "docs: add multi-platform setup guide for Cursor and Gemini CLI"
 - Modify: `packages/core/src/index.ts`
 - Create: `packages/core/src/parser-from-string.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/core/src/parser-from-string.test.ts`:
 ```typescript
@@ -348,7 +348,7 @@ authors: ["test"]
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 pnpm --filter @specdx/core test -- --run src/parser-from-string.test.ts
@@ -356,18 +356,18 @@ pnpm --filter @specdx/core test -- --run src/parser-from-string.test.ts
 
 Expected: FAIL — `parseSpecFromString` not exported.
 
-- [ ] **Step 3: Implement parseSpecFromString**
+- [x] **Step 3: Implement parseSpecFromString**
 
 In `packages/core/src/parser.ts`, refactor the existing `parseSpec()` to delegate to a new `parseSpecFromString()`:
 
 1. Extract the markdown parsing logic (everything after `readFile`) into `parseSpecFromString(content: string, filePath: string): Promise<ParsedSpec>`
 2. Keep `parseSpec(filePath)` as a wrapper that reads the file and calls `parseSpecFromString()`
 
-- [ ] **Step 4: Export from index.ts**
+- [x] **Step 4: Export from index.ts**
 
 Add `parseSpecFromString` to `packages/core/src/index.ts` exports.
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 ```bash
 pnpm --filter @specdx/core test -- --run src/parser-from-string.test.ts
@@ -375,7 +375,7 @@ pnpm --filter @specdx/core test -- --run src/parser-from-string.test.ts
 
 Expected: PASS
 
-- [ ] **Step 6: Run all core tests**
+- [x] **Step 6: Run all core tests**
 
 ```bash
 pnpm --filter @specdx/core test
@@ -383,7 +383,7 @@ pnpm --filter @specdx/core test
 
 Expected: all existing tests still pass (parseSpec behaviour unchanged).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/core/src/parser.ts packages/core/src/index.ts packages/core/src/parser-from-string.test.ts
@@ -400,7 +400,7 @@ git commit -m "feat(core): add parseSpecFromString for parsing specs from string
 - Modify: `packages/diff/package.json`
 - Modify: `packages/diff/tsconfig.json`
 
-- [ ] **Step 1: Add workspace dependencies to package.json**
+- [x] **Step 1: Add workspace dependencies to package.json**
 
 In `packages/diff/package.json`, add:
 ```json
@@ -411,7 +411,7 @@ In `packages/diff/package.json`, add:
 }
 ```
 
-- [ ] **Step 2: Create types.ts**
+- [x] **Step 2: Create types.ts**
 
 Create `packages/diff/src/types.ts` with all interfaces from the design spec:
 
@@ -486,7 +486,7 @@ export const DEFAULT_DIFF_CONFIG: DiffConfig = {
 };
 ```
 
-- [ ] **Step 3: Create index.ts with placeholder exports**
+- [x] **Step 3: Create index.ts with placeholder exports**
 
 Create `packages/diff/src/index.ts`:
 ```typescript
@@ -504,7 +504,7 @@ export type {
 export { DEFAULT_DIFF_CONFIG } from "./types.js";
 ```
 
-- [ ] **Step 4: Install deps and build**
+- [x] **Step 4: Install deps and build**
 
 ```bash
 pnpm install && pnpm --filter @specdx/diff build
@@ -512,7 +512,7 @@ pnpm install && pnpm --filter @specdx/diff build
 
 Expected: builds cleanly.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/diff/
@@ -528,7 +528,7 @@ git commit -m "feat(diff): scaffold package with types and dependencies"
 - Create: `packages/diff/src/diff-specs.test.ts`
 - Modify: `packages/diff/src/index.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `packages/diff/src/diff-specs.test.ts` with tests covering:
 - Identical specs → empty diffs
@@ -542,13 +542,13 @@ Create `packages/diff/src/diff-specs.test.ts` with tests covering:
 
 Use `parseSpecFromString()` to create `ParsedSpec` fixtures from string literals.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 pnpm --filter @specdx/diff test -- --run src/diff-specs.test.ts
 ```
 
-- [ ] **Step 3: Implement diffSpecs()**
+- [x] **Step 3: Implement diffSpecs()**
 
 Create `packages/diff/src/diff-specs.ts`:
 - Compare frontmatter field-by-field using `Object.keys()` on both before/after
@@ -556,11 +556,11 @@ Create `packages/diff/src/diff-specs.ts`:
 - Use `createPatch()` from the `diff` package for content diffs on modified sections
 - Generate summary string: "prd: 2 fields changed, 1 section modified"
 
-- [ ] **Step 4: Export from index.ts**
+- [x] **Step 4: Export from index.ts**
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git commit -m "feat(diff): implement diffSpecs for structural spec comparison"
@@ -575,7 +575,7 @@ git commit -m "feat(diff): implement diffSpecs for structural spec comparison"
 - Create: `packages/diff/src/impact.test.ts`
 - Modify: `packages/diff/src/index.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `packages/diff/src/impact.test.ts` with tests covering:
 - Single downstream spec → returns 1 impact entry with correct distance
@@ -586,13 +586,13 @@ Create `packages/diff/src/impact.test.ts` with tests covering:
 
 Build test dependency graphs using `buildGraph()` from `@specdx/core` with mock config objects.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 pnpm --filter @specdx/diff test -- --run src/impact.test.ts
 ```
 
-- [ ] **Step 3: Implement analyzeImpact()**
+- [x] **Step 3: Implement analyzeImpact()**
 
 Create `packages/diff/src/impact.ts`:
 - Use `graph.getDownstream(changedSpecId)` for transitive dependents
@@ -608,11 +608,11 @@ Create `packages/diff/src/impact.ts`:
 - Structural sections: Goals, Architecture, Features, Endpoints, Data Model, API Design
 - Generate reason string from diff summary + distance
 
-- [ ] **Step 4: Export from index.ts**
+- [x] **Step 4: Export from index.ts**
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git commit -m "feat(diff): implement downstream impact analysis with staleness scoring"
@@ -627,24 +627,24 @@ git commit -m "feat(diff): implement downstream impact analysis with staleness s
 - Create: `packages/diff/src/cross-refs.test.ts`
 - Modify: `packages/diff/src/index.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Tests covering:
 - Spec removes a referenced ID → downstream spec with that reference flagged as "broken-reference"
 - Spec renames ID (old removed, new added) → downstream refs to old ID flagged
 - No cross-reference breakage → empty result
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
-- [ ] **Step 3: Implement checkCrossReferences()**
+- [x] **Step 3: Implement checkCrossReferences()**
 
 Scan `frontmatter.references` of all specs in the suite. For each reference, check if the target ID still exists. If a spec was removed or its ID changed, flag as broken.
 
-- [ ] **Step 4: Export from index.ts**
+- [x] **Step 4: Export from index.ts**
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git commit -m "feat(diff): detect broken cross-references from upstream changes"
@@ -659,7 +659,7 @@ git commit -m "feat(diff): detect broken cross-references from upstream changes"
 - Create: `packages/diff/src/git.test.ts`
 - Modify: `packages/diff/src/index.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `packages/diff/src/git.test.ts`. Tests use a temporary git repo:
 
@@ -682,9 +682,9 @@ Tests covering:
 - Invalid ref → throws `DiffError`
 - No git binary → throws `DiffError` (mock `execSync`)
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
-- [ ] **Step 3: Create DiffError class**
+- [x] **Step 3: Create DiffError class**
 
 In `packages/diff/src/types.ts`, add:
 ```typescript
@@ -696,7 +696,7 @@ export class DiffError extends Error {
 }
 ```
 
-- [ ] **Step 4: Implement git.ts**
+- [x] **Step 4: Implement git.ts**
 
 Create `packages/diff/src/git.ts`:
 - `getSpecContentAtRef(ref: string, filePath: string): string` — runs `git show <ref>:<path>`, throws DiffError on failure
@@ -704,17 +704,17 @@ Create `packages/diff/src/git.ts`:
 - `diffBetweenRefs(configPath, baseRef, headRef): Promise<DiffResult>` — orchestrates: load config, detect changed spec files, parse before/after with `parseSpecFromString()`, run `diffSpecs()` on each, run `analyzeImpact()`, aggregate into `DiffResult`
 - For working tree diffs (no headRef), use filesystem `parseSpec()` for head
 
-- [ ] **Step 5: Export from index.ts**
+- [x] **Step 5: Export from index.ts**
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
-- [ ] **Step 7: Run all diff tests**
+- [x] **Step 7: Run all diff tests**
 
 ```bash
 pnpm --filter @specdx/diff test
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git commit -m "feat(diff): implement git-based diffing between refs"
@@ -728,13 +728,13 @@ git commit -m "feat(diff): implement git-based diffing between refs"
 - Modify: `packages/schema/src/schemas/config.json`
 - Modify: `packages/schema/src/types.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 In the existing schema tests, add a test that validates a config with a `diff` block containing `baseline_ref`, `staleness_threshold_days`, and `ignore_paths`.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Update JSON schema**
+- [x] **Step 3: Update JSON schema**
 
 In `packages/schema/src/schemas/config.json`, replace the `diff` placeholder:
 ```json
@@ -749,7 +749,7 @@ In `packages/schema/src/schemas/config.json`, replace the `diff` placeholder:
 }
 ```
 
-- [ ] **Step 4: Update TypeScript types**
+- [x] **Step 4: Update TypeScript types**
 
 In `packages/schema/src/types.ts`, replace the `diff` field type:
 ```typescript
@@ -760,9 +760,9 @@ diff?: {
 };
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git commit -m "feat(schema): add diff config block with baseline_ref and staleness options"
@@ -778,11 +778,11 @@ git commit -m "feat(schema): add diff config block with baseline_ref and stalene
 - Modify: `packages/cli/src/index.ts`
 - Modify: `packages/cli/tsup.config.ts`
 
-- [ ] **Step 1: Add @specdx/diff to CLI tsup noExternal**
+- [x] **Step 1: Add @specdx/diff to CLI tsup noExternal**
 
 In `packages/cli/tsup.config.ts`, add `"@specdx/diff"` to both `noExternal` arrays.
 
-- [ ] **Step 2: Create diff command**
+- [x] **Step 2: Create diff command**
 
 Create `packages/cli/src/commands/diff.ts` following the pattern of `lint.ts` and `pack.ts`:
 
@@ -815,22 +815,22 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 3: Register in main.ts**
+- [x] **Step 3: Register in main.ts**
 
 Add `diff` to the `subCommands` map in `packages/cli/src/main.ts`:
 ```typescript
 diff: () => import("./commands/diff.js").then((m) => m.default),
 ```
 
-- [ ] **Step 4: Export runDiff from index.ts**
+- [x] **Step 4: Export runDiff from index.ts**
 
-- [ ] **Step 5: Build and test**
+- [x] **Step 5: Build and test**
 
 ```bash
 pnpm build && node packages/cli/dist/main.js diff --help
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git commit -m "feat(cli): add sdx diff command"
@@ -845,7 +845,7 @@ git commit -m "feat(cli): add sdx diff command"
 - Modify: `packages/cli/src/main.ts`
 - Modify: `packages/cli/src/index.ts`
 
-- [ ] **Step 1: Create status command**
+- [x] **Step 1: Create status command**
 
 Create `packages/cli/src/commands/status.ts`:
 
@@ -861,15 +861,15 @@ export async function runStatus(options: { format?: string }): Promise<StatusRes
 }
 ```
 
-- [ ] **Step 2: Register in main.ts**
+- [x] **Step 2: Register in main.ts**
 
-- [ ] **Step 3: Build and test**
+- [x] **Step 3: Build and test**
 
 ```bash
 pnpm build && node packages/cli/dist/main.js status
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "feat(cli): add sdx status command for spec health overview"
@@ -884,7 +884,7 @@ git commit -m "feat(cli): add sdx status command for spec health overview"
 **Files:**
 - Create: `packages/skills/skills/specdx-pre-commit.md`
 
-- [ ] **Step 1: Write skill file**
+- [x] **Step 1: Write skill file**
 
 Create `packages/skills/skills/specdx-pre-commit.md` with frontmatter and workflow from the design spec. Include:
 - `name: specdx-pre-commit`
@@ -893,7 +893,7 @@ Create `packages/skills/skills/specdx-pre-commit.md` with frontmatter and workfl
 - Hard gate: do NOT skip the diff step
 - Workflow steps (lint → diff → present summary → ask user)
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-pre-commit.md
@@ -907,11 +907,11 @@ git commit -m "feat(skills): add specdx-pre-commit skill"
 **Files:**
 - Create: `packages/skills/skills/specdx-sprint-review.md`
 
-- [ ] **Step 1: Write skill file**
+- [x] **Step 1: Write skill file**
 
 Create with frontmatter, workflow (status → diff → synthesise report), and output format guidance.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-sprint-review.md
@@ -925,11 +925,11 @@ git commit -m "feat(skills): add specdx-sprint-review skill"
 **Files:**
 - Create: `packages/skills/skills/specdx-plan-from-spec.md`
 
-- [ ] **Step 1: Write skill file**
+- [x] **Step 1: Write skill file**
 
 Create with frontmatter, workflow (pack → generate plan with file targets, dependency order, test expectations, spec references). Note compatibility with superpowers `writing-plans` skill.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-plan-from-spec.md
@@ -944,7 +944,7 @@ git commit -m "feat(skills): add specdx-plan-from-spec skill"
 - Modify: `packages/skills/src/install.ts`
 - Modify: `packages/skills/src/install.test.ts`
 
-- [ ] **Step 1: Update SKILL_NAMES**
+- [x] **Step 1: Update SKILL_NAMES**
 
 In `packages/skills/src/install.ts`, update:
 ```typescript
@@ -960,20 +960,20 @@ export const SKILL_NAMES = [
 
 Note: `specdx-onboard` is listed here but created in Task 24. The install test for it will fail until Task 24 is complete. Either create a placeholder file or add `specdx-onboard` to `SKILL_NAMES` in Task 24 instead.
 
-- [ ] **Step 2: Update install tests**
+- [x] **Step 2: Update install tests**
 
 Update `packages/skills/src/install.test.ts`:
 - Change `toHaveLength(2)` to `toHaveLength(6)` (or 5 if deferring onboard)
 - Add expectations for new skill names
 - Update installed/updated count expectations
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 ```bash
 pnpm --filter @specdx/skills test
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "feat(skills): register new skills in SKILL_NAMES and update install tests"
@@ -989,7 +989,7 @@ git commit -m "feat(skills): register new skills in SKILL_NAMES and update insta
 - Modify: `packages/schema/src/schemas/config.json`
 - Modify: `packages/schema/src/types.ts`
 
-- [ ] **Step 1: Update JSON schema**
+- [x] **Step 1: Update JSON schema**
 
 Replace the `ci` placeholder in `packages/schema/src/schemas/config.json`:
 ```json
@@ -1005,7 +1005,7 @@ Replace the `ci` placeholder in `packages/schema/src/schemas/config.json`:
 }
 ```
 
-- [ ] **Step 2: Update TypeScript types**
+- [x] **Step 2: Update TypeScript types**
 
 In `packages/schema/src/types.ts`:
 ```typescript
@@ -1017,13 +1017,13 @@ ci?: {
 };
 ```
 
-- [ ] **Step 3: Run schema tests**
+- [x] **Step 3: Run schema tests**
 
 ```bash
 pnpm --filter @specdx/schema test
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "feat(schema): add ci config block with trigger_paths and block_on"
@@ -1038,7 +1038,7 @@ git commit -m "feat(schema): add ci config block with trigger_paths and block_on
 - Create: `packages/github-action/src/main.ts`
 - Create: `packages/github-action/action.yml`
 
-- [ ] **Step 1: Update package.json**
+- [x] **Step 1: Update package.json**
 
 Add dependencies:
 ```json
@@ -1058,7 +1058,7 @@ Add dependencies:
 
 Change build script to: `"build": "ncc build src/main.ts -o dist"`
 
-- [ ] **Step 2: Create action.yml**
+- [x] **Step 2: Create action.yml**
 
 ```yaml
 name: "specdx"
@@ -1072,7 +1072,7 @@ runs:
   main: "dist/index.js"
 ```
 
-- [ ] **Step 3: Implement main.ts**
+- [x] **Step 3: Implement main.ts**
 
 Create `packages/github-action/src/main.ts`:
 - Read inputs from `@actions/core`
@@ -1083,13 +1083,13 @@ Create `packages/github-action/src/main.ts`:
 - Emit annotations
 - Set exit code based on `ci.block_on`
 
-- [ ] **Step 4: Build and verify**
+- [x] **Step 4: Build and verify**
 
 ```bash
 pnpm --filter @specdx/action build && ls packages/github-action/dist/index.js
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git commit -m "feat(action): implement GitHub Action entry point with lint + diff"
@@ -1103,17 +1103,17 @@ git commit -m "feat(action): implement GitHub Action entry point with lint + dif
 - Create: `packages/github-action/src/comment.ts`
 - Create: `packages/github-action/src/comment.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test that `formatComment()` produces expected markdown given mock lint diagnostics and diff results.
 
-- [ ] **Step 2: Implement comment.ts**
+- [x] **Step 2: Implement comment.ts**
 
 Format as per design spec: Spec Health Report header, lint summary, changes table, downstream impact table, footer.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "feat(action): add PR comment formatter"
@@ -1127,17 +1127,17 @@ git commit -m "feat(action): add PR comment formatter"
 - Create: `packages/github-action/src/badge.ts`
 - Create: `packages/github-action/src/badge.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test `generateBadge()` returns valid SVG for each state: passing (green), warnings (yellow), failing (red).
 
-- [ ] **Step 2: Implement badge.ts**
+- [x] **Step 2: Implement badge.ts**
 
 Generate shields.io-compatible SVG badge. Three states based on lint results.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "feat(action): add health badge SVG generator"
@@ -1153,7 +1153,7 @@ git commit -m "feat(action): add health badge SVG generator"
 - Modify: `packages/schema/src/types.ts`
 - Modify: `packages/schema/src/schemas/config.json`
 
-- [ ] **Step 1: Widen lint.extends type**
+- [x] **Step 1: Widen lint.extends type**
 
 In `packages/schema/src/types.ts`, change:
 ```typescript
@@ -1168,7 +1168,7 @@ In `packages/schema/src/schemas/config.json`, change `lint.extends`:
 "extends": { "type": "string" }
 ```
 
-- [ ] **Step 2: Add owner to SpecEntry**
+- [x] **Step 2: Add owner to SpecEntry**
 
 In `packages/schema/src/types.ts`, add to `SpecEntry`:
 ```typescript
@@ -1180,13 +1180,13 @@ In config.json, add to spec entry properties:
 "owner": { "type": "string" }
 ```
 
-- [ ] **Step 3: Run all schema tests**
+- [x] **Step 3: Run all schema tests**
 
 ```bash
 pnpm --filter @specdx/schema test
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "feat(schema): widen lint.extends to string, add owner to SpecEntry"
@@ -1202,14 +1202,14 @@ git commit -m "feat(schema): widen lint.extends to string, add owner to SpecEntr
 - Modify: `packages/core/src/index.ts`
 - Modify: `packages/lint/src/presets.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Tests for `resolvePreset()`:
 - Built-in name ("recommended") → returns null (handled by lint's getPreset)
 - Local file path ("./my-config.yaml") → loads and returns parsed config
 - npm package name ("@specdx/config-strict") → resolves via import (mock for test)
 
-- [ ] **Step 2: Implement resolvePreset()**
+- [x] **Step 2: Implement resolvePreset()**
 
 ```typescript
 export async function resolvePreset(name: string): Promise<Record<string, unknown> | null> {
@@ -1221,13 +1221,13 @@ export async function resolvePreset(name: string): Promise<Record<string, unknow
 }
 ```
 
-- [ ] **Step 3: Update getPreset() in lint**
+- [x] **Step 3: Update getPreset() in lint**
 
 In `packages/lint/src/presets.ts`, add fallback to `resolvePreset()` when name is not a built-in.
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git commit -m "feat(core): add resolvePreset for external config packages"
@@ -1241,19 +1241,19 @@ git commit -m "feat(core): add resolvePreset for external config packages"
 - Create: `packages/cli/src/commands/changelog.ts`
 - Modify: `packages/cli/src/main.ts`
 
-- [ ] **Step 1: Create changelog command**
+- [x] **Step 1: Create changelog command**
 
 Thin wrapper: parse `--from` and `--to` args, call `diffBetweenRefs()`, format as markdown changelog (Modified/Added/Removed sections with version info from frontmatter).
 
-- [ ] **Step 2: Register in main.ts**
+- [x] **Step 2: Register in main.ts**
 
-- [ ] **Step 3: Build and test**
+- [x] **Step 3: Build and test**
 
 ```bash
 pnpm build && node packages/cli/dist/main.js changelog --help
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "feat(cli): add sdx changelog command"
@@ -1267,19 +1267,19 @@ git commit -m "feat(cli): add sdx changelog command"
 - Create: `packages/cli/src/commands/explain.ts`
 - Modify: `packages/cli/src/main.ts`
 
-- [ ] **Step 1: Create explain command**
+- [x] **Step 1: Create explain command**
 
 Compose existing functions: `loadConfig()`, parse all specs, `buildGraph()`, run lint health check. Format as human-readable summary: project name, spec count by type/status, dependency tree, brief description per spec, health verdict.
 
-- [ ] **Step 2: Register in main.ts**
+- [x] **Step 2: Register in main.ts**
 
-- [ ] **Step 3: Build and test**
+- [x] **Step 3: Build and test**
 
 ```bash
 pnpm build && node packages/cli/dist/main.js explain
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "feat(cli): add sdx explain command for onboarding"
@@ -1292,7 +1292,7 @@ git commit -m "feat(cli): add sdx explain command for onboarding"
 **Files:**
 - Create: `packages/skills/skills/specdx-onboard.md`
 
-- [ ] **Step 1: Write skill file**
+- [x] **Step 1: Write skill file**
 
 Create with frontmatter:
 - `name: specdx-onboard`
@@ -1300,7 +1300,7 @@ Create with frontmatter:
 - `allowed-tools: Bash(npx specdx *)`
 - Workflow: explain → pack → walk through → invite questions
 
-- [ ] **Step 2: Run install tests**
+- [x] **Step 2: Run install tests**
 
 ```bash
 pnpm --filter @specdx/skills test
@@ -1308,7 +1308,7 @@ pnpm --filter @specdx/skills test
 
 All 6 skills should now be installable.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/skills/skills/specdx-onboard.md
@@ -1321,7 +1321,7 @@ git commit -m "feat(skills): add specdx-onboard skill"
 
 ### Task 29: Full Build + Test Suite
 
-- [ ] **Step 1: Build all packages**
+- [x] **Step 1: Build all packages**
 
 ```bash
 pnpm build
@@ -1329,7 +1329,7 @@ pnpm build
 
 Expected: all 8 packages build successfully.
 
-- [ ] **Step 2: Run all tests**
+- [x] **Step 2: Run all tests**
 
 ```bash
 pnpm test
@@ -1337,7 +1337,7 @@ pnpm test
 
 Expected: all tests pass, 80%+ coverage on `@specdx/diff`.
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 ```bash
 pnpm typecheck
@@ -1345,7 +1345,7 @@ pnpm typecheck
 
 Expected: no type errors.
 
-- [ ] **Step 4: Run lint and format**
+- [x] **Step 4: Run lint and format**
 
 ```bash
 pnpm lint:code && pnpm format:check
@@ -1353,7 +1353,7 @@ pnpm lint:code && pnpm format:check
 
 Expected: clean.
 
-- [ ] **Step 5: Test skills install**
+- [x] **Step 5: Test skills install**
 
 ```bash
 node packages/cli/dist/main.js skills install --dir /tmp/sdx-test
@@ -1362,7 +1362,7 @@ ls /tmp/sdx-test/.claude/commands/
 
 Expected: 6 skill files installed.
 
-- [ ] **Step 6: End-to-end smoke test**
+- [x] **Step 6: End-to-end smoke test**
 
 ```bash
 cd /Users/umar/Desktop/Projects/varley-sanity-audit
@@ -1371,4 +1371,4 @@ node /Users/umar/Desktop/Work/sdx/packages/cli/dist/main.js diff
 node /Users/umar/Desktop/Work/sdx/packages/cli/dist/main.js explain
 ```
 
-- [ ] **Step 7: Commit any final fixes**
+- [x] **Step 7: Commit any final fixes**

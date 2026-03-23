@@ -36,7 +36,7 @@ Generate user story stubs from a PRD's Features section.
 - Create: `packages/cli/src/commands/generate-story.ts`
 - Create: `packages/cli/src/commands/generate-story.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/cli/src/commands/generate-story.test.ts`:
 
@@ -144,13 +144,13 @@ describe("generateStories", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 pnpm build && pnpm --filter specdx test
 ```
 
-- [ ] **Step 3: Implement generate-story.ts**
+- [x] **Step 3: Implement generate-story.ts**
 
 `packages/cli/src/commands/generate-story.ts`:
 
@@ -294,9 +294,9 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/cli/src/commands/generate-story.*
@@ -313,7 +313,7 @@ Generate test plan stubs from user stories' acceptance criteria.
 - Create: `packages/cli/src/commands/generate-test-plan.ts`
 - Create: `packages/cli/src/commands/generate-test-plan.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/cli/src/commands/generate-test-plan.test.ts`:
 
@@ -446,9 +446,9 @@ describe("generateTestPlan", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement generate-test-plan.ts**
+- [x] **Step 3: Implement generate-test-plan.ts**
 
 Key logic:
 1. Load config, find all user-story specs
@@ -459,9 +459,9 @@ Key logic:
 
 Function signature: `generateTestPlan({ configDir, outPath? }): Promise<{ filePath: string; testCases: number }>`
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/cli/src/commands/generate-test-plan.*
@@ -478,7 +478,7 @@ Wire `generate story` and `generate test-plan` as subcommands under `sdx generat
 - Create: `packages/cli/src/commands/generate.ts`
 - Modify: `packages/cli/src/main.ts`
 
-- [ ] **Step 1: Create generate parent command**
+- [x] **Step 1: Create generate parent command**
 
 `packages/cli/src/commands/generate.ts`:
 
@@ -494,7 +494,7 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 2: Register in main.ts**
+- [x] **Step 2: Register in main.ts**
 
 Add to subCommands in `packages/cli/src/main.ts`:
 
@@ -502,7 +502,7 @@ Add to subCommands in `packages/cli/src/main.ts`:
     generate: () => import("./commands/generate.js").then((m) => m.default),
 ```
 
-- [ ] **Step 3: Build and smoke test**
+- [x] **Step 3: Build and smoke test**
 
 ```bash
 pnpm build
@@ -511,7 +511,7 @@ node packages/cli/dist/main.js generate story --help
 node packages/cli/dist/main.js generate test-plan --help
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/cli/src/commands/generate.ts packages/cli/src/main.ts
@@ -528,7 +528,7 @@ Generate suggested spec updates based on `sdx check` findings.
 - Create: `packages/cli/src/commands/update.ts`
 - Create: `packages/cli/src/commands/update.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/cli/src/commands/update.test.ts`:
 
@@ -610,9 +610,9 @@ describe("generateUpdates", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-- [ ] **Step 3: Implement update.ts**
+- [x] **Step 3: Implement update.ts**
 
 Key logic:
 1. Accept check findings as input (from `sdx check --format json` piped or via programmatic API)
@@ -639,13 +639,13 @@ sdx update --from-code [--apply] [--format pretty|json]
 
 Without `--apply`, just prints suggestions. With `--apply`, writes the additions to the spec files (append to the relevant section).
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
-- [ ] **Step 5: Register in main.ts**
+- [x] **Step 5: Register in main.ts**
 
 Add `update: () => import("./commands/update.js").then((m) => m.default)` to subCommands.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/cli/src/commands/update.* packages/cli/src/main.ts
@@ -661,7 +661,7 @@ Minimal schema migration — for now just validates and reports current schema s
 **Files:**
 - Create: `packages/cli/src/commands/migrate.ts`
 
-- [ ] **Step 1: Create migrate command**
+- [x] **Step 1: Create migrate command**
 
 `packages/cli/src/commands/migrate.ts`:
 
@@ -709,18 +709,18 @@ export default defineCommand({
 });
 ```
 
-- [ ] **Step 2: Register in main.ts**
+- [x] **Step 2: Register in main.ts**
 
 Add `migrate: () => import("./commands/migrate.js").then((m) => m.default)` to subCommands.
 
-- [ ] **Step 3: Build and smoke test**
+- [x] **Step 3: Build and smoke test**
 
 ```bash
 pnpm build
 node packages/cli/dist/main.js migrate
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/cli/src/commands/migrate.ts packages/cli/src/main.ts
@@ -731,25 +731,25 @@ git commit -m "feat(cli): add sdx migrate command for schema migration checks"
 
 ## Task 6: Final Integration
 
-- [ ] **Step 1: Build all packages**
+- [x] **Step 1: Build all packages**
 
 ```bash
 pnpm build
 ```
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 ```bash
 pnpm test
 ```
 
-- [ ] **Step 3: Typecheck and lint**
+- [x] **Step 3: Typecheck and lint**
 
 ```bash
 pnpm typecheck && pnpm lint:code
 ```
 
-- [ ] **Step 4: Smoke test generate commands**
+- [x] **Step 4: Smoke test generate commands**
 
 ```bash
 node packages/cli/dist/main.js generate --help
@@ -759,7 +759,7 @@ node packages/cli/dist/main.js update --help
 node packages/cli/dist/main.js migrate
 ```
 
-- [ ] **Step 5: Commit any fixes**
+- [x] **Step 5: Commit any fixes**
 
 ```bash
 git add -A
