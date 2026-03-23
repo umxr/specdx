@@ -5,6 +5,7 @@ export default defineCommand({
   args: {},
   async run() {
     const { createMcpServer } = await import("@specdx/mcp");
+    // @ts-expect-error — sub-path export resolved at runtime via external bundle
     const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
 
     const server = createMcpServer();
