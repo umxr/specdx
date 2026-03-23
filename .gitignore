@@ -4,6 +4,9 @@ coverage/
 .turbo/
 *.tsbuildinfo
 
-# Project docs (tracked separately)
+# Development artifacts (kept locally, not in repo)
+CLAUDE.md
 roadmap.md
+spec.config.yaml
+specs/
 docs/superpowers/
