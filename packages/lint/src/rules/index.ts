@@ -8,6 +8,7 @@ import { noVagueLanguageRule } from "./no-vague-language.js";
 import { singleProjectContextRule } from "./single-project-context.js";
 import { terminologyRule } from "./terminology.js";
 import { edgeCaseCoverageRule } from "./edge-case-coverage.js";
+import { namingConventionsRule } from "./naming-conventions.js";
 import type { LintRule } from "../types.js";
 
 export const structureRules: LintRule[] = [
@@ -38,4 +39,5 @@ export {
   noVagueLanguageRule,
   singleProjectContextRule,
   terminologyRule,
+  edgeCaseCoverageRule,
 };
