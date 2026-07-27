@@ -77,7 +77,6 @@
     "typescript": "^5.7.0"
   },
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   }
 }

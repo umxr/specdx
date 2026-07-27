@@ -1,0 +1,17 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "@specdx/check": "0.0.0",
+    "specdx": "0.4.0-alpha.3",
+    "@specdx/core": "0.0.0",
+    "@specdx/diff": "0.0.0",
+    "@specdx/action": "0.0.0",
+    "@specdx/lint": "0.0.0",
+    "@specdx/mcp": "0.0.0",
+    "@specdx/pack": "0.0.0",
+    "@specdx/schema": "0.0.0",
+    "@specdx/skills": "0.0.0"
+  },
+  "changesets": []
+}

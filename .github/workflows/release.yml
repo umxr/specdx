@@ -12,14 +12,18 @@ jobs:
     permissions:
       contents: write
       packages: write
+      pull-requests: write
+      # Required for npm Trusted Publishing (OIDC) — no NPM_TOKEN needed.
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
+      # Trusted Publishing requires npm >= 11.5.1
+      - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: Create Release Pull Request or Publish
@@ -28,4 +32,3 @@ jobs:
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
