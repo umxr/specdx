@@ -20,6 +20,12 @@ const EDGE_CASE_KEYWORDS = [
   "malformed",
   "overflow",
   "duplicate",
+  "graceful",
+  "fall back",
+  "fallback",
+  "crash",
+  "nonexistent",
+  "corrupt",
 ];
 
 export const edgeCaseCoverageRule: LintRule = {

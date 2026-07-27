@@ -40,6 +40,15 @@ describe("edgeCaseCoverageRule", () => {
     expect(result).toHaveLength(0);
   });
 
+  it("passes when user-story describes graceful degradation without classic error keywords", () => {
+    const spec = makeSpec(
+      "user-story",
+      "## Description\n\nSkill loads spec context.\n\n## Acceptance Criteria\n\n- Skills fall back gracefully with a clear message when no config exists\n- The process does not crash on unexpected input",
+    );
+    const result = edgeCaseCoverageRule.run({ spec, allSpecs: [spec] });
+    expect(result).toHaveLength(0);
+  });
+
   it("warns when test-plan has no edge case coverage", () => {
     const spec = makeSpec("test-plan", "## Test Cases\n\n- User can log in\n- User can sign up");
     const result = edgeCaseCoverageRule.run({ spec, allSpecs: [spec] });
