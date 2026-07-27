@@ -115,45 +115,50 @@ export default defineCommand({
     },
   },
   async run({ args }) {
-    const result = await runStatus({ format: args.format });
+    try {
+      const result = await runStatus({ format: args.format });
 
-    if (args.format === "json") {
-      console.log(JSON.stringify(result, null, 2));
-      return;
-    }
+      if (args.format === "json") {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
 
-    if (args.format === "github") {
-      for (const s of result.staleSpecs) {
+      if (args.format === "github") {
+        for (const s of result.staleSpecs) {
+          console.log(
+            `::warning::Spec "${s.specId}" is stale (${s.daysSinceUpdate} days since update)`,
+          );
+        }
+        for (const issue of result.integrityIssues) {
+          console.log(`::error::${issue}`);
+        }
+        return;
+      }
+
+      // Pretty format
+      const icon = result.verdict === "healthy" ? "✓" : result.verdict === "warnings" ? "⚠" : "✗";
+      console.log(`\n  ${icon} ${result.project} — ${result.verdict}`);
+      console.log(
+        `    ${result.specCount} specs: ${Object.entries(result.byStatus)
+          .map(([k, v]) => `${v} ${k}`)
+          .join(", ")}`,
+      );
+      console.log(
+        `    Lint: ${result.lintHealth.errors} errors, ${result.lintHealth.warnings} warnings`,
+      );
+
+      if (result.staleSpecs.length > 0) {
         console.log(
-          `::warning::Spec "${s.specId}" is stale (${s.daysSinceUpdate} days since update)`,
+          `    Stale: ${result.staleSpecs.map((s) => `${s.specId} (${s.daysSinceUpdate}d)`).join(", ")}`,
         );
       }
-      for (const issue of result.integrityIssues) {
-        console.log(`::error::${issue}`);
+      if (result.integrityIssues.length > 0) {
+        console.log(`    Issues: ${result.integrityIssues.join("; ")}`);
       }
-      return;
+      console.log();
+    } catch (err) {
+      console.error(`\n  ✗ ${(err as Error).message}\n`);
+      process.exit(1);
     }
-
-    // Pretty format
-    const icon = result.verdict === "healthy" ? "✓" : result.verdict === "warnings" ? "⚠" : "✗";
-    console.log(`\n  ${icon} ${result.project} — ${result.verdict}`);
-    console.log(
-      `    ${result.specCount} specs: ${Object.entries(result.byStatus)
-        .map(([k, v]) => `${v} ${k}`)
-        .join(", ")}`,
-    );
-    console.log(
-      `    Lint: ${result.lintHealth.errors} errors, ${result.lintHealth.warnings} warnings`,
-    );
-
-    if (result.staleSpecs.length > 0) {
-      console.log(
-        `    Stale: ${result.staleSpecs.map((s) => `${s.specId} (${s.daysSinceUpdate}d)`).join(", ")}`,
-      );
-    }
-    if (result.integrityIssues.length > 0) {
-      console.log(`    Issues: ${result.integrityIssues.join("; ")}`);
-    }
-    console.log();
   },
 });

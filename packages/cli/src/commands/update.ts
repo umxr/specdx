@@ -104,7 +104,7 @@ function printSuggestionsPretty(suggestions: UpdateSuggestion[]): void {
 export default defineCommand({
   meta: {
     name: "update",
-    description: "Suggest spec updates based on sdx check findings (--from-code)",
+    description: "[experimental] Suggest spec updates based on sdx check findings (--from-code)",
   },
   args: {
     ...sharedArgs,

@@ -3,7 +3,7 @@ import { loadConfig, createLogger } from "@specdx/core";
 import { SPEC_TYPES } from "@specdx/schema";
 
 export default defineCommand({
-  meta: { name: "migrate", description: "Check and migrate spec suite schema" },
+  meta: { name: "migrate", description: "[experimental] Check and migrate spec suite schema" },
   args: {
     quiet: { type: "boolean", description: "Suppress output" },
   },

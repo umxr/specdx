@@ -175,7 +175,10 @@ export async function generateTestPlan(
 }
 
 export default defineCommand({
-  meta: { name: "generate-test-plan", description: "Generate a test plan stub from user stories" },
+  meta: {
+    name: "generate-test-plan",
+    description: "[experimental] Generate a test plan stub from user stories",
+  },
   args: {
     from: {
       type: "string",

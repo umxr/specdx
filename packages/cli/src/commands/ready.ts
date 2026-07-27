@@ -162,37 +162,42 @@ export default defineCommand({
     ...sharedArgs,
   },
   async run({ args }) {
-    const logger = createLogger({ quiet: args.quiet, verbose: args.verbose });
-    logger.debug("Running readiness checks...");
+    try {
+      const logger = createLogger({ quiet: args.quiet, verbose: args.verbose });
+      logger.debug("Running readiness checks...");
 
-    const result = await runReady();
+      const result = await runReady();
 
-    if (args.format === "json") {
-      console.log(JSON.stringify(result, null, 2));
+      if (args.format === "json") {
+        console.log(JSON.stringify(result, null, 2));
+        if (!result.ready) process.exit(1);
+        return;
+      }
+
+      // Pretty format
+      const icon = result.ready ? "✓" : "✗";
+      const label = result.ready ? "ready for implementation" : "not ready for implementation";
+
+      console.log(`\n  ${icon} ${result.project} — ${label}\n`);
+
+      for (const check of result.checks) {
+        const checkIcon = check.passed ? "✓" : "✗";
+        console.log(`    ${checkIcon} ${check.name}: ${check.details}`);
+      }
+
+      const failCount = result.checks.filter((c) => !c.passed).length;
+      if (failCount > 0) {
+        console.log(
+          `\n  Verdict: NOT READY — ${failCount} issue${failCount > 1 ? "s" : ""} to resolve\n`,
+        );
+      } else {
+        console.log(`\n  Verdict: READY\n`);
+      }
+
       if (!result.ready) process.exit(1);
-      return;
+    } catch (err) {
+      console.error(`\n  ✗ ${(err as Error).message}\n`);
+      process.exit(1);
     }
-
-    // Pretty format
-    const icon = result.ready ? "✓" : "✗";
-    const label = result.ready ? "ready for implementation" : "not ready for implementation";
-
-    console.log(`\n  ${icon} ${result.project} — ${label}\n`);
-
-    for (const check of result.checks) {
-      const checkIcon = check.passed ? "✓" : "✗";
-      console.log(`    ${checkIcon} ${check.name}: ${check.details}`);
-    }
-
-    const failCount = result.checks.filter((c) => !c.passed).length;
-    if (failCount > 0) {
-      console.log(
-        `\n  Verdict: NOT READY — ${failCount} issue${failCount > 1 ? "s" : ""} to resolve\n`,
-      );
-    } else {
-      console.log(`\n  Verdict: READY\n`);
-    }
-
-    if (!result.ready) process.exit(1);
   },
 });

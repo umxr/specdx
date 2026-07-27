@@ -1,6 +1,6 @@
 # specdx
 
-> Validate, lint, pack, and ship specs that keep your LLM-assisted workflows honest.
+> The context engine for spec-driven development — keeps AI coding sessions grounded in validated, token-budgeted spec context.
 
 [![npm version](https://img.shields.io/npm/v/specdx)](https://www.npmjs.com/package/specdx)
 [![license](https://img.shields.io/npm/l/specdx)](LICENSE)
@@ -10,7 +10,7 @@
 
 ## What is specdx?
 
-specdx is a CLI toolchain for spec-driven development. It gives your project specs (PRDs, technical designs, user stories, test plans, ADRs, API contracts) a formal schema, validates them, and packs them into token-optimised context for LLM sessions.
+specdx does a few things really well: it gives your project specs (PRDs, technical designs, user stories, test plans, ADRs, API contracts) a formal schema, **validates and lints** them, **packs** them into token-optimised context for LLM sessions, and **tracks freshness** so drift between specs gets caught before it compounds.
 
 No LLM calls in the core pipeline. No API keys required. Deterministic validation you can run in CI.
 
@@ -76,21 +76,22 @@ This scores every spec in your suite for relevance to your task, allocates a tok
 
 Your LLM session now has the right context — the PRD features you're implementing, the technical constraints, the acceptance criteria, the API contract. No manual copy-pasting, no guessing which specs matter.
 
-**3. Check for drift**
-
-```bash
-specdx check
-```
-
-After implementation, `check` does static analysis of your codebase against your specs. It extracts routes, types, and tests from your code (Express, Hono, and Next.js supported) and compares them against what the specs say should exist. You get a coverage percentage and a list of findings: missing routes, unimplemented types, gaps in test coverage.
-
-**4. Lint before committing**
+**3. Lint before committing**
 
 ```bash
 specdx lint
 ```
 
 Validates frontmatter, checks required sections, verifies cross-references, detects circular dependencies, flags vague language, and catches hardcoded secrets in specs. Three presets: `minimal`, `recommended`, `strict`.
+
+**4. Keep specs fresh**
+
+```bash
+specdx diff        # what changed, and which downstream specs it affects
+specdx ready       # is the suite fit to implement from?
+```
+
+If you updated the PRD but not the test plan that depends on it, `diff` flags it before the staleness compounds.
 
 ### Planning New Work
 
@@ -155,6 +156,22 @@ ci:
 
 ---
 
+## Experimental Features
+
+These ship with specdx but are **not part of the stable surface** — they lean on static code analysis, which is inherently fuzzy, and their output and interfaces may change or produce noise. They are flagged `[experimental]` in CLI help.
+
+| Command | What it does |
+|---------|-------------|
+| `specdx check` | Spec-to-implementation drift analysis: extracts routes (Express, Hono, Next.js), types (TS, Zod, Prisma), and tests from your code and compares them against specs |
+| `specdx check --ai` | Sends check findings to Claude for assessment (requires `ANTHROPIC_API_KEY`) |
+| `specdx update --from-code` | Suggests spec updates from check findings |
+| `specdx generate test-plan` | Generates test-plan stubs from story acceptance criteria |
+| `specdx migrate` | Schema-version migration for spec suites |
+
+Feedback on these is especially welcome — accuracy improvements (confidence scoring, better matching) are what graduates them to stable.
+
+---
+
 ## Claude Code Integration
 
 specdx ships as a Claude Code plugin with 9 skills that automate the workflow above.
@@ -180,8 +197,8 @@ specdx skills install
 | `specdx-start-task` | Loads spec context before coding — runs `pack --task` and injects the result |
 | `specdx-author-spec` | Guides spec creation with iterative linting gates between sections |
 | `specdx-plan-from-spec` | Generates implementation plans grounded in the spec suite |
-| `specdx-verify` | Verifies implementation against specs using `check` |
-| `specdx-check-drift` | Cross-references code changes vs spec definitions |
+| `specdx-verify` | *(experimental)* Verifies implementation against specs using `check` |
+| `specdx-check-drift` | *(experimental)* Cross-references code changes vs spec definitions |
 | `specdx-pre-commit` | Runs lint + diff before commits to catch drift early |
 | `specdx-review-spec` | Multi-layer quality review (completeness, consistency, adversarial) |
 | `specdx-onboard` | Guided overview for new developers |
@@ -347,16 +364,16 @@ ci:
 | `specdx validate` | Validate `spec.config.yaml` |
 | `specdx pack --task <task>` | Pack specs into token-optimised context |
 | `specdx status` | Show spec suite health overview |
-| `specdx check` | Analyse spec-to-implementation drift |
+| `specdx check` | *(experimental)* Analyse spec-to-implementation drift |
 | `specdx diff` | Show spec changes and downstream impact |
 | `specdx graph` | Print the dependency graph |
 | `specdx ready` | Check if specs are ready for implementation |
 | `specdx explain` | Print a human-readable spec suite overview |
 | `specdx changelog` | Generate changelog of spec changes |
 | `specdx generate story --from <id>` | Generate user story stubs from a PRD |
-| `specdx generate test-plan` | Generate test plan stub from stories |
-| `specdx update` | Suggest spec updates based on code drift |
-| `specdx migrate` | Check and validate spec schema version |
+| `specdx generate test-plan` | *(experimental)* Generate test plan stub from stories |
+| `specdx update` | *(experimental)* Suggest spec updates based on code drift |
+| `specdx migrate` | *(experimental)* Check and validate spec schema version |
 | `specdx skills install` | Install Claude Code skills |
 | `specdx mcp` | Start the MCP server |
 
@@ -374,7 +391,7 @@ Global flags: `--format pretty|json|github`, `--quiet`, `--verbose`.
 
 1. **Dependency chains.** `requires` declarations build a DAG. Rules catch staleness and broken references across the entire suite.
 2. **Context packing.** `specdx pack` assembles token-optimised payloads with relevance filtering, budget allocation, and boilerplate stripping.
-3. **Drift detection.** `specdx diff` walks the dependency graph to find specs affected by upstream changes. `specdx check` compares specs against your actual implementation.
+3. **Drift detection.** `specdx diff` walks the dependency graph to find specs affected by upstream changes, and `specdx ready` gates implementation on suite health. (Experimental: `specdx check` compares specs against your actual implementation.)
 
 ---
 

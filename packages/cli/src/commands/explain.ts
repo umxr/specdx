@@ -82,41 +82,46 @@ export default defineCommand({
     format: { type: "string", description: "Output format: pretty, json", default: "pretty" },
   },
   async run({ args }) {
-    const result = await runExplain({ format: args.format });
+    try {
+      const result = await runExplain({ format: args.format });
 
-    if (args.format === "json") {
-      console.log(JSON.stringify(result, null, 2));
-      return;
-    }
-
-    // Pretty format
-    console.log(`\n  ${result.project}`);
-    if (result.description) {
-      console.log(`  ${result.description}`);
-    }
-    console.log(
-      `\n  ${result.specCount} specs: ${Object.entries(result.byType)
-        .map(([k, v]) => `${v} ${k}`)
-        .join(", ")}`,
-    );
-    console.log(
-      `  Status: ${Object.entries(result.byStatus)
-        .map(([k, v]) => `${v} ${k}`)
-        .join(", ")}`,
-    );
-
-    console.log("\n  Specs:");
-    for (const spec of result.specs) {
-      console.log(`    ${spec.id} (${spec.type}, ${spec.status}) — ${spec.title}`);
-      if (spec.firstLine) {
-        console.log(`      ${spec.firstLine}`);
+      if (args.format === "json") {
+        console.log(JSON.stringify(result, null, 2));
+        return;
       }
-    }
 
-    console.log("\n  Dependencies:");
-    for (const line of result.graph) {
-      console.log(`    ${line}`);
+      // Pretty format
+      console.log(`\n  ${result.project}`);
+      if (result.description) {
+        console.log(`  ${result.description}`);
+      }
+      console.log(
+        `\n  ${result.specCount} specs: ${Object.entries(result.byType)
+          .map(([k, v]) => `${v} ${k}`)
+          .join(", ")}`,
+      );
+      console.log(
+        `  Status: ${Object.entries(result.byStatus)
+          .map(([k, v]) => `${v} ${k}`)
+          .join(", ")}`,
+      );
+
+      console.log("\n  Specs:");
+      for (const spec of result.specs) {
+        console.log(`    ${spec.id} (${spec.type}, ${spec.status}) — ${spec.title}`);
+        if (spec.firstLine) {
+          console.log(`      ${spec.firstLine}`);
+        }
+      }
+
+      console.log("\n  Dependencies:");
+      for (const line of result.graph) {
+        console.log(`    ${line}`);
+      }
+      console.log();
+    } catch (err) {
+      console.error(`\n  ✗ ${(err as Error).message}\n`);
+      process.exit(1);
     }
-    console.log();
   },
 });

@@ -6,12 +6,15 @@ import type { CheckConfig } from "@specdx/check";
 import { sharedArgs } from "../shared-args.js";
 
 export default defineCommand({
-  meta: { name: "check", description: "Check spec-to-implementation drift" },
+  meta: { name: "check", description: "[experimental] Check spec-to-implementation drift" },
   args: {
     ...sharedArgs,
     spec: { type: "string", description: "Check a specific spec by ID" },
     framework: { type: "string", description: "Framework override: express, hono, nextjs" },
-    ai: { type: "boolean", description: "Use AI to assess findings (requires ANTHROPIC_API_KEY)" },
+    ai: {
+      type: "boolean",
+      description: "[experimental] Use AI to assess findings (requires ANTHROPIC_API_KEY)",
+    },
   },
   async run({ args }) {
     const logger = createLogger({ quiet: args.quiet, verbose: args.verbose });

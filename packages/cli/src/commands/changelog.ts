@@ -75,14 +75,19 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
-      const output = await runChangelog(args);
-      console.log(output);
-    } catch (err) {
-      if (err instanceof DiffError) {
-        console.error(`\n  \u2717 ${err.message}\n`);
-        process.exit(1);
+      try {
+        const output = await runChangelog(args);
+        console.log(output);
+      } catch (err) {
+        if (err instanceof DiffError) {
+          console.error(`\n  \u2717 ${err.message}\n`);
+          process.exit(1);
+        }
+        throw err;
       }
-      throw err;
+    } catch (err) {
+      console.error(`\n  ✗ ${(err as Error).message}\n`);
+      process.exit(1);
     }
   },
 });
