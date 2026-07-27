@@ -22,8 +22,10 @@ jobs:
         with:
           node-version: 24
           cache: "pnpm"
-      # Trusted Publishing requires npm >= 11.5.1
-      - run: npm install -g npm@latest
+      # Trusted Publishing requires npm >= 11.5.1. Pinned to 11.x: npm 12+
+      # hard-errors (EUNKNOWNCONFIG) on the pnpm-only flags/config it inherits
+      # from .npmrc and changesets' publish invocation.
+      - run: npm install -g npm@11
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: Create Release Pull Request or Publish
