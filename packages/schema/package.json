@@ -1,5 +1,6 @@
 {
   "name": "@specdx/schema",
+  "private": true,
   "version": "0.0.0",
   "type": "module",
   "exports": {
@@ -8,7 +9,9 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --build && node -e \"require('node:fs').cpSync('src/schemas', 'dist/schemas', { recursive: true })\"",
     "typecheck": "tsc --noEmit",

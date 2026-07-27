@@ -1,5 +1,6 @@
 {
   "name": "@specdx/skills",
+  "private": true,
   "version": "0.0.0",
   "type": "module",
   "exports": {
@@ -8,7 +9,10 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist", "skills"],
+  "files": [
+    "dist",
+    "skills"
+  ],
   "scripts": {
     "build": "tsc --build",
     "typecheck": "tsc --noEmit",
