@@ -1,6 +1,8 @@
+import { readFileSync } from "node:fs";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { describe, it, expect } from "vitest";
+import { SPEC_TYPES } from "./types.js";
 import baseSpecSchema from "./schemas/base-spec.json";
 import prdSchema from "./schemas/prd.json";
 import technicalDesignSchema from "./schemas/technical-design.json";
@@ -230,5 +232,42 @@ describe("config schema", () => {
     expect(
       validate({ version: "1.0", specs: { prd: { path: "specs/prd.md", type: "prd" } } }),
     ).toBe(true);
+  });
+});
+
+describe("spec type enum drift", () => {
+  // Read the JSON from disk rather than importing it, so these assertions see
+  // the files exactly as editor/schema-store consumers do — unaffected by the
+  // runtime enum patching in validator.ts.
+  const loadSchema = (name: string): Record<string, unknown> =>
+    JSON.parse(readFileSync(new URL(`./schemas/${name}`, import.meta.url), "utf8")) as Record<
+      string,
+      unknown
+    >;
+
+  const enumAt = (schema: Record<string, unknown>, path: string[]): unknown => {
+    let node: unknown = schema;
+    for (const key of path) {
+      node = (node as Record<string, unknown>)[key];
+    }
+    return node;
+  };
+
+  it("config.json spec type enum matches SPEC_TYPES", () => {
+    const schema = loadSchema("config.json");
+    expect(
+      enumAt(schema, ["properties", "specs", "additionalProperties", "properties", "type", "enum"]),
+    ).toEqual([...SPEC_TYPES]);
+  });
+
+  it("base-spec.json type enum matches SPEC_TYPES", () => {
+    const schema = loadSchema("base-spec.json");
+    expect(enumAt(schema, ["properties", "type", "enum"])).toEqual([...SPEC_TYPES]);
+  });
+
+  it("every spec type has a dedicated schema file", () => {
+    for (const type of SPEC_TYPES) {
+      expect(() => loadSchema(`${type}.json`)).not.toThrow();
+    }
   });
 });

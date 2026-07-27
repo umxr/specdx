@@ -10,7 +10,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build && node -e \"require('node:fs').cpSync('src/schemas', 'dist/schemas', { recursive: true })\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist *.tsbuildinfo"

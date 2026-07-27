@@ -1,5 +1,5 @@
 import { Ajv as AjvClass, type ErrorObject } from "ajv";
-import type { SpecType } from "./types.js";
+import { SPEC_TYPES, type SpecType } from "./types.js";
 
 import baseSpecSchema from "./schemas/base-spec.json" with { type: "json" };
 import configSchema from "./schemas/config.json" with { type: "json" };
@@ -26,9 +26,18 @@ export interface ValidationResult {
   errors: ErrorObject[] | null;
 }
 
+// The JSON schemas duplicate the spec-type enum for editor and schema-store
+// consumers. At runtime SPEC_TYPES is the single source of truth: the enums are
+// overwritten before compilation so the JSON copies can never drift from the
+// TypeScript types (see issue #2 — a stale enum shipped in 0.4.0-alpha.2).
+const runtimeBaseSpecSchema = structuredClone(baseSpecSchema);
+runtimeBaseSpecSchema.properties.type.enum = [...SPEC_TYPES];
+const runtimeConfigSchema = structuredClone(configSchema);
+runtimeConfigSchema.properties.specs.additionalProperties.properties.type.enum = [...SPEC_TYPES];
+
 const ajv = new AjvClass({ allErrors: true, strict: true });
 addFormats(ajv, ["date"]);
-ajv.addSchema(baseSpecSchema);
+ajv.addSchema(runtimeBaseSpecSchema);
 
 const specValidators: Record<string, ReturnType<typeof ajv.compile>> = {
   prd: ajv.compile(prdSchema),
@@ -42,7 +51,7 @@ const specValidators: Record<string, ReturnType<typeof ajv.compile>> = {
   "project-context": ajv.compile(projectContextSchema),
 };
 
-const configValidator = ajv.compile(configSchema);
+const configValidator = ajv.compile(runtimeConfigSchema);
 
 export function validateSpec(type: SpecType, data: Record<string, unknown>): ValidationResult {
   const validate = specValidators[type];

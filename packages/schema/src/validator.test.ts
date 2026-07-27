@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateSpec, validateConfig } from "./validator.js";
-import type { SpecType } from "./types.js";
+import { SPEC_TYPES, type SpecType } from "./types.js";
 
 describe("validateSpec", () => {
   it("validates a correct PRD frontmatter", () => {
@@ -102,6 +102,16 @@ describe("validateConfig", () => {
   it("rejects config missing version", () => {
     const result = validateConfig({ specs: {} });
     expect(result.valid).toBe(false);
+  });
+
+  it("accepts every spec type in SPEC_TYPES", () => {
+    for (const type of SPEC_TYPES) {
+      const result = validateConfig({
+        version: "1.0",
+        specs: { [type]: { path: `specs/${type}.md`, type } },
+      });
+      expect(result.valid, `config with spec type "${type}" should be valid`).toBe(true);
+    }
   });
 
   it("accepts valid pack config with all fields", () => {
