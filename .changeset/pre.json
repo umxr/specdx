@@ -14,6 +14,7 @@
     "@specdx/skills": "0.0.0"
   },
   "changesets": [
-    "context-engine-focus"
+    "context-engine-focus",
+    "story-filename-word-boundary"
   ]
 }
