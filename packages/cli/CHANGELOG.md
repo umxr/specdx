@@ -1,5 +1,11 @@
 # specdx
 
+## 0.4.0-alpha.5
+
+### Patch Changes
+
+- 7591c43: `generate story` now truncates long filenames on a word boundary instead of cutting mid-word (`...-rules-across.md` rather than `...-rules-across-st.md`).
+
 ## 0.4.0-alpha.4
 
 ### Minor Changes
