@@ -68,6 +68,50 @@ describe("generateStories", () => {
     expect(content).toContain("prd-001");
   });
 
+  it("truncates long filenames on a word boundary, not mid-word", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      [
+        'version: "1.0"',
+        "specs:",
+        "  prd:",
+        "    path: specs/prd.md",
+        "    type: prd",
+        "  stories:",
+        "    path: specs/stories/*.md",
+        "    type: user-story",
+        '    requires: ["prd"]',
+      ].join("\n"),
+    );
+    await writeFile(
+      join(tempDir, "specs/prd.md"),
+      [
+        "---",
+        'id: "prd-001"',
+        'type: "prd"',
+        'title: "Test PRD"',
+        'status: "approved"',
+        'version: "1.0"',
+        'created: "2026-01-01"',
+        'authors: ["dev"]',
+        "---",
+        "",
+        "# Test PRD",
+        "",
+        "## Features",
+        "",
+        "- **F2**: Spec linting — 13 built-in rules across structure and completeness categories",
+      ].join("\n"),
+    );
+
+    const result = await generateStories({ configDir: tempDir, from: "prd-001" });
+
+    expect(result.generated).toHaveLength(1);
+    const files = await readdir(join(tempDir, "specs/stories"));
+    // hard cut at 40 chars would produce "...-rules-across-st.md"
+    expect(files[0]).toBe("story-f2-spec-linting-13-built-in-rules-across.md");
+  });
+
   it("returns empty when PRD has no features", async () => {
     await writeFile(
       join(tempDir, "spec.config.yaml"),

@@ -15,11 +15,15 @@ export interface GenerateStoriesResult {
 }
 
 function slugify(text: string): string {
-  return text
+  const slug = text
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
+    .replace(/^-+|-+$/g, "");
+  if (slug.length <= 40) return slug;
+  // Truncate on a word boundary so filenames don't end mid-word
+  const cut = slug.slice(0, 40);
+  const lastHyphen = cut.lastIndexOf("-");
+  return lastHyphen > 0 ? cut.slice(0, lastHyphen) : cut;
 }
 
 function detectStoriesDir(
