@@ -6,6 +6,7 @@ describe("computeScore", () => {
   it("computes 100% when no findings", () => {
     const score = computeScore([], { routes: 5, types: 10, tests: 8 });
     expect(score.overall).toBe(100);
+    expect(score.assessed).toBe(true);
   });
 
   it("computes correct percentage with missing items", () => {
@@ -29,8 +30,9 @@ describe("computeScore", () => {
     expect(score.overall).toBe(100);
   });
 
-  it("handles zero totals gracefully", () => {
+  it("marks zero totals as not assessed instead of a vacuous 100% (issue #6)", () => {
     const score = computeScore([], { routes: 0, types: 0, tests: 0 });
-    expect(score.overall).toBe(100);
+    expect(score.assessed).toBe(false);
+    expect(score.overall).toBe(0);
   });
 });

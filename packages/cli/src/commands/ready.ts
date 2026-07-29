@@ -8,6 +8,8 @@ import { sharedArgs } from "../shared-args.js";
 export interface ReadyCheck {
   name: string;
   passed: boolean;
+  /** True when the check had nothing to verify — reported as skipped, not as a pass. */
+  skipped?: boolean;
   details: string;
 }
 
@@ -52,14 +54,23 @@ export async function runReady(): Promise<ReadyResult> {
       missingRequired.push(key);
     }
   }
-  checks.push({
-    name: "Required specs present",
-    passed: missingRequired.length === 0,
-    details:
-      missingRequired.length === 0
-        ? `All ${requiredEntries.length} required specs found`
-        : `Missing: ${missingRequired.join(", ")}`,
-  });
+  if (requiredEntries.length === 0) {
+    checks.push({
+      name: "Required specs present",
+      passed: true,
+      skipped: true,
+      details: "skipped (no specs marked required in config)",
+    });
+  } else {
+    checks.push({
+      name: "Required specs present",
+      passed: missingRequired.length === 0,
+      details:
+        missingRequired.length === 0
+          ? `All ${requiredEntries.length} required specs found`
+          : `Missing: ${missingRequired.join(", ")}`,
+    });
+  }
 
   // Check 2: Lint health (no errors)
   const presetName = config.lint?.extends ?? "recommended";
@@ -105,14 +116,31 @@ export async function runReady(): Promise<ReadyResult> {
   for (const d of refErrors) {
     integrityIssues.push(d.message);
   }
-  checks.push({
-    name: "No integrity issues",
-    passed: integrityIssues.length === 0,
-    details:
-      integrityIssues.length === 0
-        ? "References and dependencies valid"
-        : integrityIssues.join("; "),
-  });
+  const hasDeclaredRelations =
+    specs.some((s) => {
+      const refs = s.spec.frontmatter.references;
+      return Array.isArray(refs) && refs.length > 0;
+    }) ||
+    Object.values(config.specs).some(
+      (entry) => ((entry as { requires?: string[] }).requires?.length ?? 0) > 0,
+    );
+  if (integrityIssues.length === 0 && !hasDeclaredRelations) {
+    checks.push({
+      name: "No integrity issues",
+      passed: true,
+      skipped: true,
+      details: "skipped (no references or dependencies declared)",
+    });
+  } else {
+    checks.push({
+      name: "No integrity issues",
+      passed: integrityIssues.length === 0,
+      details:
+        integrityIssues.length === 0
+          ? "References and dependencies valid"
+          : integrityIssues.join("; "),
+    });
+  }
 
   // Check 4: No stale specs
   const thresholdDays =
@@ -140,17 +168,27 @@ export async function runReady(): Promise<ReadyResult> {
   });
 
   // Check 5: Story coverage — every PRD feature has a user story
+  const hasPrd = specs.some((s) => s.spec.frontmatter.type === "prd");
   const storyCoverageErrors = lintResults.diagnostics.filter(
     (d) => d.ruleId === "completeness/story-coverage",
   );
-  checks.push({
-    name: "Story coverage",
-    passed: storyCoverageErrors.length === 0,
-    details:
-      storyCoverageErrors.length === 0
-        ? "All PRD features have corresponding stories"
-        : storyCoverageErrors.map((d) => d.message).join("; "),
-  });
+  if (!hasPrd) {
+    checks.push({
+      name: "Story coverage",
+      passed: true,
+      skipped: true,
+      details: "skipped (no PRD in suite)",
+    });
+  } else {
+    checks.push({
+      name: "Story coverage",
+      passed: storyCoverageErrors.length === 0,
+      details:
+        storyCoverageErrors.length === 0
+          ? "All PRD features have corresponding stories"
+          : storyCoverageErrors.map((d) => d.message).join("; "),
+    });
+  }
 
   const ready = checks.every((c) => c.passed);
   return { project: config.project?.name ?? "project", ready, checks };
@@ -181,7 +219,7 @@ export default defineCommand({
       console.log(`\n  ${icon} ${result.project} — ${label}\n`);
 
       for (const check of result.checks) {
-        const checkIcon = check.passed ? "✓" : "✗";
+        const checkIcon = check.skipped ? "–" : check.passed ? "✓" : "✗";
         console.log(`    ${checkIcon} ${check.name}: ${check.details}`);
       }
 

@@ -95,6 +95,9 @@ const WEIGHT_TITLE = 3;
 const WEIGHT_SECTIONS = 2;
 const WEIGHT_BODY = 1;
 
+/** Minimum id length considered for verbatim matching (avoids ids like "a"). */
+const ID_MATCH_MIN_LENGTH = 3;
+
 /** Graph propagation factor for immediate neighbors. */
 const GRAPH_BOOST_FACTOR = 0.5;
 
@@ -134,10 +137,18 @@ export function scoreSpecs(
   // Score each spec by keyword hits across weighted fields
   const rawScores = new Map<string, number>();
   const matchedMap = new Map<string, Set<string>>();
+  const idMatchedSet = new Set<string>();
+  const taskLower = (task ?? "").toLowerCase();
 
   for (const [specId, spec] of specs) {
     let weightedHits = 0;
     const matched = new Set<string>();
+
+    // Verbatim id match: a task that names a spec dominates keyword scoring
+    const idLower = specId.toLowerCase();
+    if (idLower.length >= ID_MATCH_MIN_LENGTH && taskLower.includes(idLower)) {
+      idMatchedSet.add(specId);
+    }
 
     for (const keyword of keywords) {
       let hit = false;
@@ -227,11 +238,14 @@ export function scoreSpecs(
     if (score > maxScore) maxScore = score;
   }
 
-  // Build results, normalize, and filter
+  // Build results, normalize, and filter. A spec the task names verbatim is
+  // clamped to 1.0 — an explicit mention always outranks keyword inference —
+  // without distorting the normalization of the other specs' scores.
   const results: RelevanceScore[] = [];
   for (const [specId] of specs) {
     const combined = finalRawScores.get(specId) ?? 0;
-    const normalized = maxScore > 0 ? combined / maxScore : 0;
+    const idMatched = idMatchedSet.has(specId);
+    const normalized = idMatched ? 1.0 : maxScore > 0 ? combined / maxScore : 0;
 
     if (normalized < SCORE_THRESHOLD) continue;
 
@@ -241,11 +255,14 @@ export function scoreSpecs(
       rawScore: rawScores.get(specId) ?? 0,
       matchedKeywords: [...(matchedMap.get(specId) ?? [])],
       graphBoosted: boostedSet.has(specId),
+      idMatched,
     });
   }
 
-  // Sort descending by score
-  results.sort((a, b) => b.score - a.score);
+  // Sort descending by score; ties prefer specs the task named explicitly
+  results.sort(
+    (a, b) => b.score - a.score || Number(b.idMatched ?? false) - Number(a.idMatched ?? false),
+  );
 
   return results;
 }

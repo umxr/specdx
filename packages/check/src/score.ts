@@ -34,7 +34,11 @@ export function computeScore(findings: Finding[], totals: SpecTotals): Implement
     totalMatched += matched;
   }
 
-  const overall = totalItems === 0 ? 100 : Math.round((totalMatched / totalItems) * 100);
+  // Nothing checkable is "not assessed", never a vacuous 100% pass (issue #6)
+  if (totalItems === 0) {
+    return { overall: 0, assessed: false, byCategory };
+  }
 
-  return { overall, byCategory };
+  const overall = Math.round((totalMatched / totalItems) * 100);
+  return { overall, assessed: true, byCategory };
 }

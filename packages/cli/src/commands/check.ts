@@ -6,7 +6,11 @@ import type { CheckConfig } from "@specdx/check";
 import { sharedArgs } from "../shared-args.js";
 
 export default defineCommand({
-  meta: { name: "check", description: "[experimental] Check spec-to-implementation drift" },
+  meta: {
+    name: "check",
+    description:
+      "[experimental] Check spec-to-implementation drift. Exit codes: 0 ok, 1 errors found, 3 nothing checkable (coverage not assessed)",
+  },
   args: {
     ...sharedArgs,
     spec: { type: "string", description: "Check a specific spec by ID" },
@@ -77,7 +81,23 @@ export default defineCommand({
       console.log(JSON.stringify(result, null, 2));
     } else {
       // Pretty format
-      console.log(`\n  sdx check — ${result.score.overall}% implementation coverage\n`);
+      const headline = result.score.assessed
+        ? `${result.score.overall}% implementation coverage`
+        : "coverage not assessed — no checkable surfaces found";
+      console.log(`\n  sdx check — ${headline}\n`);
+
+      for (const note of result.notes) {
+        console.log(`  ⚠ ${note}`);
+      }
+      if (result.notes.length > 0) console.log();
+
+      if (args.verbose) {
+        const fmt = (n: number | null) => (n === null ? "not scanned" : `${n} found`);
+        console.log(`  Scanned: framework=${result.scanned.framework ?? "none detected"}`);
+        console.log(`    routes: ${fmt(result.scanned.codeRoutes)}`);
+        console.log(`    types: ${fmt(result.scanned.codeTypes)}`);
+        console.log(`    tests: ${fmt(result.scanned.codeTests)}\n`);
+      }
 
       for (const [category, stats] of Object.entries(result.score.byCategory)) {
         if (stats.total === 0) continue;
@@ -104,6 +124,10 @@ export default defineCommand({
 
     if (result.findings.some((f) => f.severity === "error")) {
       process.exit(1);
+    }
+    // Distinct exit code so CI cannot mistake "nothing was checkable" for a pass
+    if (!result.score.assessed) {
+      process.exit(3);
     }
   },
 });

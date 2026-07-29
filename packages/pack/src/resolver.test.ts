@@ -214,3 +214,41 @@ describe("scoreSpecsByIds", () => {
     expect(() => scoreSpecsByIds(specs, ["nonexistent"], graph)).toThrow(/Available specs:/);
   });
 });
+
+describe("scoreSpecs id matching (issue #9)", () => {
+  it("a task naming a spec's id verbatim dominates keyword-only matches", () => {
+    const specs = new Map([
+      [
+        "crawler-logger",
+        makeSpec("crawler-logger", {
+          title: "Crawler Logger Middleware",
+          content: "Log crawler requests via middleware.",
+        }),
+      ],
+      [
+        "project-context",
+        makeSpec("project-context", {
+          title: "Project Context",
+          content: "The site uses middleware and a crawler for logging things.",
+        }),
+      ],
+    ]);
+    const graph = makeGraph(["crawler-logger", "project-context"]);
+    const results = scoreSpecs(specs, "implement the crawler-logger middleware", graph);
+
+    const named = results.find((r) => r.specId === "crawler-logger")!;
+    const context = results.find((r) => r.specId === "project-context")!;
+    expect(named.idMatched).toBe(true);
+    expect(named.score).toBe(1.0);
+    expect(context.idMatched).toBe(false);
+    expect(context.score).toBeLessThan(0.5);
+    expect(results[0]!.specId).toBe("crawler-logger");
+  });
+
+  it("does not id-match very short ids", () => {
+    const specs = new Map([["db", makeSpec("db", { content: "database" })]]);
+    const graph = makeGraph(["db"]);
+    const results = scoreSpecs(specs, "installed by the db team", graph);
+    expect(results[0]?.idMatched ?? false).toBe(false);
+  });
+});

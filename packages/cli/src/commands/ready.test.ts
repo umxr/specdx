@@ -66,6 +66,84 @@ describe("runReady", () => {
     expect(result.checks.find((c) => c.name === "No stale specs")?.passed).toBe(true);
   });
 
+  it("marks vacuous checks as skipped instead of passed", async () => {
+    // A suite with only a quick-spec: no PRD, no required specs, no relations
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  qs:\n    path: "specs/qs.md"\n    type: "quick-spec"\n`,
+    );
+    await writeFile(
+      join(tempDir, "specs/qs.md"),
+      [
+        "---",
+        'id: "qs-001"',
+        'type: "quick-spec"',
+        'title: "Quick"',
+        'status: "draft"',
+        'version: "1.0"',
+        `created: "${new Date().toISOString().slice(0, 10)}"`,
+        'authors: ["dev"]',
+        "---",
+        "",
+        "# Quick",
+        "",
+        "## Intent",
+        "",
+        "Do a thing.",
+        "",
+        "## Boundaries",
+        "",
+        "Only the thing. Errors are reported.",
+        "",
+        "## Tasks",
+        "",
+        "- The thing",
+      ].join("\n"),
+    );
+    const result = await runReady();
+
+    const story = result.checks.find((c) => c.name === "Story coverage");
+    expect(story?.skipped).toBe(true);
+    expect(story?.details).toContain("no PRD");
+
+    const required = result.checks.find((c) => c.name === "Required specs present");
+    expect(required?.skipped).toBe(true);
+
+    const integrity = result.checks.find((c) => c.name === "No integrity issues");
+    expect(integrity?.skipped).toBe(true);
+
+    // Skipped checks don't block readiness
+    expect(result.ready).toBe(true);
+  });
+
+  it("does not mark story coverage skipped when a PRD exists", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  prd:\n    path: "specs/prd.md"\n    type: "prd"\n    required: true\n`,
+    );
+    await writeFile(
+      join(tempDir, "specs/prd.md"),
+      [
+        "---",
+        'id: "prd-001"',
+        'type: "prd"',
+        'title: "Test PRD"',
+        'status: "draft"',
+        'version: "1.0"',
+        `created: "${new Date().toISOString().slice(0, 10)}"`,
+        'authors: ["dev"]',
+        "---",
+        "",
+        "## Features",
+        "",
+        "- **F1**: Core feature",
+      ].join("\n"),
+    );
+    const result = await runReady();
+    const story = result.checks.find((c) => c.name === "Story coverage");
+    expect(story?.skipped).toBeUndefined();
+  });
+
   it("detects missing required specs", async () => {
     await writeFile(
       join(tempDir, "spec.config.yaml"),

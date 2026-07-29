@@ -2,6 +2,18 @@ export interface CheckResult {
   findings: Finding[];
   score: ImplementationScore;
   summary: string;
+  /** What was actually scanned — null means the category was not scanned at all. */
+  scanned: ScanSummary;
+  /** Human-readable caveats about skipped or degraded analysis. */
+  notes: string[];
+}
+
+export interface ScanSummary {
+  /** Detected or configured framework, null when none. */
+  framework: string | null;
+  codeRoutes: number | null;
+  codeTypes: number | null;
+  codeTests: number | null;
 }
 
 export interface Finding {
@@ -18,6 +30,11 @@ export interface Finding {
 
 export interface ImplementationScore {
   overall: number;
+  /**
+   * False when there was nothing checkable — no spec'd routes, types, or test
+   * cases. An unassessed score must never be presented as coverage.
+   */
+  assessed: boolean;
   byCategory: Record<string, { matched: number; total: number }>;
 }
 

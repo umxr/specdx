@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { buildGraph, GraphError } from "./graph.js";
+import {
+  buildGraph,
+  GraphError,
+  collectReferenceEdges,
+  findUnreflectedReferences,
+} from "./graph.js";
 import type { SdxConfig } from "@specdx/schema";
 
 const makeConfig = (specs: SdxConfig["specs"]): SdxConfig => ({ version: "1.0", specs });
@@ -56,5 +61,86 @@ describe("buildGraph", () => {
       prd: { path: "specs/prd.md", type: "prd", requires: ["nonexistent"] },
     });
     expect(() => buildGraph(config)).toThrow(GraphError);
+  });
+});
+
+describe("collectReferenceEdges", () => {
+  it("collects typed reference edges from frontmatter", () => {
+    const specs = [
+      {
+        frontmatter: {
+          id: "crawler-logger",
+          references: [{ id: "project-context", relationship: "depends-on" }],
+        },
+      },
+      { frontmatter: { id: "project-context" } },
+    ];
+    const edges = collectReferenceEdges(specs);
+    expect(edges).toEqual([
+      { fromId: "crawler-logger", toId: "project-context", relationship: "depends-on" },
+    ]);
+  });
+
+  it("ignores malformed reference entries", () => {
+    const specs = [
+      { frontmatter: { id: "a", references: [null, "b", { relationship: "depends-on" }] } },
+    ];
+    expect(collectReferenceEdges(specs)).toEqual([]);
+  });
+});
+
+describe("findUnreflectedReferences", () => {
+  const config = {
+    version: "1.0",
+    specs: {
+      ctx: { path: "specs/ctx.md", type: "project-context" },
+      design: { path: "specs/design.md", type: "technical-design" },
+    },
+  } as never;
+
+  const idToEntry = new Map([
+    ["project-context", "ctx"],
+    ["crawler-logger", "design"],
+  ]);
+
+  it("flags a depends-on reference missing from config requires", () => {
+    const graph = buildGraph(config);
+    const missing = findUnreflectedReferences(
+      [{ fromId: "crawler-logger", toId: "project-context", relationship: "depends-on" }],
+      idToEntry,
+      graph,
+    );
+    expect(missing).toHaveLength(1);
+    expect(missing[0]).toMatchObject({ requiringEntry: "design", requiredEntry: "ctx" });
+  });
+
+  it("does not flag references the config already reflects", () => {
+    const withRequires = {
+      version: "1.0",
+      specs: {
+        ctx: { path: "specs/ctx.md", type: "project-context" },
+        design: { path: "specs/design.md", type: "technical-design", requires: ["ctx"] },
+      },
+    } as never;
+    const graph = buildGraph(withRequires);
+    const missing = findUnreflectedReferences(
+      [{ fromId: "crawler-logger", toId: "project-context", relationship: "depends-on" }],
+      idToEntry,
+      graph,
+    );
+    expect(missing).toHaveLength(0);
+  });
+
+  it("skips non-dependency relationships and unmapped ids", () => {
+    const graph = buildGraph(config);
+    const missing = findUnreflectedReferences(
+      [
+        { fromId: "crawler-logger", toId: "project-context", relationship: "related-to" },
+        { fromId: "unknown-id", toId: "project-context", relationship: "depends-on" },
+      ],
+      idToEntry,
+      graph,
+    );
+    expect(missing).toHaveLength(0);
   });
 });

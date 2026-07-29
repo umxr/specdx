@@ -66,6 +66,8 @@ export interface RelevanceScore {
   matchedKeywords: string[];
   /** Whether this score was boosted by the spec graph. */
   graphBoosted: boolean;
+  /** Whether the task string contains this spec's id verbatim. */
+  idMatched?: boolean;
 }
 
 /** A spec that has been compressed to fit a budget. */

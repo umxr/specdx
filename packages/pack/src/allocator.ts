@@ -27,6 +27,49 @@ export interface AllocationResult {
   stats: PackStats;
 }
 
+/** Relevance at or above which a spec is trimmed to fit rather than excluded. */
+const HIGH_RELEVANCE = 0.75;
+
+/** Minimum remaining budget worth trimming into. */
+const MIN_TRIM_BUDGET = 150;
+
+const OMITTED_MARKER = "[section omitted to fit token budget]";
+
+/**
+ * Produce a variant of `compressed` that fits within `budget` by keeping
+ * sections in order while they fit and replacing the rest with one-line
+ * omission markers. Returns null when not even one real section fits.
+ */
+function trimToBudget(
+  compressed: CompressedSpec,
+  budget: number,
+): { spec: CompressedSpec; tokens: number } | null {
+  const markerTokens = countTokens(OMITTED_MARKER);
+  const kept: CompressedSpec["sections"] = [];
+  let used = 0;
+  let keptReal = false;
+
+  for (const section of compressed.sections) {
+    if (used + section.tokens <= budget) {
+      kept.push(section);
+      used += section.tokens;
+      keptReal = true;
+    } else if (used + markerTokens <= budget) {
+      kept.push({
+        heading: section.heading,
+        content: OMITTED_MARKER,
+        tokens: markerTokens,
+        compressed: true,
+        originalTokens: section.tokens,
+      });
+      used += markerTokens;
+    }
+  }
+
+  if (!keptReal) return null;
+  return { spec: { ...compressed, sections: kept }, tokens: used };
+}
+
 /**
  * Allocate a token budget across specs, sorted by relevance.
  *
@@ -53,6 +96,7 @@ export function allocate(
     compressed: CompressedSpec;
     relevance: number;
     tokens: number;
+    idMatched: boolean;
   }
 
   const items: ScoredCompressed[] = [];
@@ -101,11 +145,11 @@ export function allocate(
       }
     }
 
-    items.push({ compressed, relevance: score.score, tokens });
+    items.push({ compressed, relevance: score.score, tokens, idMatched: score.idMatched ?? false });
   }
 
-  // 4. Sort by relevance descending
-  items.sort((a, b) => b.relevance - a.relevance);
+  // 4. Sort by relevance descending; ties prefer specs the task named explicitly
+  items.sort((a, b) => b.relevance - a.relevance || Number(b.idMatched) - Number(a.idMatched));
 
   // 5. Greedy selection within budget
   const totalTokens = items.reduce((sum, item) => sum + item.tokens, 0);
@@ -122,14 +166,29 @@ export function allocate(
       usedTokens += item.tokens;
     }
   } else {
-    // Greedy: include from highest to lowest relevance
+    // Greedy: include from highest to lowest relevance. High-relevance specs
+    // that don't fit are trimmed into the remaining budget before being
+    // excluded — a task-named spec should never silently drop out.
     for (const item of items) {
       if (usedTokens + item.tokens <= options.budget) {
         included.push(item);
         usedTokens += item.tokens;
-      } else {
-        excluded.push(item);
+        continue;
       }
+      const remaining = options.budget - usedTokens;
+      if (
+        (item.idMatched || item.relevance >= HIGH_RELEVANCE) &&
+        remaining >= MIN_TRIM_BUDGET &&
+        !item.compressed.collapsed
+      ) {
+        const trimmed = trimToBudget(item.compressed, remaining);
+        if (trimmed) {
+          included.push({ ...item, compressed: trimmed.spec, tokens: trimmed.tokens });
+          usedTokens += trimmed.tokens;
+          continue;
+        }
+      }
+      excluded.push(item);
     }
   }
 

@@ -207,3 +207,60 @@ describe("allocate", () => {
     expect(result.stats.allocations).toHaveLength(0);
   });
 });
+
+describe("trim before exclusion (issue #9)", () => {
+  it("trims a high-relevance spec into the remaining budget instead of excluding it", () => {
+    const small = makeSpec("small", [sec("Intro", "short", 100)]);
+    const big = makeSpec("big", [
+      sec("Overview", "first section", 120),
+      sec("Details", "second section", 400),
+      sec("Appendix", "third section", 400),
+    ]);
+    const scores = [makeScore("small", 1.0), { ...makeScore("big", 1.0), idMatched: true }];
+
+    const result = allocate([small, big], scores, {
+      budget: 300,
+      full: true,
+      compression: defaultCompression,
+    });
+
+    const bigAlloc = result.stats.allocations.find((a) => a.specId === "big")!;
+    expect(bigAlloc.included).toBe(true);
+    expect(bigAlloc.compressed).toBe(true);
+    expect(result.stats.used).toBeLessThanOrEqual(300);
+
+    const bigSpec = result.specs.find((s) => s.specId === "big")!;
+    expect(bigSpec.sections[0]!.content).toBe("first section");
+    expect(bigSpec.sections.some((s) => s.content.includes("omitted"))).toBe(true);
+  });
+
+  it("still excludes low-relevance specs that do not fit", () => {
+    const small = makeSpec("small", [sec("Intro", "short", 100)]);
+    const big = makeSpec("big", [sec("Overview", "first", 120), sec("Details", "second", 400)]);
+    const scores = [makeScore("small", 1.0), makeScore("big", 0.3)];
+
+    const result = allocate([small, big], scores, {
+      budget: 300,
+      full: true,
+      compression: defaultCompression,
+    });
+
+    const bigAlloc = result.stats.allocations.find((a) => a.specId === "big")!;
+    expect(bigAlloc.included).toBe(false);
+  });
+
+  it("prefers the id-matched spec on relevance ties", () => {
+    const a = makeSpec("aaa", [sec("A", "content a", 200)]);
+    const b = makeSpec("bbb", [sec("B", "content b", 200)]);
+    const scores = [makeScore("aaa", 1.0), { ...makeScore("bbb", 1.0), idMatched: true }];
+
+    const result = allocate([a, b], scores, {
+      budget: 200,
+      full: true,
+      compression: defaultCompression,
+    });
+
+    const included = result.stats.allocations.filter((x) => x.included).map((x) => x.specId);
+    expect(included).toContain("bbb");
+  });
+});

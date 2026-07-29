@@ -104,3 +104,81 @@ export function buildGraph(config: SdxConfig): DependencyGraph {
     },
   };
 }
+
+/** A relationship edge declared in a spec's frontmatter `references`. */
+export interface ReferenceEdge {
+  fromId: string;
+  toId: string;
+  relationship: string;
+}
+
+/** Reference relationships that imply a dependency, and its direction. */
+const DEPENDENCY_RELATIONSHIPS: Record<string, "self-requires-target" | "target-requires-self"> = {
+  "depends-on": "self-requires-target",
+  "decomposed-into": "target-requires-self",
+  "implemented-by": "target-requires-self",
+};
+
+/**
+ * Collect relationship edges declared in spec frontmatter `references` fields.
+ * Edges point from the declaring spec's id to the referenced spec's id.
+ */
+export function collectReferenceEdges(
+  specs: { frontmatter: Record<string, unknown> }[],
+): ReferenceEdge[] {
+  const edges: ReferenceEdge[] = [];
+  for (const spec of specs) {
+    const fromId = spec.frontmatter.id;
+    if (typeof fromId !== "string") continue;
+    const refs = spec.frontmatter.references;
+    if (!Array.isArray(refs)) continue;
+    for (const ref of refs) {
+      if (ref && typeof ref === "object" && "id" in ref) {
+        const r = ref as { id: unknown; relationship?: unknown };
+        if (typeof r.id === "string") {
+          edges.push({
+            fromId,
+            toId: r.id,
+            relationship: typeof r.relationship === "string" ? r.relationship : "related-to",
+          });
+        }
+      }
+    }
+  }
+  return edges;
+}
+
+/**
+ * Find dependency-implying frontmatter references that the config-level
+ * `requires` graph does not reflect. `idToEntry` maps spec frontmatter ids to
+ * config entry keys. References within the same entry (e.g. story-to-story
+ * under one glob) and references to unmapped ids are skipped — reference
+ * existence itself is the `structure/valid-references` lint rule's concern.
+ */
+export function findUnreflectedReferences(
+  referenceEdges: ReferenceEdge[],
+  idToEntry: Map<string, string>,
+  graph: DependencyGraph,
+): { edge: ReferenceEdge; requiringEntry: string; requiredEntry: string }[] {
+  const configEdges = new Set(graph.edges.map((e) => `${e.from}→${e.to}`));
+  const missing: { edge: ReferenceEdge; requiringEntry: string; requiredEntry: string }[] = [];
+
+  for (const edge of referenceEdges) {
+    const direction = DEPENDENCY_RELATIONSHIPS[edge.relationship];
+    if (!direction) continue;
+
+    const selfEntry = idToEntry.get(edge.fromId);
+    const targetEntry = idToEntry.get(edge.toId);
+    if (!selfEntry || !targetEntry || selfEntry === targetEntry) continue;
+
+    const requiringEntry = direction === "self-requires-target" ? selfEntry : targetEntry;
+    const requiredEntry = direction === "self-requires-target" ? targetEntry : selfEntry;
+
+    // Config edges point dependency → dependent
+    if (!configEdges.has(`${requiredEntry}→${requiringEntry}`)) {
+      missing.push({ edge, requiringEntry, requiredEntry });
+    }
+  }
+
+  return missing;
+}

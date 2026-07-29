@@ -27,19 +27,50 @@ export async function runCheck(
   config: CheckConfig = {},
 ): Promise<CheckResult> {
   const findings: Finding[] = [];
+  const notes: string[] = [];
   let routeTotal = 0;
   let typeTotal = 0;
   let testTotal = 0;
+  let codeRouteCount: number | null = null;
+  let codeTypeCount: number | null = null;
+  let codeTestCount: number | null = null;
+
+  // ts-morph is an optional peer dependency; without it (e.g. under pnpm dlx,
+  // where installing into the ephemeral cache is impossible) route and TS/Zod
+  // type extraction degrade to skipped-with-a-note instead of throwing (issue #7).
+  const tsMorphAvailable = await import("ts-morph").then(
+    () => true,
+    () => false,
+  );
+  if (!tsMorphAvailable) {
+    notes.push(
+      "route and type extraction skipped: ts-morph is not installed. " +
+        "Install specdx and ts-morph as devDependencies (pnpm add -D specdx ts-morph) — " +
+        "an ephemeral runner like pnpm dlx cannot provide it.",
+    );
+  }
+
+  // Resolve the framework once so reporting can say what was scanned
+  const framework =
+    config.framework && config.framework !== "auto"
+      ? config.framework
+      : await detectFramework(projectDir);
 
   // 1. Route checking: find api-contract specs
   const apiContractSpecs = specs.filter((s) => s.frontmatter.type === "api-contract");
-  if (apiContractSpecs.length > 0) {
-    const codeRoutes = await extractRoutes(projectDir, config);
+  if (apiContractSpecs.length > 0 && tsMorphAvailable) {
+    const codeRoutes = await extractRoutes(projectDir, config, framework);
+    codeRouteCount = codeRoutes.length;
 
     for (const spec of apiContractSpecs) {
       const specEndpoints = parseEndpoints(spec.content);
       routeTotal += specEndpoints.length;
       findings.push(...matchRoutes(specEndpoints, codeRoutes, spec.frontmatter.id as string));
+    }
+    if (framework === null) {
+      notes.push(
+        "no supported framework detected (express, hono, nextjs) — route extraction ran in fallback mode across all extractors.",
+      );
     }
   }
 
@@ -47,10 +78,11 @@ export async function runCheck(
   const designSpecs = specs.filter((s) => s.frontmatter.type === "technical-design");
   if (designSpecs.length > 0) {
     const codeTypes = [
-      ...(await extractTypeScriptTypes(projectDir, config.types_dir)),
-      ...(await extractZodSchemas(projectDir, config.types_dir)),
+      ...(tsMorphAvailable ? await extractTypeScriptTypes(projectDir, config.types_dir) : []),
+      ...(tsMorphAvailable ? await extractZodSchemas(projectDir, config.types_dir) : []),
       ...(await extractPrismaModels(projectDir)),
     ];
+    codeTypeCount = codeTypes.length;
 
     for (const spec of designSpecs) {
       const specTypes = parseTypeDefinitions(spec.content);
@@ -63,6 +95,7 @@ export async function runCheck(
   const testPlanSpecs = specs.filter((s) => s.frontmatter.type === "test-plan");
   if (testPlanSpecs.length > 0) {
     const codeTests = await extractTestDescriptions(projectDir, config.tests_dir);
+    codeTestCount = codeTests.length;
 
     for (const spec of testPlanSpecs) {
       const specCases = parseTestCases(spec.content);
@@ -74,12 +107,21 @@ export async function runCheck(
   // 4. Score
   const score = computeScore(findings, { routes: routeTotal, types: typeTotal, tests: testTotal });
 
-  // 5. Summary
+  // 5. Summary — never present "nothing was checkable" as coverage (issue #6)
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warn").length;
-  const summary = `${score.overall}% implementation coverage — ${errors} errors, ${warnings} warnings`;
+  const summary = score.assessed
+    ? `${score.overall}% implementation coverage — ${errors} errors, ${warnings} warnings`
+    : "coverage not assessed — no checkable surfaces found (no spec'd routes, types, or test cases)";
 
-  return { findings, score, summary };
+  const scanned = {
+    framework: framework ?? null,
+    codeRoutes: codeRouteCount,
+    codeTypes: codeTypeCount,
+    codeTests: codeTestCount,
+  };
+
+  return { findings, score, summary, scanned, notes };
 }
 
 /**
@@ -89,9 +131,11 @@ export async function runCheck(
  * If a framework is detected, only that extractor is used.
  * If no framework is detected, falls back to trying all extractors and merging results.
  */
-async function extractRoutes(projectDir: string, config: CheckConfig): Promise<ExtractedRoute[]> {
-  const framework = config.framework ?? "auto";
-
+async function extractRoutes(
+  projectDir: string,
+  config: CheckConfig,
+  framework: string | null,
+): Promise<ExtractedRoute[]> {
   if (framework === "express") {
     return extractExpressRoutes(projectDir, config.routes_dir);
   }
@@ -99,18 +143,6 @@ async function extractRoutes(projectDir: string, config: CheckConfig): Promise<E
     return extractHonoRoutes(projectDir, config.routes_dir);
   }
   if (framework === "nextjs") {
-    return extractNextjsRoutes(projectDir, config.app_dir);
-  }
-
-  // auto: detect from package.json first
-  const detected = await detectFramework(projectDir);
-  if (detected === "express") {
-    return extractExpressRoutes(projectDir, config.routes_dir);
-  }
-  if (detected === "hono") {
-    return extractHonoRoutes(projectDir, config.routes_dir);
-  }
-  if (detected === "nextjs") {
     return extractNextjsRoutes(projectDir, config.app_dir);
   }
 

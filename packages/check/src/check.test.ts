@@ -31,7 +31,7 @@ function makeSpec(
 const FIXTURES_DIR = join(import.meta.dirname, "..", "test", "fixtures");
 
 describe("runCheck", () => {
-  it("returns 100% score and empty findings when no specs match check categories", async () => {
+  it("reports not-assessed when no specs match check categories (issue #6)", async () => {
     const specs: ParsedSpec[] = [
       makeSpec({ id: "prd-001", type: "prd" }, "# Some PRD\n\nJust a product doc."),
       makeSpec({ id: "story-001", type: "user-story" }, "# A user story\n\nAs a user..."),
@@ -40,17 +40,19 @@ describe("runCheck", () => {
     const result = await runCheck(specs, FIXTURES_DIR);
 
     expect(result.findings).toHaveLength(0);
-    expect(result.score.overall).toBe(100);
-    expect(result.summary).toContain("100%");
-    expect(result.summary).toContain("0 errors");
-    expect(result.summary).toContain("0 warnings");
+    expect(result.score.assessed).toBe(false);
+    expect(result.summary).toContain("not assessed");
+    expect(result.summary).not.toContain("100%");
   });
 
-  it("returns 100% score when specs array is empty", async () => {
+  it("reports not-assessed when specs array is empty", async () => {
     const result = await runCheck([], FIXTURES_DIR);
 
     expect(result.findings).toHaveLength(0);
-    expect(result.score.overall).toBe(100);
+    expect(result.score.assessed).toBe(false);
+    expect(result.scanned.codeRoutes).toBeNull();
+    expect(result.scanned.codeTypes).toBeNull();
+    expect(result.scanned.codeTests).toBeNull();
   });
 
   it("reports missing routes for api-contract spec when project has no matching routes", async () => {
