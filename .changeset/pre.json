@@ -16,6 +16,7 @@
   "changesets": [
     "context-engine-focus",
     "dogfood-issue-batch",
+    "honest-trims-and-cycles",
     "story-filename-word-boundary"
   ]
 }
