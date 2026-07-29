@@ -15,6 +15,7 @@
   },
   "changesets": [
     "context-engine-focus",
+    "dogfood-issue-batch",
     "story-filename-word-boundary"
   ]
 }
