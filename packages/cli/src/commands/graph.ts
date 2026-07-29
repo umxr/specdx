@@ -71,11 +71,23 @@ export default defineCommand({
         }
       }
 
-      if (unreflected.length > 0) {
+      const suggestions = unreflected.filter((u) => !u.createsCycle);
+      const conflicts = unreflected.filter((u) => u.createsCycle);
+
+      if (suggestions.length > 0) {
         console.log("\n  ⚠ References not reflected in config requires:\n");
-        for (const { edge, requiringEntry, requiredEntry } of unreflected) {
+        for (const { edge, requiringEntry, requiredEntry } of suggestions) {
           console.log(
             `  ${edge.fromId} ${edge.relationship} ${edge.toId} — add "requires: [${requiredEntry}]" to the "${requiringEntry}" entry in spec.config.yaml`,
+          );
+        }
+      }
+
+      if (conflicts.length > 0) {
+        console.log("\n  ⚠ References that conflict with the requires chain:\n");
+        for (const { edge, requiringEntry, requiredEntry } of conflicts) {
+          console.log(
+            `  ${edge.fromId} ${edge.relationship} ${edge.toId} — implies "${requiringEntry}" requires "${requiredEntry}", but that would create a cycle; review the reference or the config requires`,
           );
         }
       }

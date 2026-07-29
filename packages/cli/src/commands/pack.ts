@@ -148,7 +148,8 @@ export default defineCommand({
         console.log(
           `  Included: ${stats.specsIncluded} / ${stats.specsIncluded + stats.specsExcluded} specs`,
         );
-        console.log(`  Sections compressed: ${stats.sectionsCompressed}\n`);
+        console.log(`  Sections compressed: ${stats.sectionsCompressed}`);
+        console.log(`  Sections omitted: ${stats.sectionsOmitted}\n`);
         return;
       }
 
@@ -168,7 +169,7 @@ export default defineCommand({
       // Token report to stderr
       const total = stats.specsIncluded + stats.specsExcluded;
       process.stderr.write(
-        `Packed ${stats.specsIncluded}/${total} specs \u2022 ${stats.used} / ${stats.budget} tokens \u2022 ${stats.sectionsCompressed} sections compressed\n`,
+        `Packed ${stats.specsIncluded}/${total} specs \u2022 ${stats.used} / ${stats.budget} tokens \u2022 ${stats.sectionsCompressed} sections compressed \u2022 ${stats.sectionsOmitted} sections omitted\n`,
       );
     } catch (err) {
       console.error(`\n  \u2717 ${(err as Error).message}\n`);

@@ -19,7 +19,7 @@ export function formatXml(specs: CompressedSpec[], stats: PackStats): string {
   const lines: string[] = [];
 
   lines.push(
-    `<context budget="${stats.budget}" used="${stats.used}" specs="${stats.specsIncluded}" compressed="${stats.sectionsCompressed}">`,
+    `<context budget="${stats.budget}" used="${stats.used}" specs="${stats.specsIncluded}" compressed="${stats.sectionsCompressed}" omitted="${stats.sectionsOmitted}">`,
   );
 
   for (const spec of specs) {

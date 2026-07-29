@@ -249,6 +249,65 @@ describe("trim before exclusion (issue #9)", () => {
     expect(bigAlloc.included).toBe(false);
   });
 
+  it("emits omission markers even when kept sections nearly exhaust the budget (issue #12)", () => {
+    // Remaining budget for "big" is 200: greedy keeps 95 + 100 = 195 tokens,
+    // leaving less than one marker's cost. The marker must still be emitted.
+    const small = makeSpec("small", [sec("Intro", "short", 100)]);
+    const big = makeSpec("big", [
+      sec("Overview", "first section", 95),
+      sec("Architecture", "second section", 100),
+      sec("Data Model", "third section", 100),
+      sec("Risks", "fourth section", 100),
+    ]);
+    const scores = [makeScore("small", 1.0), { ...makeScore("big", 1.0), idMatched: true }];
+
+    const result = allocate([small, big], scores, {
+      budget: 300,
+      full: true,
+      compression: defaultCompression,
+    });
+
+    const bigSpec = result.specs.find((s) => s.specId === "big")!;
+    expect(bigSpec.sections.some((s) => s.content.includes("omitted"))).toBe(true);
+    expect(result.stats.used).toBeLessThanOrEqual(300);
+  });
+
+  it("marker names the omitted sections and stats count them (issue #12)", () => {
+    const small = makeSpec("small", [sec("Intro", "short", 100)]);
+    const big = makeSpec("big", [
+      sec("Overview", "first section", 120),
+      sec("Data Model", "second section", 400),
+      sec("Risks", "third section", 400),
+    ]);
+    const scores = [makeScore("small", 1.0), { ...makeScore("big", 1.0), idMatched: true }];
+
+    const result = allocate([small, big], scores, {
+      budget: 300,
+      full: true,
+      compression: defaultCompression,
+    });
+
+    const bigSpec = result.specs.find((s) => s.specId === "big")!;
+    const marker = bigSpec.sections.find((s) => s.content.includes("omitted"))!;
+    expect(marker).toBeDefined();
+    expect(marker.content).toContain("Data Model");
+    expect(marker.content).toContain("Risks");
+    expect(result.stats.sectionsOmitted).toBe(2);
+
+    const bigAlloc = result.stats.allocations.find((a) => a.specId === "big")!;
+    expect(bigAlloc.compressed).toBe(true);
+  });
+
+  it("reports zero omitted sections when nothing is trimmed", () => {
+    const specs = [makeSpec("s1", [sec("Context", "ctx", 20)])];
+    const result = allocate(specs, [makeScore("s1", 1.0)], {
+      budget: 1000,
+      full: false,
+      compression: defaultCompression,
+    });
+    expect(result.stats.sectionsOmitted).toBe(0);
+  });
+
   it("prefers the id-matched spec on relevance ties", () => {
     const a = makeSpec("aaa", [sec("A", "content a", 200)]);
     const b = makeSpec("bbb", [sec("B", "content b", 200)]);

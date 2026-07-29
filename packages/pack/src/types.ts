@@ -26,6 +26,8 @@ export interface PackStats {
   specsExcluded: number;
   /** Number of sections that were compressed. */
   sectionsCompressed: number;
+  /** Number of sections omitted entirely to fit the budget. */
+  sectionsOmitted: number;
   /** Per-spec allocation details. */
   allocations: SpecAllocation[];
 }
@@ -98,6 +100,8 @@ export interface CompressedSection {
   compressed: boolean;
   /** Token count of the original, uncompressed content. */
   originalTokens: number;
+  /** For omission markers: how many original sections this marker replaces. */
+  omittedSections?: number;
 }
 
 /** Options that control compression behaviour. */

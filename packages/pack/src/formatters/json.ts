@@ -19,6 +19,7 @@ interface JsonSpec {
 interface JsonOutput {
   budget: number;
   used: number;
+  sectionsOmitted: number;
   specs: JsonSpec[];
 }
 
@@ -33,6 +34,7 @@ export function formatJson(specs: CompressedSpec[], stats: PackStats): string {
   const output: JsonOutput = {
     budget: stats.budget,
     used: stats.used,
+    sectionsOmitted: stats.sectionsOmitted,
     specs: specs.map((spec) => {
       const alloc = stats.allocations.find((a) => a.specId === spec.specId);
       const relevance = alloc?.relevance ?? 0;

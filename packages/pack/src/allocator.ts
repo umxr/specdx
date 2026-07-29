@@ -33,41 +33,93 @@ const HIGH_RELEVANCE = 0.75;
 /** Minimum remaining budget worth trimming into. */
 const MIN_TRIM_BUDGET = 150;
 
-const OMITTED_MARKER = "[section omitted to fit token budget]";
+/** Build the marker text for a contiguous run of omitted sections. */
+function omissionMarker(sections: CompressedSpec["sections"]): string {
+  const names = sections.map((s) => s.heading || "(untitled)");
+  const noun = names.length === 1 ? "section" : "sections";
+  return `[${names.length} ${noun} omitted to fit token budget: ${names.join(", ")}]`;
+}
 
 /**
  * Produce a variant of `compressed` that fits within `budget` by keeping
- * sections in order while they fit and replacing the rest with one-line
- * omission markers. Returns null when not even one real section fits.
+ * sections in order while they fit and replacing each contiguous run of
+ * omitted sections with an explicit marker naming them. Marker cost is
+ * reserved out of the budget before sections are kept, so markers are always
+ * emitted — a trimmed spec must never read as complete (issue #12).
+ * Returns null when not even one real section fits.
  */
 function trimToBudget(
   compressed: CompressedSpec,
   budget: number,
 ): { spec: CompressedSpec; tokens: number } | null {
-  const markerTokens = countTokens(OMITTED_MARKER);
-  const kept: CompressedSpec["sections"] = [];
-  let used = 0;
-  let keptReal = false;
+  const sections = compressed.sections;
+  let reserve = 0;
 
-  for (const section of compressed.sections) {
-    if (used + section.tokens <= budget) {
-      kept.push(section);
-      used += section.tokens;
-      keptReal = true;
-    } else if (used + markerTokens <= budget) {
-      kept.push({
-        heading: section.heading,
-        content: OMITTED_MARKER,
-        tokens: markerTokens,
-        compressed: true,
-        originalTokens: section.tokens,
-      });
-      used += markerTokens;
+  // The kept set only shrinks as the reserve grows, so this converges.
+  for (;;) {
+    const effective = budget - reserve;
+    const keep: boolean[] = new Array(sections.length).fill(false);
+    let used = 0;
+    let keptReal = false;
+
+    for (let i = 0; i < sections.length; i++) {
+      if (used + sections[i]!.tokens <= effective) {
+        keep[i] = true;
+        used += sections[i]!.tokens;
+        keptReal = true;
+      }
     }
-  }
 
-  if (!keptReal) return null;
-  return { spec: { ...compressed, sections: kept }, tokens: used };
+    if (!keptReal) return null;
+
+    // Group omitted sections into contiguous runs and price their markers.
+    interface OmittedRun {
+      start: number;
+      sections: CompressedSpec["sections"];
+      marker: string;
+      markerTokens: number;
+    }
+    const runs: OmittedRun[] = [];
+    for (let i = 0; i < sections.length; i++) {
+      if (keep[i]) continue;
+      const start = i;
+      const run: CompressedSpec["sections"] = [];
+      while (i < sections.length && !keep[i]) {
+        run.push(sections[i]!);
+        i++;
+      }
+      i--;
+      const marker = omissionMarker(run);
+      runs.push({ start, sections: run, marker, markerTokens: countTokens(marker) });
+    }
+
+    const markerTokens = runs.reduce((sum, r) => sum + r.markerTokens, 0);
+    if (markerTokens > reserve) {
+      reserve = markerTokens;
+      continue;
+    }
+
+    // Assemble output: kept sections in order, markers at each cut.
+    const out: CompressedSpec["sections"] = [];
+    for (let i = 0; i < sections.length; i++) {
+      const run = runs.find((r) => r.start === i);
+      if (run) {
+        out.push({
+          heading: "",
+          content: run.marker,
+          tokens: run.markerTokens,
+          compressed: true,
+          originalTokens: run.sections.reduce((sum, s) => sum + s.tokens, 0),
+          omittedSections: run.sections.length,
+        });
+        i += run.sections.length - 1;
+        continue;
+      }
+      out.push(sections[i]!);
+    }
+
+    return { spec: { ...compressed, sections: out }, tokens: used + markerTokens };
+  }
 }
 
 /**
@@ -194,11 +246,13 @@ export function allocate(
 
   // 6. Build stats
   let sectionsCompressed = 0;
+  let sectionsOmitted = 0;
   for (const item of included) {
     for (const section of item.compressed.sections) {
       if (section.compressed) {
         sectionsCompressed++;
       }
+      sectionsOmitted += section.omittedSections ?? 0;
     }
   }
 
@@ -234,6 +288,7 @@ export function allocate(
     specsIncluded: included.length,
     specsExcluded: excluded.length,
     sectionsCompressed,
+    sectionsOmitted,
     allocations,
   };
 

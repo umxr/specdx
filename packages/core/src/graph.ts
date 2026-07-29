@@ -112,10 +112,14 @@ export interface ReferenceEdge {
   relationship: string;
 }
 
-/** Reference relationships that imply a dependency, and its direction. */
+/**
+ * Reference relationships that imply a dependency, and its direction.
+ * Structural relationships (`decomposed-into`, `supersedes`) are deliberately
+ * excluded: a parent decomposed into children does not make the children
+ * build-depend on the parent (issue #13).
+ */
 const DEPENDENCY_RELATIONSHIPS: Record<string, "self-requires-target" | "target-requires-self"> = {
   "depends-on": "self-requires-target",
-  "decomposed-into": "target-requires-self",
   "implemented-by": "target-requires-self",
 };
 
@@ -155,13 +159,21 @@ export function collectReferenceEdges(
  * under one glob) and references to unmapped ids are skipped — reference
  * existence itself is the `structure/valid-references` lint rule's concern.
  */
+export interface UnreflectedReference {
+  edge: ReferenceEdge;
+  requiringEntry: string;
+  requiredEntry: string;
+  /** True when adding the suggested requires edge would create a cycle. */
+  createsCycle: boolean;
+}
+
 export function findUnreflectedReferences(
   referenceEdges: ReferenceEdge[],
   idToEntry: Map<string, string>,
   graph: DependencyGraph,
-): { edge: ReferenceEdge; requiringEntry: string; requiredEntry: string }[] {
+): UnreflectedReference[] {
   const configEdges = new Set(graph.edges.map((e) => `${e.from}→${e.to}`));
-  const missing: { edge: ReferenceEdge; requiringEntry: string; requiredEntry: string }[] = [];
+  const missing: UnreflectedReference[] = [];
 
   for (const edge of referenceEdges) {
     const direction = DEPENDENCY_RELATIONSHIPS[edge.relationship];
@@ -176,7 +188,10 @@ export function findUnreflectedReferences(
 
     // Config edges point dependency → dependent
     if (!configEdges.has(`${requiredEntry}→${requiringEntry}`)) {
-      missing.push({ edge, requiringEntry, requiredEntry });
+      // The suggested edge closes a cycle when the required entry is already
+      // downstream of the requiring one (issue #13) — never recommend it.
+      const createsCycle = graph.getDownstream(requiringEntry).includes(requiredEntry);
+      missing.push({ edge, requiringEntry, requiredEntry, createsCycle });
     }
   }
 

@@ -131,6 +131,73 @@ describe("findUnreflectedReferences", () => {
     expect(missing).toHaveLength(0);
   });
 
+  it("does not treat decomposed-into as dependency-implying (issue #13)", () => {
+    // An epic decomposed into a design does not mean the design
+    // build-depends on the epic — no requires suggestion should result.
+    const withRequires = {
+      version: "1.0",
+      specs: {
+        ctx: { path: "specs/ctx.md", type: "project-context" },
+        design: { path: "specs/design.md", type: "technical-design" },
+        epic: { path: "specs/epic.md", type: "epic", requires: ["design"] },
+      },
+    } as never;
+    const graph = buildGraph(withRequires);
+    const entries = new Map([
+      ["project-context", "ctx"],
+      ["crawler-logger", "design"],
+      ["content-calendar", "epic"],
+    ]);
+    const missing = findUnreflectedReferences(
+      [{ fromId: "content-calendar", toId: "crawler-logger", relationship: "decomposed-into" }],
+      entries,
+      graph,
+    );
+    expect(missing).toHaveLength(0);
+  });
+
+  it("marks suggestions that would create a cycle instead of recommending them (issue #13)", () => {
+    // Config already has design → epic (epic requires design). A depends-on
+    // reference implying epic → design would close a cycle.
+    const withRequires = {
+      version: "1.0",
+      specs: {
+        design: { path: "specs/design.md", type: "technical-design" },
+        epic: { path: "specs/epic.md", type: "epic", requires: ["design"] },
+      },
+    } as never;
+    const graph = buildGraph(withRequires);
+    const entries = new Map([
+      ["crawler-logger", "design"],
+      ["content-calendar", "epic"],
+    ]);
+    const missing = findUnreflectedReferences(
+      [{ fromId: "crawler-logger", toId: "content-calendar", relationship: "depends-on" }],
+      entries,
+      graph,
+    );
+    expect(missing).toHaveLength(1);
+    expect(missing[0]!.createsCycle).toBe(true);
+  });
+
+  it("marks safe suggestions as not cycle-creating", () => {
+    const config2 = {
+      version: "1.0",
+      specs: {
+        ctx: { path: "specs/ctx.md", type: "project-context" },
+        design: { path: "specs/design.md", type: "technical-design" },
+      },
+    } as never;
+    const graph = buildGraph(config2);
+    const missing = findUnreflectedReferences(
+      [{ fromId: "crawler-logger", toId: "project-context", relationship: "depends-on" }],
+      idToEntry,
+      graph,
+    );
+    expect(missing).toHaveLength(1);
+    expect(missing[0]!.createsCycle).toBe(false);
+  });
+
   it("skips non-dependency relationships and unmapped ids", () => {
     const graph = buildGraph(config);
     const missing = findUnreflectedReferences(

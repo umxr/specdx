@@ -14,6 +14,7 @@ export {
   type DependencyGraph,
   type Edge,
   type ReferenceEdge,
+  type UnreflectedReference,
 } from "./graph.js";
 export { resolveGlob } from "./glob.js";
 export { countTokens } from "./tokens.js";

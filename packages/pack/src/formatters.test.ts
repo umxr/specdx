@@ -37,6 +37,7 @@ function defaultStats(overrides?: Partial<PackStats>): PackStats {
     specsIncluded: 1,
     specsExcluded: 0,
     sectionsCompressed: 1,
+    sectionsOmitted: 0,
     allocations: [
       {
         specId: "prd-001",
