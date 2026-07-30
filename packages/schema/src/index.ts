@@ -13,6 +13,7 @@ export {
   type SpecType,
   type SpecStatus,
   type SpecReference,
+  type SpecArtifact,
   type SdxConfig,
   type SpecEntry,
   type PackConfig,

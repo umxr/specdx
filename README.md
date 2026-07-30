@@ -163,12 +163,27 @@ These ship with specdx but are **not part of the stable surface** — they lean 
 | Command | What it does |
 |---------|-------------|
 | `specdx check` | Spec-to-implementation drift analysis: extracts routes (Express, Hono, Next.js), types (TS, Zod, Prisma), and tests from your code and compares them against specs |
+| Declared artifacts | Framework-agnostic checkable surfaces for `check`: a spec's optional `artifacts:` frontmatter lists files that must exist and names they must export, so any project — static sites, CLIs, libraries — gets drift checking. See below. |
 | `specdx check --ai` | Sends check findings to Claude for assessment (requires `ANTHROPIC_API_KEY`) |
 | `specdx update --from-code` | Suggests spec updates from check findings |
 | `specdx generate test-plan` | Generates test-plan stubs from story acceptance criteria |
 | `specdx migrate` | Schema-version migration for spec suites |
 
 Feedback on these is especially welcome — accuracy improvements (confidence scoring, better matching) are what graduates them to stable.
+
+### Declared artifacts
+
+When no framework extractor applies (Astro, static sites, CLIs, libraries), declare what "implemented" means directly in a spec's frontmatter:
+
+```yaml
+artifacts:
+  - path: "middleware.ts"
+  - path: "scripts/export-crawler-log.mjs"
+  - path: "src/lib/bots.ts"
+    exports: ["BOT_SIGNATURES"]
+```
+
+`specdx check` verifies each `path` exists and each name in `exports` is exported from it (export checks use ts-morph and are skipped with a note — never silently passed — when it isn't installed). Declared artifacts count toward the implementation score as their own category and make a spec checkable on any stack; missing files or exports are error findings that exit 1.
 
 ---
 

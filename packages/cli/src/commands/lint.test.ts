@@ -73,4 +73,82 @@ describe("runLint", () => {
     const errors = result.diagnostics.filter((d) => d.severity === "error");
     expect(errors).toHaveLength(0);
   });
+
+  it("single-file lint still resolves cross-references against the full suite", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      [
+        'version: "1.0"',
+        "specs:",
+        "  design:",
+        '    path: "specs/design.md"',
+        '    type: "technical-design"',
+        "  adr:",
+        '    path: "specs/adr.md"',
+        '    type: "adr"',
+      ].join("\n"),
+    );
+    await writeFile(
+      join(tempDir, "specs/design.md"),
+      [
+        "---",
+        'id: "design-001"',
+        'type: "technical-design"',
+        'title: "Design"',
+        'status: "draft"',
+        'version: "1.0"',
+        'created: "2026-01-01"',
+        'authors: ["dev"]',
+        "---",
+        "",
+        "# Design",
+        "",
+        "## Overview",
+        "",
+        "Content.",
+      ].join("\n"),
+    );
+    await writeFile(
+      join(tempDir, "specs/adr.md"),
+      [
+        "---",
+        'id: "adr-001"',
+        'type: "adr"',
+        'title: "A Decision"',
+        'status: "draft"',
+        'version: "1.0"',
+        'created: "2026-01-01"',
+        'authors: ["dev"]',
+        "references:",
+        '  - id: "design-001"',
+        '    relationship: "depends-on"',
+        "---",
+        "",
+        "# A Decision",
+        "",
+        "## Context",
+        "",
+        "Context here.",
+        "",
+        "## Decision",
+        "",
+        "We decided.",
+        "",
+        "## Status",
+        "",
+        "Draft.",
+        "",
+        "## Consequences",
+        "",
+        "Some consequences.",
+      ].join("\n"),
+    );
+
+    const result = await runLint({ configDir: tempDir, specPath: "specs/adr.md" });
+    const refErrors = result.diagnostics.filter((d) => d.ruleId === "structure/valid-references");
+    expect(refErrors).toHaveLength(0);
+
+    // Diagnostics from other files must not leak into single-file results
+    expect(result.diagnostics.every((d) => d.filePath.includes("specs/adr.md"))).toBe(true);
+  });
 });

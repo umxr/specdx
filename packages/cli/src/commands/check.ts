@@ -96,7 +96,12 @@ export default defineCommand({
         console.log(`  Scanned: framework=${result.scanned.framework ?? "none detected"}`);
         console.log(`    routes: ${fmt(result.scanned.codeRoutes)}`);
         console.log(`    types: ${fmt(result.scanned.codeTypes)}`);
-        console.log(`    tests: ${fmt(result.scanned.codeTests)}\n`);
+        console.log(`    tests: ${fmt(result.scanned.codeTests)}`);
+        const artifacts =
+          result.scanned.artifacts === null
+            ? "none declared"
+            : `${result.scanned.artifacts} verified`;
+        console.log(`    artifacts: ${artifacts}\n`);
       }
 
       for (const [category, stats] of Object.entries(result.score.byCategory)) {

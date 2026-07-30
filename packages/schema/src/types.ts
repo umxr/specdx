@@ -19,6 +19,14 @@ export interface SpecReference {
   relationship: "implemented-by" | "decomposed-into" | "depends-on" | "supersedes" | "related-to";
 }
 
+/** A checkable implementation artifact declared by a spec (issue #15). */
+export interface SpecArtifact {
+  /** Project-root-relative file path that must exist. */
+  path: string;
+  /** Names that must be exported from the file. */
+  exports?: string[];
+}
+
 export interface BaseSpec {
   id: string;
   type: SpecType;
@@ -30,6 +38,7 @@ export interface BaseSpec {
   authors: string[];
   tags?: string[];
   references?: SpecReference[];
+  artifacts?: SpecArtifact[];
 }
 
 export interface PrdSpec extends BaseSpec {

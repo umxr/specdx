@@ -18,11 +18,12 @@ export async function runLint(options: RunLintOptions): Promise<LintResults> {
   const preset = options.preset ?? config.lint?.extends ?? "recommended";
   const rules = getPreset(preset);
 
+  // Always parse the full suite so cross-reference rules have complete
+  // context; a single-file lint filters the *diagnostics*, not the suite.
   const specs: ParsedSpec[] = [];
   for (const [, entry] of Object.entries(config.specs)) {
     const files = await resolveGlob(entry.path, options.configDir);
     for (const file of files) {
-      if (options.specPath && !file.includes(options.specPath)) continue;
       specs.push(await parseSpec(file));
     }
   }
@@ -37,6 +38,13 @@ export async function runLint(options: RunLintOptions): Promise<LintResults> {
 
   const engine = createLintEngine({ rules, config, graph });
   const results = engine.lint(specs);
+
+  if (options.specPath) {
+    const specPath = options.specPath;
+    results.diagnostics = results.diagnostics.filter((d) => d.filePath.includes(specPath));
+    results.hasErrors = results.diagnostics.some((d) => d.severity === "error");
+    results.hasWarnings = results.diagnostics.some((d) => d.severity === "warn");
+  }
 
   if (graphError) {
     results.diagnostics.push({

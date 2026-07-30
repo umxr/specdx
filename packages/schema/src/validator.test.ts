@@ -90,6 +90,45 @@ describe("validateSpec", () => {
   });
 });
 
+describe("artifacts frontmatter (issue #15)", () => {
+  const base = {
+    id: "design-001",
+    type: "technical-design",
+    title: "Design",
+    status: "draft",
+    version: "1.0",
+    created: "2026-07-30",
+    authors: ["umar"],
+  };
+
+  it("validates a spec with well-formed artifacts", () => {
+    const result = validateSpec("technical-design", {
+      ...base,
+      artifacts: [
+        { path: "middleware.ts" },
+        { path: "src/lib/bots.ts", exports: ["BOT_SIGNATURES"] },
+      ],
+    });
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects artifacts entries without a path", () => {
+    const result = validateSpec("technical-design", {
+      ...base,
+      artifacts: [{ exports: ["x"] }],
+    });
+    expect(result.valid).toBe(false);
+  });
+
+  it("rejects artifacts entries with unknown keys", () => {
+    const result = validateSpec("technical-design", {
+      ...base,
+      artifacts: [{ path: "a.ts", symbol: "x" }],
+    });
+    expect(result.valid).toBe(false);
+  });
+});
+
 describe("validateConfig", () => {
   it("validates a correct config", () => {
     const result = validateConfig({

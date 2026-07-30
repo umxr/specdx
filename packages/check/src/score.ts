@@ -4,11 +4,12 @@ interface SpecTotals {
   routes: number;
   types: number;
   tests: number;
+  artifacts: number;
 }
 
 export function computeScore(findings: Finding[], totals: SpecTotals): ImplementationScore {
   // Count missing findings per category (only "missing" and "mismatch" reduce the score, not "extra")
-  const missingByCategory: Record<string, number> = { route: 0, type: 0, test: 0 };
+  const missingByCategory: Record<string, number> = { route: 0, type: 0, test: 0, artifact: 0 };
 
   for (const f of findings) {
     if (f.type === "missing" || f.type === "mismatch") {
@@ -20,6 +21,7 @@ export function computeScore(findings: Finding[], totals: SpecTotals): Implement
     routes: { total: totals.routes, categoryKey: "route" },
     types: { total: totals.types, categoryKey: "type" },
     tests: { total: totals.tests, categoryKey: "test" },
+    artifacts: { total: totals.artifacts, categoryKey: "artifact" },
   };
 
   const byCategory: Record<string, { matched: number; total: number }> = {};

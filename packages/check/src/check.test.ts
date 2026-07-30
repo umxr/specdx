@@ -270,6 +270,52 @@ describe("runCheck", () => {
     }
   });
 
+  it("declared artifacts make an otherwise uncheckable project assessable (issue #15)", async () => {
+    const artifactsDir = join(import.meta.dirname, "..", "test", "fixtures-artifacts");
+    const specs: ParsedSpec[] = [
+      makeSpec(
+        {
+          id: "crawler-logger",
+          type: "technical-design",
+          artifacts: [
+            { path: "middleware.ts", exports: ["onRequest"] },
+            { path: "src/lib/bots.ts", exports: ["BOT_SIGNATURES"] },
+          ],
+        } as never,
+        "# Crawler Logger\n\nNo Data Model section here.",
+      ),
+    ];
+
+    const result = await runCheck(specs, artifactsDir);
+
+    expect(result.score.assessed).toBe(true);
+    expect(result.findings.filter((f) => f.category === "artifact")).toHaveLength(0);
+    expect(result.scanned.artifacts).toBe(4);
+    expect(result.summary).toContain("100%");
+  });
+
+  it("reports missing declared artifacts as findings", async () => {
+    const artifactsDir = join(import.meta.dirname, "..", "test", "fixtures-artifacts");
+    const specs: ParsedSpec[] = [
+      makeSpec(
+        {
+          id: "crawler-logger",
+          type: "technical-design",
+          artifacts: [{ path: "not/here.ts" }],
+        } as never,
+        "# Crawler Logger",
+      ),
+    ];
+
+    const result = await runCheck(specs, artifactsDir);
+
+    const artifactFindings = result.findings.filter((f) => f.category === "artifact");
+    expect(artifactFindings).toHaveLength(1);
+    expect(artifactFindings[0]!.severity).toBe("error");
+    expect(result.score.assessed).toBe(true);
+    expect(result.score.overall).toBe(0);
+  });
+
   it("summary string includes score, errors, and warnings", async () => {
     const spec = makeSpec(
       { id: "api-005", type: "api-contract" },

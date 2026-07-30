@@ -11,6 +11,7 @@ import { extractTestDescriptions } from "./extractors/test-extractor.js";
 import { matchRoutes } from "./matchers/routes.js";
 import { matchTypes } from "./matchers/types.js";
 import { matchTests } from "./matchers/tests.js";
+import { checkArtifacts } from "./artifacts.js";
 import { computeScore } from "./score.js";
 import { detectFramework } from "./detect-framework.js";
 
@@ -104,21 +105,32 @@ export async function runCheck(
     }
   }
 
-  // 4. Score
-  const score = computeScore(findings, { routes: routeTotal, types: typeTotal, tests: testTotal });
+  // 4. Declared artifacts: framework-agnostic checkable surfaces (issue #15)
+  const artifactResult = await checkArtifacts(specs, projectDir, tsMorphAvailable);
+  findings.push(...artifactResult.findings);
+  notes.push(...artifactResult.notes);
 
-  // 5. Summary — never present "nothing was checkable" as coverage (issue #6)
+  // 5. Score
+  const score = computeScore(findings, {
+    routes: routeTotal,
+    types: typeTotal,
+    tests: testTotal,
+    artifacts: artifactResult.total,
+  });
+
+  // 6. Summary — never present "nothing was checkable" as coverage (issue #6)
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warn").length;
   const summary = score.assessed
     ? `${score.overall}% implementation coverage — ${errors} errors, ${warnings} warnings`
-    : "coverage not assessed — no checkable surfaces found (no spec'd routes, types, or test cases)";
+    : "coverage not assessed — no checkable surfaces found (no spec'd routes, types, test cases, or declared artifacts)";
 
   const scanned = {
     framework: framework ?? null,
     codeRoutes: codeRouteCount,
     codeTypes: codeTypeCount,
     codeTests: codeTestCount,
+    artifacts: artifactResult.total > 0 ? artifactResult.checked : null,
   };
 
   return { findings, score, summary, scanned, notes };

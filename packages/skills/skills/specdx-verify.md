@@ -20,6 +20,15 @@ If the command fails with "ts-morph is required", tell the user to install it: `
 
 If it fails with "No spec.config.yaml found", the project isn't set up with specdx. Stop and inform the user.
 
+If it exits 3 ("coverage not assessed — no checkable surfaces"), the project has no extractable routes/types/tests — common outside Express/Hono/Next.js. Suggest declaring checkable artifacts in the relevant spec's frontmatter so check has something real to verify:
+
+```yaml
+artifacts:
+  - path: "middleware.ts"
+  - path: "src/lib/bots.ts"
+    exports: ["BOT_SIGNATURES"]
+```
+
 ### Step 2: Load spec context
 
 ```bash

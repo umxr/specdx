@@ -14,11 +14,13 @@ export interface ScanSummary {
   codeRoutes: number | null;
   codeTypes: number | null;
   codeTests: number | null;
+  /** Artifact assertions verified from spec `artifacts` declarations — null when none declared. */
+  artifacts: number | null;
 }
 
 export interface Finding {
   type: "missing" | "extra" | "mismatch" | "drift";
-  category: "route" | "type" | "test";
+  category: "route" | "type" | "test" | "artifact";
   specId: string;
   specSection?: string;
   codeLocation?: { file: string; line: number };

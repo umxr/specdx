@@ -3,29 +3,122 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "id": { "type": "string", "minLength": 1 },
-    "type": { "type": "string", "enum": ["prd", "technical-design", "user-story", "test-plan", "adr", "api-contract", "epic", "quick-spec", "project-context"] },
-    "title": { "type": "string", "minLength": 1 },
-    "status": { "type": "string", "enum": ["draft", "review", "approved", "superseded"] },
-    "version": { "type": "string" },
-    "created": { "type": "string", "format": "date" },
-    "updated": { "type": "string", "format": "date" },
-    "authors": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "prd",
+        "technical-design",
+        "user-story",
+        "test-plan",
+        "adr",
+        "api-contract",
+        "epic",
+        "quick-spec",
+        "project-context"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "review",
+        "approved",
+        "superseded"
+      ]
+    },
+    "version": {
+      "type": "string"
+    },
+    "created": {
+      "type": "string",
+      "format": "date"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date"
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
     "references": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "relationship": { "type": "string", "enum": ["implemented-by", "decomposed-into", "depends-on", "supersedes", "related-to"] }
+          "id": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string",
+            "enum": [
+              "implemented-by",
+              "decomposed-into",
+              "depends-on",
+              "supersedes",
+              "related-to"
+            ]
+          }
         },
-        "required": ["id", "relationship"],
+        "required": [
+          "id",
+          "relationship"
+        ],
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "exports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "path"
+        ],
         "additionalProperties": false
       },
       "default": []
     }
   },
-  "required": ["id", "type", "title", "status", "version", "created", "authors"],
+  "required": [
+    "id",
+    "type",
+    "title",
+    "status",
+    "version",
+    "created",
+    "authors"
+  ],
   "additionalProperties": true
 }
