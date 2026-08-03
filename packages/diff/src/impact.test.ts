@@ -1,10 +1,24 @@
-import { buildGraph } from "@specdx/core";
+import { buildRelationResolver } from "@specdx/core";
 import { parseSpecFromString } from "@specdx/core";
 import type { SdxConfig } from "@specdx/schema";
 import { analyzeImpact } from "./impact.js";
 import type { SpecDiff } from "./types.js";
 
 const makeConfig = (specs: SdxConfig["specs"]): SdxConfig => ({ version: "1.0", specs });
+
+type Parsed = Awaited<ReturnType<typeof parseSpecFromString>>;
+
+/** Build a relation resolver, grouping specs by the config entry they came from. */
+function relationsFor(config: SdxConfig, specs: Parsed[]) {
+  const byEntry = new Map<string, Parsed[]>();
+  for (const [key, entry] of Object.entries(config.specs)) {
+    byEntry.set(
+      key,
+      specs.filter((s) => s.filePath === entry.path),
+    );
+  }
+  return buildRelationResolver(config, byEntry);
+}
 
 function makeSpecDiff(specId: string, sections: { heading: string }[] = []): SpecDiff {
   return {
@@ -18,10 +32,21 @@ function makeSpecDiff(specId: string, sections: { heading: string }[] = []): Spe
 
 async function makeSpec(
   id: string,
-  opts: { updated?: string; created?: string } = {},
+  opts: {
+    updated?: string;
+    created?: string;
+    references?: { id: string; relationship: string }[];
+  } = {},
 ): Promise<Awaited<ReturnType<typeof parseSpecFromString>>> {
   const created = opts.created ?? "2026-01-01";
   const updatedLine = opts.updated ? `updated: "${opts.updated}"\n` : "";
+  const refsLine = opts.references
+    ? "references:\n" +
+      opts.references
+        .map((r) => `  - id: "${r.id}"\n    relationship: "${r.relationship}"`)
+        .join("\n") +
+      "\n"
+    : "";
   const raw = `---
 id: ${id}
 type: prd
@@ -29,7 +54,7 @@ title: "Spec ${id}"
 status: draft
 version: "0.1"
 created: "${created}"
-${updatedLine}authors: ["alice"]
+${updatedLine}${refsLine}authors: ["alice"]
 ---
 
 ## Goals
@@ -44,11 +69,10 @@ describe("analyzeImpact", () => {
     const config = makeConfig({
       a: { path: "specs/a.md", type: "prd" },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     const diff = makeSpecDiff("a");
 
-    const result = analyzeImpact("a", diff, graph, [specA]);
+    const result = analyzeImpact("a", diff, relationsFor(config, [specA]), [specA]);
 
     expect(result.changedSpec).toBe("a");
     expect(result.downstream).toHaveLength(0);
@@ -60,12 +84,11 @@ describe("analyzeImpact", () => {
       a: { path: "specs/a.md", type: "prd" },
       b: { path: "specs/b.md", type: "technical-design", requires: ["a"] },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     const specB = await makeSpec("b");
     const diff = makeSpecDiff("a");
 
-    const result = analyzeImpact("a", diff, graph, [specA, specB]);
+    const result = analyzeImpact("a", diff, relationsFor(config, [specA, specB]), [specA, specB]);
 
     expect(result.changedSpec).toBe("a");
     expect(result.downstream).toHaveLength(1);
@@ -84,13 +107,16 @@ describe("analyzeImpact", () => {
       b: { path: "specs/b.md", type: "technical-design", requires: ["a"] },
       c: { path: "specs/c.md", type: "test-plan", requires: ["b"] },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     const specB = await makeSpec("b");
     const specC = await makeSpec("c");
     const diff = makeSpecDiff("a");
 
-    const result = analyzeImpact("a", diff, graph, [specA, specB, specC]);
+    const result = analyzeImpact("a", diff, relationsFor(config, [specA, specB, specC]), [
+      specA,
+      specB,
+      specC,
+    ]);
 
     expect(result.changedSpec).toBe("a");
     expect(result.downstream).toHaveLength(2);
@@ -106,7 +132,6 @@ describe("analyzeImpact", () => {
       a: { path: "specs/a.md", type: "prd" },
       b: { path: "specs/b.md", type: "technical-design", requires: ["a"] },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     // B was updated yesterday — very fresh
     const yesterday = new Date();
@@ -114,7 +139,13 @@ describe("analyzeImpact", () => {
     const specB = await makeSpec("b", { updated: yesterday.toISOString().split("T")[0] });
     const diff = makeSpecDiff("a");
 
-    const result = analyzeImpact("a", diff, graph, [specA, specB], 14);
+    const result = analyzeImpact(
+      "a",
+      diff,
+      relationsFor(config, [specA, specB]),
+      [specA, specB],
+      14,
+    );
 
     const bImpact = result.downstream.find((d) => d.specId === "b");
     expect(bImpact).toBeDefined();
@@ -129,7 +160,6 @@ describe("analyzeImpact", () => {
       a: { path: "specs/a.md", type: "prd" },
       b: { path: "specs/b.md", type: "technical-design", requires: ["a"] },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     // B was last updated 100 days ago — very stale
     const longAgo = new Date();
@@ -137,7 +167,13 @@ describe("analyzeImpact", () => {
     const specB = await makeSpec("b", { updated: longAgo.toISOString().split("T")[0] });
     const diff = makeSpecDiff("a");
 
-    const result = analyzeImpact("a", diff, graph, [specA, specB], 14);
+    const result = analyzeImpact(
+      "a",
+      diff,
+      relationsFor(config, [specA, specB]),
+      [specA, specB],
+      14,
+    );
 
     const bImpact = result.downstream.find((d) => d.specId === "b");
     expect(bImpact).toBeDefined();
@@ -151,7 +187,6 @@ describe("analyzeImpact", () => {
       a: { path: "specs/a.md", type: "prd" },
       b: { path: "specs/b.md", type: "technical-design", requires: ["a"] },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     // Use a neutral date 7 days ago — exactly at 0.5 threshold factor
     const sevenDaysAgo = new Date();
@@ -164,8 +199,20 @@ describe("analyzeImpact", () => {
       { heading: "Open Questions" },
     ]);
 
-    const resultStructural = analyzeImpact("a", structuralDiff, graph, [specA, specB], 14);
-    const resultMinor = analyzeImpact("a", minorDiff, graph, [specA, specB], 14);
+    const resultStructural = analyzeImpact(
+      "a",
+      structuralDiff,
+      relationsFor(config, [specA, specB]),
+      [specA, specB],
+      14,
+    );
+    const resultMinor = analyzeImpact(
+      "a",
+      minorDiff,
+      relationsFor(config, [specA, specB]),
+      [specA, specB],
+      14,
+    );
 
     const structuralScore = resultStructural.downstream.find((d) => d.specId === "b")!.staleness;
     const minorScore = resultMinor.downstream.find((d) => d.specId === "b")!.staleness;
@@ -179,13 +226,18 @@ describe("analyzeImpact", () => {
       a: { path: "specs/a.md", type: "prd" },
       b: { path: "specs/b.md", type: "technical-design", requires: ["a"] },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     // No updated field — falls back to created which is very old
     const specB = await makeSpec("b", { created: "2020-01-01" });
     const diff = makeSpecDiff("a");
 
-    const result = analyzeImpact("a", diff, graph, [specA, specB], 14);
+    const result = analyzeImpact(
+      "a",
+      diff,
+      relationsFor(config, [specA, specB]),
+      [specA, specB],
+      14,
+    );
 
     const bImpact = result.downstream.find((d) => d.specId === "b");
     expect(bImpact).toBeDefined();
@@ -199,12 +251,11 @@ describe("analyzeImpact", () => {
       a: { path: "specs/a.md", type: "prd" },
       b: { path: "specs/b.md", type: "technical-design", requires: ["a"] },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     const specB = await makeSpec("b");
     const diff = makeSpecDiff("a", [{ heading: "Goals" }]);
 
-    const result = analyzeImpact("a", diff, graph, [specA, specB]);
+    const result = analyzeImpact("a", diff, relationsFor(config, [specA, specB]), [specA, specB]);
 
     const bImpact = result.downstream[0];
     expect(bImpact).toBeDefined();
@@ -217,7 +268,6 @@ describe("analyzeImpact", () => {
       a: { path: "specs/a.md", type: "prd" },
       b: { path: "specs/b.md", type: "technical-design", requires: ["a"] },
     });
-    const graph = buildGraph(config);
     const specA = await makeSpec("a");
     const extremelyOld = await makeSpec("b", { created: "2000-01-01" });
     const diff = makeSpecDiff("a", [
@@ -226,10 +276,56 @@ describe("analyzeImpact", () => {
       { heading: "Features" },
     ]);
 
-    const result = analyzeImpact("a", diff, graph, [specA, extremelyOld], 1);
+    const result = analyzeImpact(
+      "a",
+      diff,
+      relationsFor(config, [specA, extremelyOld]),
+      [specA, extremelyOld],
+      1,
+    );
 
     const bImpact = result.downstream.find((d) => d.specId === "b");
     expect(bImpact!.staleness).toBeGreaterThanOrEqual(0);
     expect(bImpact!.staleness).toBeLessThanOrEqual(1);
+  });
+  it("finds downstream when config entry keys differ from spec ids (ADR: unification)", async () => {
+    // The classic shape: entry keys "prd"/"design", spec ids "prd-001"/"design-001".
+    // Impact used to BFS entry-keyed graph edges with a spec id and silently
+    // return nothing, so downstream impact was invisible for most projects.
+    const config = makeConfig({
+      prd: { path: "specs/prd-001.md", type: "prd" },
+      design: { path: "specs/design-001.md", type: "technical-design", requires: ["prd"] },
+    });
+    const prd = await makeSpec("prd-001");
+    const design = await makeSpec("design-001");
+    const diff = makeSpecDiff("prd-001", [{ heading: "Goals" }]);
+
+    const result = analyzeImpact("prd-001", diff, relationsFor(config, [prd, design]), [
+      prd,
+      design,
+    ]);
+
+    expect(result.totalAffected).toBe(1);
+    expect(result.downstream[0]!.specId).toBe("design-001");
+  });
+
+  it("finds downstream declared only via frontmatter references (ADR: unification)", async () => {
+    const config = makeConfig({
+      prd: { path: "specs/prd-001.md", type: "prd" },
+      design: { path: "specs/design-001.md", type: "technical-design" },
+    });
+    const prd = await makeSpec("prd-001");
+    const design = await makeSpec("design-001", {
+      references: [{ id: "prd-001", relationship: "depends-on" }],
+    });
+    const diff = makeSpecDiff("prd-001", [{ heading: "Goals" }]);
+
+    const result = analyzeImpact("prd-001", diff, relationsFor(config, [prd, design]), [
+      prd,
+      design,
+    ]);
+
+    expect(result.totalAffected).toBe(1);
+    expect(result.downstream[0]!.specId).toBe("design-001");
   });
 });

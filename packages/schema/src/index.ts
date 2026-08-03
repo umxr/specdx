@@ -18,8 +18,11 @@ export {
   type SpecEntry,
   type PackConfig,
   type PackCompressionConfig,
+  type SpecRelationship,
   SPEC_TYPES,
   SPEC_STATUSES,
+  SPEC_RELATIONSHIPS,
+  DEPENDENCY_RELATIONSHIPS,
 } from "./types.js";
 
 export { REQUIRED_SECTIONS } from "./sections.js";

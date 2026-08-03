@@ -14,9 +14,38 @@ export type SpecType = (typeof SPEC_TYPES)[number];
 export const SPEC_STATUSES = ["draft", "review", "approved", "superseded"] as const;
 export type SpecStatus = (typeof SPEC_STATUSES)[number];
 
+/**
+ * Every relationship kind a spec may declare in frontmatter `references`.
+ * Single source of truth — `base-spec.json`'s enum is drift-tested against it.
+ */
+export const SPEC_RELATIONSHIPS = [
+  "implemented-by",
+  "decomposed-into",
+  "depends-on",
+  "supersedes",
+  "related-to",
+] as const;
+export type SpecRelationship = (typeof SPEC_RELATIONSHIPS)[number];
+
+/**
+ * Which relationship kinds imply a build dependency, and in which direction.
+ *
+ * Structural kinds are deliberately absent: `decomposed-into` describes a
+ * parent/child split and `supersedes` describes lineage — neither means the
+ * target depends on the source (issue #13). Declared here rather than in
+ * `@specdx/core` so the taxonomy is versioned with the schema it belongs to
+ * (ADR: references/requires unification).
+ */
+export const DEPENDENCY_RELATIONSHIPS: Partial<
+  Record<SpecRelationship, "self-requires-target" | "target-requires-self">
+> = {
+  "depends-on": "self-requires-target",
+  "implemented-by": "target-requires-self",
+};
+
 export interface SpecReference {
   id: string;
-  relationship: "implemented-by" | "decomposed-into" | "depends-on" | "supersedes" | "related-to";
+  relationship: SpecRelationship;
 }
 
 /** A checkable implementation artifact declared by a spec (issue #15). */

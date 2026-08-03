@@ -1,4 +1,4 @@
-import type { DependencyGraph, ParsedSpec } from "@specdx/core";
+import type { RelationResolver, ParsedSpec } from "@specdx/core";
 import type { SpecDiff, ImpactAnalysis, DownstreamImpact } from "./types.js";
 
 const STRUCTURAL_SECTIONS = new Set([
@@ -12,15 +12,15 @@ const STRUCTURAL_SECTIONS = new Set([
 ]);
 
 /**
- * Calculate BFS distances from a starting node using the graph's edges.
- * Returns a map of nodeId -> shortest distance from the start node.
+ * Calculate BFS distances from a starting spec id using relation edges.
+ * Returns a map of specId -> shortest distance from the start spec.
  */
-function bfsDistances(startId: string, graph: DependencyGraph): Map<string, number> {
+function bfsDistances(startId: string, relations: RelationResolver): Map<string, number> {
   const distances = new Map<string, number>();
   const queue: Array<{ id: string; distance: number }> = [];
 
   // Seed queue with direct downstream neighbors (distance 1)
-  for (const edge of graph.edges) {
+  for (const edge of relations.edges) {
     if (edge.from === startId) {
       if (!distances.has(edge.to)) {
         distances.set(edge.to, 1);
@@ -33,7 +33,7 @@ function bfsDistances(startId: string, graph: DependencyGraph): Map<string, numb
     const item = queue.shift()!;
     const currentDist = item.distance;
 
-    for (const edge of graph.edges) {
+    for (const edge of relations.edges) {
       if (edge.from === item.id && !distances.has(edge.to)) {
         distances.set(edge.to, currentDist + 1);
         queue.push({ id: edge.to, distance: currentDist + 1 });
@@ -57,12 +57,12 @@ function clamp(min: number, max: number, value: number): number {
 export function analyzeImpact(
   changedSpecId: string,
   diff: SpecDiff,
-  graph: DependencyGraph,
+  relations: RelationResolver,
   allSpecs: ParsedSpec[],
   thresholdDays = 14,
 ): ImpactAnalysis {
   // 1. BFS to get downstream spec IDs with their distances
-  const distanceMap = bfsDistances(changedSpecId, graph);
+  const distanceMap = bfsDistances(changedSpecId, relations);
 
   if (distanceMap.size === 0) {
     return {

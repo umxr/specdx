@@ -1,4 +1,5 @@
 import type { SdxConfig } from "@specdx/schema";
+import { DEPENDENCY_RELATIONSHIPS } from "@specdx/schema";
 
 export class GraphError extends Error {
   constructor(message: string) {
@@ -112,16 +113,9 @@ export interface ReferenceEdge {
   relationship: string;
 }
 
-/**
- * Reference relationships that imply a dependency, and its direction.
- * Structural relationships (`decomposed-into`, `supersedes`) are deliberately
- * excluded: a parent decomposed into children does not make the children
- * build-depend on the parent (issue #13).
- */
-const DEPENDENCY_RELATIONSHIPS: Record<string, "self-requires-target" | "target-requires-self"> = {
-  "depends-on": "self-requires-target",
-  "implemented-by": "target-requires-self",
-};
+// The dependency-implying taxonomy lives in @specdx/schema so it is versioned
+// with the schema it describes, rather than hardcoded here (ADR:
+// references/requires unification).
 
 /**
  * Collect relationship edges declared in spec frontmatter `references` fields.
@@ -176,7 +170,7 @@ export function findUnreflectedReferences(
   const missing: UnreflectedReference[] = [];
 
   for (const edge of referenceEdges) {
-    const direction = DEPENDENCY_RELATIONSHIPS[edge.relationship];
+    const direction = DEPENDENCY_RELATIONSHIPS[edge.relationship as never];
     if (!direction) continue;
 
     const selfEntry = idToEntry.get(edge.fromId);

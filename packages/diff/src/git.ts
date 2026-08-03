@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
-import { loadConfig, parseSpecFromString, buildGraph } from "@specdx/core";
+import { loadConfig, parseSpecFromString, buildRelationResolver } from "@specdx/core";
 import type { ParsedSpec } from "@specdx/core";
 import { diffSpecs } from "./diff-specs.js";
 import { analyzeImpact } from "./impact.js";
@@ -161,26 +161,34 @@ export async function diffBetweenRefs(
     .map((p) => specIdByPath.get(p))
     .filter((id): id is string => id !== undefined);
 
-  // Build graph and run impact analysis for each changed spec
-  const graph = buildGraph(config);
   const impact: ImpactAnalysis[] = [];
 
-  // Parse all current specs from head ref for impact analysis
+  // Parse all current specs from head ref for impact analysis, keeping the
+  // config entry each came from so requires edges can be mapped to spec ids.
   const allSpecs: ParsedSpec[] = [];
-  for (const entry of Object.values(config.specs)) {
+  const specsByEntry = new Map<string, ParsedSpec[]>();
+  for (const [key, entry] of Object.entries(config.specs)) {
+    const forEntry: ParsedSpec[] = [];
     try {
       const content = gitShow(headRef, entry.path, projectRoot, repoRoot);
       const parsed = await parseSpecFromString(content, entry.path);
+      forEntry.push(parsed);
       allSpecs.push(parsed);
     } catch {
       // Spec may have been deleted at head ref -- skip
     }
+    specsByEntry.set(key, forEntry);
   }
+
+  // Impact works in spec id space: config requires and frontmatter references
+  // unioned, so downstream is found whether entry keys match spec ids or not
+  // (ADR: references/requires unification).
+  const relations = buildRelationResolver(config, specsByEntry);
 
   const thresholdDays = config.diff?.staleness_threshold_days ?? 14;
 
   for (const diff of diffs) {
-    const analysis = analyzeImpact(diff.specId, diff, graph, allSpecs, thresholdDays);
+    const analysis = analyzeImpact(diff.specId, diff, relations, allSpecs, thresholdDays);
     if (analysis.totalAffected > 0) {
       impact.push(analysis);
     }

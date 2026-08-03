@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { describe, it, expect } from "vitest";
-import { SPEC_TYPES } from "./types.js";
+import { SPEC_TYPES, SPEC_RELATIONSHIPS, DEPENDENCY_RELATIONSHIPS } from "./types.js";
 import baseSpecSchema from "./schemas/base-spec.json";
 import prdSchema from "./schemas/prd.json";
 import technicalDesignSchema from "./schemas/technical-design.json";
@@ -263,6 +263,25 @@ describe("spec type enum drift", () => {
   it("base-spec.json type enum matches SPEC_TYPES", () => {
     const schema = loadSchema("base-spec.json");
     expect(enumAt(schema, ["properties", "type", "enum"])).toEqual([...SPEC_TYPES]);
+  });
+
+  it("base-spec.json relationship enum matches SPEC_RELATIONSHIPS", () => {
+    const schema = loadSchema("base-spec.json");
+    expect(
+      enumAt(schema, ["properties", "references", "items", "properties", "relationship", "enum"]),
+    ).toEqual([...SPEC_RELATIONSHIPS]);
+  });
+
+  it("every dependency-implying relationship is a known relationship kind", () => {
+    for (const kind of Object.keys(DEPENDENCY_RELATIONSHIPS)) {
+      expect(SPEC_RELATIONSHIPS).toContain(kind);
+    }
+  });
+
+  it("structural relationships are not dependency-implying (issue #13)", () => {
+    expect(DEPENDENCY_RELATIONSHIPS["decomposed-into"]).toBeUndefined();
+    expect(DEPENDENCY_RELATIONSHIPS["supersedes"]).toBeUndefined();
+    expect(DEPENDENCY_RELATIONSHIPS["related-to"]).toBeUndefined();
   });
 
   it("every spec type has a dedicated schema file", () => {

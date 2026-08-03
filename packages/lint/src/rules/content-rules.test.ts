@@ -298,12 +298,97 @@ describe("staleness-check", () => {
         version: "1.0",
         created: "2026-01-01",
         authors: ["dev"],
-        references: [{ id: "prd-001", relationship: "implemented-by" as const }],
+        references: [{ id: "prd-001", relationship: "depends-on" as const }],
       },
       content: "",
     });
     const diags = stalenessCheckRule.run(makeContext(downstream, [downstream, upstream]));
     expect(diags.length).toBe(1);
+    expect(diags[0]!.message).toContain("prd-001");
+  });
+
+  it("reads implemented-by in the documented direction: the implementer depends on the implemented", () => {
+    // "prd-001 is implemented-by tech-001" means tech-001 depends on prd-001,
+    // so a newer PRD makes the TECH DESIGN stale — not the other way round.
+    const prd = makeSpec({
+      filePath: "specs/prd.md",
+      frontmatter: {
+        id: "prd-001",
+        type: "prd",
+        title: "PRD",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-01",
+        updated: "2026-03-01",
+        authors: ["dev"],
+        references: [{ id: "tech-001", relationship: "implemented-by" as const }],
+      },
+      content: "",
+    });
+    const tech = makeSpec({
+      filePath: "specs/tech.md",
+      frontmatter: {
+        id: "tech-001",
+        type: "technical-design",
+        title: "Tech Design",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-01",
+        updated: "2026-01-02",
+        authors: ["dev"],
+      },
+      content: "",
+    });
+
+    // The tech design is stale relative to the PRD it implements
+    expect(stalenessCheckRule.run(makeContext(tech, [prd, tech]))).toHaveLength(1);
+    // The PRD is not stale relative to its own implementation
+    expect(stalenessCheckRule.run(makeContext(prd, [prd, tech]))).toHaveLength(0);
+  });
+
+  it("warns from config requires alone, with no frontmatter references (ADR: unification)", () => {
+    const config = {
+      version: "1.0",
+      specs: {
+        prd: { path: "specs/prd.md", type: "prd" },
+        tech: { path: "specs/tech.md", type: "technical-design", requires: ["prd"] },
+      },
+    } as never;
+    const prd = makeSpec({
+      filePath: "specs/prd.md",
+      frontmatter: {
+        id: "prd-001",
+        type: "prd",
+        title: "PRD",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-01",
+        updated: "2026-03-01",
+        authors: ["dev"],
+      },
+      content: "",
+    });
+    const tech = makeSpec({
+      filePath: "specs/tech.md",
+      frontmatter: {
+        id: "tech-001",
+        type: "technical-design",
+        title: "Tech",
+        status: "draft",
+        version: "1.0",
+        created: "2026-01-01",
+        updated: "2026-01-02",
+        authors: ["dev"],
+      },
+      content: "",
+    });
+
+    const diags = stalenessCheckRule.run({
+      spec: tech,
+      allSpecs: [prd, tech],
+      config,
+    });
+    expect(diags).toHaveLength(1);
     expect(diags[0]!.message).toContain("prd-001");
   });
 });

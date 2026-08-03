@@ -16,6 +16,12 @@ export {
   type ReferenceEdge,
   type UnreflectedReference,
 } from "./graph.js";
+export {
+  buildRelationResolver,
+  type RelationResolver,
+  type RelationEdge,
+  type RelationSource,
+} from "./relations.js";
 export { resolveGlob } from "./glob.js";
 export { countTokens } from "./tokens.js";
 export { createLogger, type Logger, type LoggerOptions, type LogLevel } from "./logger.js";
