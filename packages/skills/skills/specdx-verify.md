@@ -29,6 +29,8 @@ artifacts:
     exports: ["BOT_SIGNATURES"]
 ```
 
+Declaring artifacts for work that is not built yet is safe: while the spec is `draft` or `review`, absent files report as *pending* (info, exit 0). They become enforceable errors when the spec status is `approved`. So write the declaration when you write the spec — do not wait for the implementation.
+
 ### Step 2: Load spec context
 
 ```bash

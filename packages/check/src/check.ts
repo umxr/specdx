@@ -131,6 +131,7 @@ export async function runCheck(
     codeTypes: codeTypeCount,
     codeTests: codeTestCount,
     artifacts: artifactResult.total > 0 ? artifactResult.checked : null,
+    artifactsPending: artifactResult.pending,
   };
 
   return { findings, score, summary, scanned, notes };

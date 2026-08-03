@@ -294,6 +294,50 @@ describe("runCheck", () => {
     expect(result.summary).toContain("100%");
   });
 
+  it("a draft spec's planned artifacts do not fail the check (issue #17)", async () => {
+    const artifactsDir = join(import.meta.dirname, "..", "test", "fixtures-artifacts");
+    const specs: ParsedSpec[] = [
+      makeSpec(
+        {
+          id: "crawler-log-drain",
+          type: "technical-design",
+          status: "draft",
+          artifacts: [{ path: "api/cron/drain.ts" }, { path: "middleware.ts" }],
+        } as never,
+        "# Drain job",
+      ),
+    ];
+
+    const result = await runCheck(specs, artifactsDir);
+
+    // Nothing at error severity, so the CLI exits 0 and the gate stays green
+    expect(result.findings.filter((f) => f.severity === "error")).toHaveLength(0);
+    expect(result.scanned.artifactsPending).toBe(1);
+    expect(result.scanned.artifacts).toBe(1);
+    expect(result.notes.some((n) => /pending/i.test(n))).toBe(true);
+  });
+
+  it("the same spec approved does fail on its unbuilt artifacts (issue #17)", async () => {
+    const artifactsDir = join(import.meta.dirname, "..", "test", "fixtures-artifacts");
+    const specs: ParsedSpec[] = [
+      makeSpec(
+        {
+          id: "crawler-log-drain",
+          type: "technical-design",
+          status: "approved",
+          artifacts: [{ path: "api/cron/drain.ts" }, { path: "middleware.ts" }],
+        } as never,
+        "# Drain job",
+      ),
+    ];
+
+    const result = await runCheck(specs, artifactsDir);
+
+    expect(result.findings.filter((f) => f.severity === "error")).toHaveLength(1);
+    expect(result.scanned.artifactsPending).toBe(0);
+    expect(result.score.overall).toBe(50);
+  });
+
   it("reports missing declared artifacts as findings", async () => {
     const artifactsDir = join(import.meta.dirname, "..", "test", "fixtures-artifacts");
     const specs: ParsedSpec[] = [

@@ -18,7 +18,24 @@ export interface ArtifactCheckResult {
   total: number;
   /** Assertions actually verified — equals `total`; skipped assertions are excluded, not passed. */
   checked: number;
+  /** Declared-but-absent artifacts of specs not yet approved — planned, not missing (issue #17). */
+  pending: number;
   notes: string[];
+}
+
+/**
+ * Spec statuses at which declared artifacts must already exist.
+ *
+ * A spec is the plan for work that has not happened yet, so its artifacts are
+ * enforceable only once it is approved. Before then a declared-but-absent file
+ * is the expected state, not a defect (issue #17) — otherwise spec-first
+ * authoring would fail the very gate the artifacts exist to feed.
+ */
+const ENFORCED_STATUSES = new Set(["approved"]);
+
+/** True when a spec's declared artifacts must exist for the check to pass. */
+export function artifactsEnforced(status: unknown): boolean {
+  return typeof status === "string" && ENFORCED_STATUSES.has(status);
 }
 
 /**
@@ -70,26 +87,46 @@ export async function checkArtifacts(
   const findings: Finding[] = [];
   const notes: string[] = [];
   let total = 0;
+  let pending = 0;
   let skippedExports = 0;
 
   for (const spec of specs) {
     const specId = String(spec.frontmatter.id);
+    const status = spec.frontmatter.status;
+    const enforced = artifactsEnforced(status);
+
     for (const artifact of parseArtifacts(spec)) {
-      total += 1;
       const absolute = join(projectDir, artifact.path);
 
       if (!existsSync(absolute)) {
-        findings.push({
-          type: "missing",
-          category: "artifact",
-          specId,
-          expected: `file "${artifact.path}"`,
-          severity: "error",
-          suggestion: `Create ${artifact.path} or update the artifacts list in ${specId}.`,
-        });
-        // Export assertions for a missing file are not separately counted.
+        if (enforced) {
+          total += 1;
+          findings.push({
+            type: "missing",
+            category: "artifact",
+            specId,
+            expected: `file "${artifact.path}"`,
+            severity: "error",
+            suggestion: `Create ${artifact.path} or update the artifacts list in ${specId}.`,
+          });
+        } else {
+          // Planned, not missing: excluded from the score rather than passed.
+          pending += 1;
+          findings.push({
+            type: "pending",
+            category: "artifact",
+            specId,
+            expected: `file "${artifact.path}"`,
+            severity: "info",
+            suggestion: `planned by ${specId} (status: ${String(status)}) — not yet implemented; enforced once the spec is approved.`,
+          });
+        }
+        // Export assertions for an absent file are not separately counted.
         continue;
       }
+
+      // The file exists, so it is a real assertion regardless of spec status.
+      total += 1;
 
       if (!artifact.exports || artifact.exports.length === 0) continue;
 
@@ -127,5 +164,11 @@ export async function checkArtifacts(
     );
   }
 
-  return { findings, total, checked: total, notes };
+  if (pending > 0) {
+    notes.push(
+      `${pending} declared artifact(s) pending: planned by specs that are not yet approved. They are excluded from the score and become enforceable when the spec status changes to approved.`,
+    );
+  }
+
+  return { findings, total, checked: total, pending, notes };
 }

@@ -5,14 +5,14 @@ import type { ParsedSpec } from "@specdx/core";
 
 const fixtureDir = join(import.meta.dirname, "../test/fixtures-artifacts");
 
-function makeSpec(id: string, artifacts: unknown): ParsedSpec {
+function makeSpec(id: string, artifacts: unknown, status = "approved"): ParsedSpec {
   return {
     filePath: `/specs/${id}.md`,
     frontmatter: {
       id,
       type: "technical-design",
       title: `Spec ${id}`,
-      status: "draft",
+      status,
       version: "1.0",
       created: "2026-07-30",
       authors: ["test"],
@@ -106,6 +106,66 @@ describe("checkArtifacts", () => {
     const result = await checkArtifacts([spec], fixtureDir, true);
     expect(result.findings).toHaveLength(1);
     expect(result.total).toBe(1);
+  });
+
+  it("reports missing artifacts of a draft spec as pending, not an error (issue #17)", async () => {
+    const spec = makeSpec("planned", [{ path: "api/cron/drain.ts" }], "draft");
+    const result = await checkArtifacts([spec], fixtureDir, true);
+
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0]!.severity).toBe("info");
+    expect(result.findings[0]!.expected).toContain("api/cron/drain.ts");
+    // The absence is the expected state, so it must not drag down the score
+    expect(result.total).toBe(0);
+    expect(result.pending).toBe(1);
+  });
+
+  it("phrases the pending suggestion for a planned file, not a defect (issue #17)", async () => {
+    const spec = makeSpec("planned", [{ path: "api/cron/drain.ts" }], "draft");
+    const result = await checkArtifacts([spec], fixtureDir, true);
+    const suggestion = result.findings[0]!.suggestion ?? "";
+    expect(suggestion).toMatch(/planned|not yet/i);
+    expect(suggestion).not.toMatch(/^Create /);
+  });
+
+  it.each(["draft", "review", "superseded"])(
+    "does not enforce missing artifacts for status %s (issue #17)",
+    async (status) => {
+      const spec = makeSpec("s", [{ path: "nope.ts" }], status);
+      const result = await checkArtifacts([spec], fixtureDir, true);
+      expect(result.findings[0]!.severity).toBe("info");
+      expect(result.total).toBe(0);
+    },
+  );
+
+  it("still errors on missing artifacts of an approved spec (issue #17)", async () => {
+    const spec = makeSpec("built", [{ path: "nope.ts" }], "approved");
+    const result = await checkArtifacts([spec], fixtureDir, true);
+    expect(result.findings[0]!.severity).toBe("error");
+    expect(result.total).toBe(1);
+    expect(result.pending).toBe(0);
+  });
+
+  it("verifies artifacts that do exist regardless of spec status (issue #17)", async () => {
+    const spec = makeSpec(
+      "planned",
+      [{ path: "middleware.ts", exports: ["onRequest"] }, { path: "missing.ts" }],
+      "draft",
+    );
+    const result = await checkArtifacts([spec], fixtureDir, true);
+
+    // The existing file and its export are still real, verified assertions
+    expect(result.total).toBe(2);
+    expect(result.findings.filter((f) => f.severity === "error")).toHaveLength(0);
+    expect(result.pending).toBe(1);
+  });
+
+  it("discloses pending artifacts in the notes (issue #17)", async () => {
+    const spec = makeSpec("planned", [{ path: "a.ts" }, { path: "b.ts" }], "draft");
+    const result = await checkArtifacts([spec], fixtureDir, true);
+    expect(result.notes.some((n) => /2 declared artifact/i.test(n) && /pending/i.test(n))).toBe(
+      true,
+    );
   });
 
   it("returns empty result for specs without artifacts", async () => {

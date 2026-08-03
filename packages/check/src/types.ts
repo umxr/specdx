@@ -16,10 +16,13 @@ export interface ScanSummary {
   codeTests: number | null;
   /** Artifact assertions verified from spec `artifacts` declarations — null when none declared. */
   artifacts: number | null;
+  /** Declared artifacts planned by not-yet-approved specs, excluded from scoring (issue #17). */
+  artifactsPending: number;
 }
 
 export interface Finding {
-  type: "missing" | "extra" | "mismatch" | "drift";
+  /** "pending" = declared but not yet built, by a spec that is not yet approved (issue #17). */
+  type: "missing" | "extra" | "mismatch" | "drift" | "pending";
   category: "route" | "type" | "test" | "artifact";
   specId: string;
   specSection?: string;

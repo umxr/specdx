@@ -36,6 +36,22 @@ describe("computeScore", () => {
     expect(score.overall).toBe(0);
   });
 
+  it("pending artifacts do not subtract from the score (issue #17)", () => {
+    const findings: Finding[] = [
+      {
+        type: "pending",
+        category: "artifact",
+        specId: "x",
+        expected: 'file "planned.ts"',
+        severity: "info",
+      },
+    ];
+    // One verified artifact; the pending one is excluded from totals entirely
+    const score = computeScore(findings, { routes: 0, types: 0, tests: 0, artifacts: 1 });
+    expect(score.byCategory["artifacts"]).toEqual({ matched: 1, total: 1 });
+    expect(score.overall).toBe(100);
+  });
+
   it("declared artifacts alone make the score assessed (issue #15)", () => {
     const findings: Finding[] = [
       {

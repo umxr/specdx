@@ -101,7 +101,9 @@ export default defineCommand({
           result.scanned.artifacts === null
             ? "none declared"
             : `${result.scanned.artifacts} verified`;
-        console.log(`    artifacts: ${artifacts}\n`);
+        const pending =
+          result.scanned.artifactsPending > 0 ? `, ${result.scanned.artifactsPending} pending` : "";
+        console.log(`    artifacts: ${artifacts}${pending}\n`);
       }
 
       for (const [category, stats] of Object.entries(result.score.byCategory)) {
@@ -111,7 +113,7 @@ export default defineCommand({
           (f) => f.category === category.replace(/s$/, ""),
         );
         for (const f of categoryFindings) {
-          const icon = f.type === "extra" ? "ℹ" : f.severity === "error" ? "✗" : "⚠";
+          const icon = f.severity === "error" ? "✗" : f.severity === "warn" ? "⚠" : "ℹ";
           const detail = f.actual ? ` — ${f.actual}` : "";
           const suggestion = f.suggestion ? ` (${f.suggestion})` : "";
           console.log(`    ${icon} ${f.expected}${detail}${suggestion}`);
