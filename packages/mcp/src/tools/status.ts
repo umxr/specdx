@@ -59,9 +59,11 @@ export async function handleStatus(): Promise<string> {
     }
   }
 
-  let verdict: "healthy" | "warnings" | "errors" = "healthy";
+  // An empty suite is unassessed, never a vacuous "healthy" (vacuous-pass audit)
+  let verdict: "healthy" | "warnings" | "errors" | "unassessed" = "healthy";
   if (errors > 0 || graphError) verdict = "errors";
   else if (warnings > 0 || staleSpecs.length > 0) verdict = "warnings";
+  else if (specs.length === 0) verdict = "unassessed";
 
   return JSON.stringify({
     project: config.project?.name ?? "unknown",

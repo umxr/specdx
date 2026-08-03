@@ -13,7 +13,15 @@ export interface RunLintOptions {
   preset?: "minimal" | "recommended" | "strict";
 }
 
-export async function runLint(options: RunLintOptions): Promise<LintResults> {
+/** Lint results plus whether anything was actually linted (vacuous-pass audit). */
+export interface RunLintResults extends LintResults {
+  /** Number of specs linted. */
+  specCount: number;
+  /** False when no specs resolved — "no diagnostics" is then not a pass. */
+  assessed: boolean;
+}
+
+export async function runLint(options: RunLintOptions): Promise<RunLintResults> {
   const config = await loadConfig(undefined, options.configDir);
   const preset = options.preset ?? config.lint?.extends ?? "recommended";
   const rules = getPreset(preset);
@@ -56,7 +64,7 @@ export async function runLint(options: RunLintOptions): Promise<LintResults> {
     results.hasErrors = true;
   }
 
-  return results;
+  return { ...results, specCount: specs.length, assessed: specs.length > 0 };
 }
 
 export default defineCommand({
@@ -87,6 +95,14 @@ export default defineCommand({
           : args.format === "github"
             ? formatGithub
             : formatPretty;
+      // "No diagnostics" over an empty suite is not a pass (vacuous-pass audit)
+      if (!results.assessed) {
+        console.error(
+          "\n  ⚠ No specs found — nothing was linted. Check the spec paths in spec.config.yaml.\n",
+        );
+        process.exit(3);
+      }
+
       console.log(formatter(results.diagnostics));
 
       if (results.hasErrors) process.exit(1);

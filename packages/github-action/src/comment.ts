@@ -12,11 +12,17 @@ export function formatComment(
   const lines: string[] = [];
   lines.push("## Spec Health Report\n");
 
-  // Lint summary
-  const lintIcon = errors > 0 ? "❌" : warnings > 0 ? "⚠️" : "✅";
-  lines.push(
-    `**Lint:** ${lintIcon} ${specCount} specs checked (${errors} errors, ${warnings} warnings)\n`,
-  );
+  // Lint summary — zero specs checked is not a pass (vacuous-pass audit)
+  if (specCount === 0) {
+    lines.push(
+      "**Lint:** ⚠️ no specs were checked — spec paths in `spec.config.yaml` resolved to no files\n",
+    );
+  } else {
+    const lintIcon = errors > 0 ? "❌" : warnings > 0 ? "⚠️" : "✅";
+    lines.push(
+      `**Lint:** ${lintIcon} ${specCount} specs checked (${errors} errors, ${warnings} warnings)\n`,
+    );
+  }
 
   // Diff section
   if (

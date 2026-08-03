@@ -89,10 +89,11 @@ export async function runStatus(_options: { format?: string } = {}): Promise<Sta
     integrityIssues.push(d.message);
   }
 
-  // Verdict
-  let verdict: "healthy" | "warnings" | "errors" = "healthy";
+  // Verdict — an empty suite is unassessed, never a vacuous "healthy"
+  let verdict: StatusResult["verdict"] = "healthy";
   if (errors > 0) verdict = "errors";
   else if (warnings > 0 || staleSpecs.length > 0) verdict = "warnings";
+  else if (specs.length === 0) verdict = "unassessed";
 
   return {
     project: config.project?.name ?? "unknown",
@@ -136,8 +137,18 @@ export default defineCommand({
       }
 
       // Pretty format
-      const icon = result.verdict === "healthy" ? "✓" : result.verdict === "warnings" ? "⚠" : "✗";
+      const icon =
+        result.verdict === "healthy"
+          ? "✓"
+          : result.verdict === "warnings" || result.verdict === "unassessed"
+            ? "⚠"
+            : "✗";
       console.log(`\n  ${icon} ${result.project} — ${result.verdict}`);
+      if (result.verdict === "unassessed") {
+        console.log(
+          "    No specs resolved — nothing was assessed. Check the spec paths in spec.config.yaml.",
+        );
+      }
       console.log(
         `    ${result.specCount} specs: ${Object.entries(result.byStatus)
           .map(([k, v]) => `${v} ${k}`)

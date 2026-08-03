@@ -11,6 +11,13 @@ describe("formatComment", () => {
     expect(result).toContain("0 errors");
   });
 
+  it("does not show a green check when zero specs were checked (vacuous-pass audit)", () => {
+    const result = formatComment([], 0, null);
+    expect(result).not.toContain("✅");
+    expect(result).toContain("⚠️");
+    expect(result).toMatch(/no specs/i);
+  });
+
   it("shows error icon when lint errors exist", () => {
     const diagnostics: Diagnostic[] = [
       { ruleId: "test", severity: "error", message: "bad", filePath: "specs/prd.md" },

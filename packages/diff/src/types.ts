@@ -51,7 +51,8 @@ export interface StatusResult {
   lintHealth: { errors: number; warnings: number; passing: number };
   staleSpecs: { specId: string; daysSinceUpdate: number; owner?: string }[];
   integrityIssues: string[];
-  verdict: "healthy" | "warnings" | "errors";
+  /** "unassessed" when the suite resolved to zero specs — never a vacuous "healthy". */
+  verdict: "healthy" | "warnings" | "errors" | "unassessed";
 }
 
 export interface DiffConfig {

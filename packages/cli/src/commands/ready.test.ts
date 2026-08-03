@@ -257,4 +257,29 @@ describe("runReady", () => {
     expect(staleCheck?.passed).toBe(false);
     expect(staleCheck?.details).toContain("prd-001");
   });
+
+  it("is NOT ready when the suite resolves to zero specs (vacuous-pass audit)", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  prd:\n    path: "specs/*.md"\n    type: "prd"\n`,
+    );
+
+    const result = await runReady();
+    expect(result.ready).toBe(false);
+    const emptyCheck = result.checks.find((c) => c.name === "Spec suite non-empty");
+    expect(emptyCheck?.passed).toBe(false);
+  });
+
+  it("does not tick lint health or staleness over an empty suite", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  prd:\n    path: "specs/*.md"\n    type: "prd"\n`,
+    );
+
+    const result = await runReady();
+    const lintCheck = result.checks.find((c) => c.name === "Lint health");
+    const staleCheck = result.checks.find((c) => c.name === "No stale specs");
+    expect(lintCheck?.skipped).toBe(true);
+    expect(staleCheck?.skipped).toBe(true);
+  });
 });

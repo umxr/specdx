@@ -74,6 +74,32 @@ describe("runLint", () => {
     expect(errors).toHaveLength(0);
   });
 
+  it("does not report a vacuous pass when no specs resolve (vacuous-pass audit)", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  prd:\n    path: "specs/*.md"\n    type: "prd"\n`,
+    );
+
+    const result = await runLint({ configDir: tempDir });
+    expect(result.specCount).toBe(0);
+    expect(result.assessed).toBe(false);
+  });
+
+  it("marks a suite with specs as assessed", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  prd:\n    path: "specs/prd.md"\n    type: "prd"\n`,
+    );
+    await writeFile(
+      join(tempDir, "specs/prd.md"),
+      `---\nid: "prd-001"\ntype: "prd"\ntitle: "Test"\nstatus: "draft"\nversion: "1.0"\ncreated: "2026-01-01"\nauthors: ["dev"]\n---\n\n# Test\n\n## Problem Statement\n\nContent.\n`,
+    );
+
+    const result = await runLint({ configDir: tempDir });
+    expect(result.specCount).toBe(1);
+    expect(result.assessed).toBe(true);
+  });
+
   it("single-file lint still resolves cross-references against the full suite", async () => {
     await writeFile(
       join(tempDir, "spec.config.yaml"),

@@ -43,6 +43,17 @@ export async function runReady(): Promise<ReadyResult> {
     }
   }
 
+  // Check 0: The suite has specs at all. Without this, every check below
+  // ticks over an empty set and READY means nothing (vacuous-pass audit).
+  checks.push({
+    name: "Spec suite non-empty",
+    passed: specs.length > 0,
+    details:
+      specs.length > 0
+        ? `${specs.length} specs resolved`
+        : "no spec files resolved — check the spec paths in spec.config.yaml",
+  });
+
   // Check 1: Required specs exist
   const requiredEntries = Object.entries(config.specs).filter(
     ([, entry]) => (entry as { required?: boolean }).required,
@@ -99,11 +110,20 @@ export async function runReady(): Promise<ReadyResult> {
 
   const errors = lintResults.diagnostics.filter((d) => d.severity === "error").length;
   const warnings = lintResults.diagnostics.filter((d) => d.severity === "warn").length;
-  checks.push({
-    name: "Lint health",
-    passed: errors === 0,
-    details: `${errors} errors, ${warnings} warnings`,
-  });
+  if (specs.length === 0) {
+    checks.push({
+      name: "Lint health",
+      passed: true,
+      skipped: true,
+      details: "skipped (no specs to lint)",
+    });
+  } else {
+    checks.push({
+      name: "Lint health",
+      passed: errors === 0,
+      details: `${errors} errors, ${warnings} warnings`,
+    });
+  }
 
   // Check 3: No integrity issues (broken refs, circular deps)
   const integrityIssues: string[] = [];
@@ -158,14 +178,23 @@ export async function runReady(): Promise<ReadyResult> {
       }
     }
   }
-  checks.push({
-    name: "No stale specs",
-    passed: staleSpecs.length === 0,
-    details:
-      staleSpecs.length === 0
-        ? `All specs within ${thresholdDays}-day threshold`
-        : staleSpecs.map((s) => `${s.specId} (${s.days}d)`).join(", "),
-  });
+  if (specs.length === 0) {
+    checks.push({
+      name: "No stale specs",
+      passed: true,
+      skipped: true,
+      details: "skipped (no specs to date-check)",
+    });
+  } else {
+    checks.push({
+      name: "No stale specs",
+      passed: staleSpecs.length === 0,
+      details:
+        staleSpecs.length === 0
+          ? `All specs within ${thresholdDays}-day threshold`
+          : staleSpecs.map((s) => `${s.specId} (${s.days}d)`).join(", "),
+    });
+  }
 
   // Check 5: Story coverage — every PRD feature has a user story
   const hasPrd = specs.some((s) => s.spec.frontmatter.type === "prd");
