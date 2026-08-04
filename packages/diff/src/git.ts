@@ -350,11 +350,11 @@ function listUncommittedSpecFiles(
   for (const line of statusOutput.split("\n")) {
     if (!line.trim()) continue;
     // Porcelain v1: two status columns, a space, then the path. A rename reads
-    // "old -> new"; the new path is the one that exists now.
+    // "old -> new"; the new path is the one that exists now. Paths containing
+    // unusual characters are quoted.
     const rawPath = line.slice(3);
-    const filePath = rawPath.includes(" -> ")
-      ? (rawPath.split(" -> ")[1] ?? rawPath)
-      : rawPath.replace(/^"|"$/g, "");
+    const renamed = rawPath.includes(" -> ") ? rawPath.split(" -> ")[1] : undefined;
+    const filePath = (renamed ?? rawPath).replace(/^"|"$/g, "");
     if (!matchers.some((m) => m.isMatch(filePath))) continue;
     files.push(relative(projectRoot, resolve(repoRoot, filePath)));
   }
