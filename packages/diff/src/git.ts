@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { realpathSync } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { dirname, relative, resolve, sep } from "node:path";
+import picomatch from "picomatch";
 import { loadConfig, parseSpecFromString, buildRelationResolver } from "@specdx/core";
 import type { ParsedSpec } from "@specdx/core";
 import { diffSpecs } from "./diff-specs.js";
@@ -49,29 +50,61 @@ function gitShow(ref: string, filePath: string, projectRoot: string, repoRoot: s
   }
 }
 
-interface ChangedFiles {
-  modified: string[];
-  added: string[];
-  deleted: string[];
+/** Git reports paths with forward slashes regardless of platform. */
+function toPosix(p: string): string {
+  return sep === "/" ? p : p.split(sep).join("/");
+}
+
+interface EntryMatcher {
+  /** Config entry key (may cover many spec files when the path is a glob). */
+  key: string;
+  /** Matches repo-relative, posix-separated paths against the entry's path. */
+  isMatch: (repoRelPath: string) => boolean;
 }
 
 /**
- * Get list of changed files between two refs, filtered to the given spec paths.
+ * Build one matcher per config entry.
+ *
+ * A config entry's `path` may be a glob (`specs/stories/*.md`), so it cannot be
+ * compared to git's output by string equality -- the literal pattern is never
+ * itself a changed path. Matching by pattern is what makes globbed specs
+ * visible to diff at all.
+ */
+function buildEntryMatchers(
+  specPathsByKey: Map<string, string>,
+  projectRoot: string,
+  repoRoot: string,
+): EntryMatcher[] {
+  return [...specPathsByKey].map(([key, specPath]) => ({
+    key,
+    isMatch: picomatch(toPosix(relative(repoRoot, resolve(projectRoot, specPath)))),
+  }));
+}
+
+/** A spec file that changed between two refs, with the entry it belongs to. */
+interface ChangedSpecFile {
+  /** Project-relative path, as the rest of the pipeline expects. */
+  path: string;
+  entryKey: string;
+}
+
+interface ChangedFiles {
+  modified: ChangedSpecFile[];
+  added: ChangedSpecFile[];
+  deleted: ChangedSpecFile[];
+}
+
+/**
+ * Get list of changed files between two refs, filtered to files that belong to
+ * a configured spec entry.
  */
 function getChangedSpecFiles(
   baseRef: string,
   headRef: string,
-  specPaths: string[],
+  matchers: EntryMatcher[],
   projectRoot: string,
   repoRoot: string,
 ): ChangedFiles {
-  // Build a map from repo-relative path to project-relative path
-  const repoRelToProjectRel = new Map<string, string>();
-  for (const p of specPaths) {
-    const repoRel = relative(repoRoot, resolve(projectRoot, p));
-    repoRelToProjectRel.set(repoRel, p);
-  }
-
   let diffOutput: string;
   try {
     diffOutput = execSync(`git diff --name-status ${baseRef} ${headRef}`, {
@@ -92,19 +125,86 @@ function getChangedSpecFiles(
     const filePath = parts[1];
     if (!status || !filePath) continue;
 
-    const projectRelPath = repoRelToProjectRel.get(filePath);
-    if (projectRelPath === undefined) continue;
+    const entry = matchers.find((m) => m.isMatch(filePath));
+    if (!entry) continue;
+
+    const changed: ChangedSpecFile = {
+      path: relative(projectRoot, resolve(repoRoot, filePath)),
+      entryKey: entry.key,
+    };
 
     if (status === "M") {
-      result.modified.push(projectRelPath);
+      result.modified.push(changed);
     } else if (status === "A") {
-      result.added.push(projectRelPath);
+      result.added.push(changed);
     } else if (status === "D") {
-      result.deleted.push(projectRelPath);
+      result.deleted.push(changed);
     }
   }
 
   return result;
+}
+
+/**
+ * List every spec file present at a ref, grouped by config entry key.
+ *
+ * Expanding globs against the ref rather than the working tree keeps impact
+ * analysis accurate for specs that were added or deleted in the range.
+ */
+function listSpecFilesAtRef(
+  ref: string,
+  matchers: EntryMatcher[],
+  projectRoot: string,
+  repoRoot: string,
+): Map<string, string[]> {
+  const byEntry = new Map<string, string[]>(matchers.map((m) => [m.key, []]));
+
+  let listing: string;
+  try {
+    listing = execSync(`git ls-tree -r --name-only ${ref}`, {
+      cwd: repoRoot,
+      encoding: "utf-8",
+      stdio: "pipe",
+    });
+  } catch {
+    throw new DiffError(`Failed to list files at ref "${ref}"`);
+  }
+
+  for (const filePath of listing.trim().split("\n")) {
+    if (!filePath) continue;
+    const entry = matchers.find((m) => m.isMatch(filePath));
+    if (!entry) continue;
+    byEntry.get(entry.key)?.push(relative(projectRoot, resolve(repoRoot, filePath)));
+  }
+
+  return byEntry;
+}
+
+/**
+ * Resolve the spec ids of files that only exist on one side of the range.
+ *
+ * The config entry key is not usable as a spec id: one glob entry covers many
+ * specs, so the id has to come from each file's own frontmatter.
+ */
+async function specIdsAtRef(
+  files: ChangedSpecFile[],
+  ref: string,
+  projectRoot: string,
+  repoRoot: string,
+): Promise<string[]> {
+  const ids: string[] = [];
+  for (const file of files) {
+    try {
+      const content = gitShow(ref, file.path, projectRoot, repoRoot);
+      const parsed = await parseSpecFromString(content, file.path);
+      ids.push(parsed.frontmatter.id);
+    } catch {
+      // Unparseable or unreadable at this ref -- fall back to the entry key so
+      // the spec is still reported as added/removed rather than dropped.
+      ids.push(file.entryKey);
+    }
+  }
+  return ids;
 }
 
 /**
@@ -126,56 +226,54 @@ export async function diffBetweenRefs(
   // Load config from filesystem (current version)
   const config = await loadConfig(configPath);
 
-  // Collect all spec file paths from config
-  const specPaths: string[] = [];
-  const specIdByPath = new Map<string, string>();
-
-  for (const [specId, entry] of Object.entries(config.specs)) {
-    specPaths.push(entry.path);
-    specIdByPath.set(entry.path, specId);
+  // Collect all spec paths from config, keyed by entry. A path may be a glob,
+  // so entries are matched by pattern rather than by string equality.
+  const specPathsByKey = new Map<string, string>();
+  for (const [key, entry] of Object.entries(config.specs)) {
+    specPathsByKey.set(key, entry.path);
   }
+  const matchers = buildEntryMatchers(specPathsByKey, projectRoot, repoRoot);
 
   // Determine which spec files changed
-  const changed = getChangedSpecFiles(baseRef, headRef, specPaths, projectRoot, repoRoot);
+  const changed = getChangedSpecFiles(baseRef, headRef, matchers, projectRoot, repoRoot);
 
   // Build diffs for modified specs
   const diffs: SpecDiff[] = [];
 
-  for (const filePath of changed.modified) {
-    const beforeContent = gitShow(baseRef, filePath, projectRoot, repoRoot);
-    const afterContent = gitShow(headRef, filePath, projectRoot, repoRoot);
+  for (const file of changed.modified) {
+    const beforeContent = gitShow(baseRef, file.path, projectRoot, repoRoot);
+    const afterContent = gitShow(headRef, file.path, projectRoot, repoRoot);
 
-    const beforeSpec = await parseSpecFromString(beforeContent, filePath);
-    const afterSpec = await parseSpecFromString(afterContent, filePath);
+    const beforeSpec = await parseSpecFromString(beforeContent, file.path);
+    const afterSpec = await parseSpecFromString(afterContent, file.path);
 
     const diff = diffSpecs(beforeSpec, afterSpec);
     diffs.push(diff);
   }
 
-  // Added and removed spec IDs
-  const added = changed.added
-    .map((p) => specIdByPath.get(p))
-    .filter((id): id is string => id !== undefined);
-
-  const removed = changed.deleted
-    .map((p) => specIdByPath.get(p))
-    .filter((id): id is string => id !== undefined);
+  // Added and removed spec IDs, read from the frontmatter on the side of the
+  // range where the file exists.
+  const added = await specIdsAtRef(changed.added, headRef, projectRoot, repoRoot);
+  const removed = await specIdsAtRef(changed.deleted, baseRef, projectRoot, repoRoot);
 
   const impact: ImpactAnalysis[] = [];
 
-  // Parse all current specs from head ref for impact analysis, keeping the
-  // config entry each came from so requires edges can be mapped to spec ids.
+  // Parse all specs present at head ref for impact analysis, keeping the config
+  // entry each came from so requires edges can be mapped to spec ids.
   const allSpecs: ParsedSpec[] = [];
   const specsByEntry = new Map<string, ParsedSpec[]>();
-  for (const [key, entry] of Object.entries(config.specs)) {
+  const filesAtHead = listSpecFilesAtRef(headRef, matchers, projectRoot, repoRoot);
+  for (const [key, paths] of filesAtHead) {
     const forEntry: ParsedSpec[] = [];
-    try {
-      const content = gitShow(headRef, entry.path, projectRoot, repoRoot);
-      const parsed = await parseSpecFromString(content, entry.path);
-      forEntry.push(parsed);
-      allSpecs.push(parsed);
-    } catch {
-      // Spec may have been deleted at head ref -- skip
+    for (const path of paths) {
+      try {
+        const content = gitShow(headRef, path, projectRoot, repoRoot);
+        const parsed = await parseSpecFromString(content, path);
+        forEntry.push(parsed);
+        allSpecs.push(parsed);
+      } catch {
+        // Unparseable at this ref -- skip
+      }
     }
     specsByEntry.set(key, forEntry);
   }

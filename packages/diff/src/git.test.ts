@@ -154,6 +154,149 @@ Updated goals.
     expect(result.impact.length).toBeGreaterThan(0);
   });
 
+  // Every fixture above declares spec entries by literal path, so a glob entry
+  // (`specs/stories/*.md`) was never exercised -- it matched no changed file and
+  // diff reported a vacuous "no changes" for the majority of a real suite.
+  async function setupGlobRepo() {
+    await writeFile(
+      join(tmpDir, "spec.config.yaml"),
+      `
+version: "1.0"
+project:
+  name: "test"
+specs:
+  prd:
+    path: specs/prd.md
+    type: prd
+  stories:
+    path: specs/stories/*.md
+    type: user-story
+    requires: ["prd"]
+`,
+    );
+    await mkdir(join(tmpDir, "specs/stories"), { recursive: true });
+    await writeFile(
+      join(tmpDir, "specs/prd.md"),
+      `---
+id: prd
+type: prd
+title: "Test PRD"
+status: draft
+version: "0.1"
+created: "2026-01-01"
+authors: ["test"]
+---
+
+## Goals
+Original goals.
+`,
+    );
+    await writeFile(
+      join(tmpDir, "specs/stories/story-one.md"),
+      `---
+id: story-one
+type: user-story
+title: "Story One"
+status: draft
+version: "0.1"
+created: "2026-01-01"
+authors: ["test"]
+---
+
+## Acceptance Criteria
+Original criteria.
+`,
+    );
+    execSync("git add -A && git commit -m 'initial'", { cwd: tmpDir });
+    execSync("git tag base", { cwd: tmpDir });
+  }
+
+  it("detects a modified spec inside a glob entry", async () => {
+    await setupGlobRepo();
+    await writeFile(
+      join(tmpDir, "specs/stories/story-one.md"),
+      `---
+id: story-one
+type: user-story
+title: "Story One"
+status: approved
+version: "0.2"
+created: "2026-01-01"
+authors: ["test"]
+---
+
+## Acceptance Criteria
+Updated criteria.
+`,
+    );
+    execSync("git add -A && git commit -m 'update story'", { cwd: tmpDir });
+
+    const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD");
+    const storyDiff = result.diffs.find((d) => d.specId === "story-one");
+    expect(storyDiff).toBeDefined();
+    expect(storyDiff!.frontmatter.length).toBeGreaterThan(0);
+  });
+
+  it("detects a spec added inside a glob entry, keyed by its spec id", async () => {
+    await setupGlobRepo();
+    await writeFile(
+      join(tmpDir, "specs/stories/story-two.md"),
+      `---
+id: story-two
+type: user-story
+title: "Story Two"
+status: draft
+version: "0.1"
+created: "2026-01-01"
+authors: ["test"]
+---
+
+## Acceptance Criteria
+Brand new.
+`,
+    );
+    execSync("git add -A && git commit -m 'add story'", { cwd: tmpDir });
+
+    const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD");
+    // The entry key is "stories"; the spec id is "story-two".
+    expect(result.added).toContain("story-two");
+  });
+
+  it("detects a spec removed from a glob entry, keyed by its spec id", async () => {
+    await setupGlobRepo();
+    execSync("git rm -q specs/stories/story-one.md", { cwd: tmpDir });
+    execSync("git commit -m 'remove story'", { cwd: tmpDir });
+
+    const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD");
+    expect(result.removed).toContain("story-one");
+  });
+
+  it("reports downstream impact on specs inside a glob entry", async () => {
+    await setupGlobRepo();
+    await writeFile(
+      join(tmpDir, "specs/prd.md"),
+      `---
+id: prd
+type: prd
+title: "Test PRD"
+status: approved
+version: "0.2"
+created: "2026-01-01"
+authors: ["test"]
+---
+
+## Goals
+Updated goals.
+`,
+    );
+    execSync("git add -A && git commit -m 'update prd'", { cwd: tmpDir });
+
+    const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD");
+    const prdImpact = result.impact.find((i) => i.changedSpec === "prd");
+    expect(prdImpact).toBeDefined();
+    expect(prdImpact!.downstream.map((d) => d.specId)).toContain("story-one");
+  });
+
   it("generates a summary string", async () => {
     await setupRepo();
     await writeFile(

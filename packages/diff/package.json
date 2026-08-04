@@ -21,9 +21,11 @@
   "dependencies": {
     "@specdx/core": "workspace:*",
     "@specdx/schema": "workspace:*",
-    "diff": "^7.0.0"
+    "diff": "^7.0.0",
+    "picomatch": "^4.0.3"
   },
   "devDependencies": {
+    "@types/picomatch": "^4.0.3",
     "typescript": "^5.7.0"
   }
 }
