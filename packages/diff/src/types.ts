@@ -42,6 +42,22 @@ export interface DiffResult {
   removed: string[];
   impact: ImpactAnalysis[];
   summary: string;
+  /**
+   * Spec files changed in the working tree but not covered by the comparison.
+   *
+   * A ref-to-ref diff cannot see uncommitted work, so reporting "no changes"
+   * without this would be a false all-clear. Always empty in working mode,
+   * where those changes are part of the comparison.
+   */
+  uncommittedSpecFiles: string[];
+}
+
+export interface DiffOptions {
+  /**
+   * Compare the base ref against the working tree instead of a head ref.
+   * Includes staged, unstaged, and untracked spec files.
+   */
+  working?: boolean;
 }
 
 export interface StatusResult {

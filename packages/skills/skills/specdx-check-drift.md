@@ -13,10 +13,12 @@ Compare recent code changes against spec definitions to detect drift.
 ### Step 1: Check for spec changes
 
 ```bash
-npx specdx diff
+npx specdx diff --working
 ```
 
-This shows which specs changed since the last commit. Note any upstream spec changes.
+This shows which specs changed, including edits still in the working tree. Note any upstream spec changes.
+
+Use `--working` here. Plain `npx specdx diff` compares committed refs only, so it cannot see uncommitted spec edits — the ones most likely to have caused the drift you are looking for.
 
 ### Step 2: Check implementation alignment
 

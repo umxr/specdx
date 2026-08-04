@@ -6,6 +6,7 @@ export type {
   ImpactAnalysis,
   DownstreamImpact,
   DiffResult,
+  DiffOptions,
   StatusResult,
   DiffConfig,
 } from "./types.js";

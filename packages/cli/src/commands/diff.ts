@@ -9,6 +9,8 @@ export interface RunDiffOptions {
   head?: string;
   spec?: string;
   format?: string;
+  /** Compare the base ref against the working tree instead of a head ref. */
+  working?: boolean;
 }
 
 export async function runDiff(options: RunDiffOptions): Promise<DiffResult> {
@@ -20,7 +22,9 @@ export async function runDiff(options: RunDiffOptions): Promise<DiffResult> {
 
   const configPath = join(configDir, "spec.config.yaml");
 
-  const result = await diffBetweenRefs(configPath, baseRef, headRef);
+  const result = await diffBetweenRefs(configPath, baseRef, headRef, {
+    working: options.working ?? false,
+  });
 
   if (options.spec) {
     result.diffs = result.diffs.filter((d) => d.specId === options.spec);
@@ -35,6 +39,11 @@ export default defineCommand({
   args: {
     base: { type: "string", description: "Base git ref (default: from config or 'main')" },
     head: { type: "string", description: "Head git ref (default: HEAD)" },
+    working: {
+      type: "boolean",
+      description: "Compare the base ref against the working tree (includes uncommitted specs)",
+      default: false,
+    },
     spec: { type: "string", description: "Scope to a single spec ID" },
     format: {
       type: "string",
@@ -50,6 +59,7 @@ export default defineCommand({
           head: args.head,
           spec: args.spec,
           format: args.format,
+          working: args.working,
         });
 
         if (args.format === "json") {
@@ -57,9 +67,24 @@ export default defineCommand({
           return;
         }
 
+        // A ref-to-ref comparison cannot see the working tree, so an unqualified
+        // "no changes" would be a false all-clear for anyone about to commit.
+        const printUncommittedWarning = (): void => {
+          if (result.uncommittedSpecFiles.length === 0) return;
+          const count = result.uncommittedSpecFiles.length;
+          console.log(
+            `\n  \u26a0 ${count} spec file(s) changed in the working tree are not covered by this comparison:`,
+          );
+          for (const file of result.uncommittedSpecFiles) {
+            console.log(`      ${file}`);
+          }
+          console.log("    Run with --working to include them.");
+        };
+
         // Pretty format
         if (result.diffs.length === 0 && result.added.length === 0 && result.removed.length === 0) {
           console.log("  \u2713 No spec changes detected.");
+          printUncommittedWarning();
           return;
         }
 
@@ -97,6 +122,8 @@ export default defineCommand({
             }
           }
         }
+
+        printUncommittedWarning();
       } catch (err) {
         if (err instanceof DiffError) {
           console.error(`\n  \u2717 ${err.message}\n`);

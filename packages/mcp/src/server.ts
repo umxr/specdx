@@ -75,6 +75,12 @@ export function createMcpServer(): McpServer {
     {
       base: z.string().optional().describe("Base git ref (default: main)"),
       head: z.string().optional().describe("Head git ref (default: HEAD)"),
+      working: z
+        .boolean()
+        .optional()
+        .describe(
+          "Compare the base ref against the working tree, including uncommitted and untracked specs (default: false)",
+        ),
     },
     async (params) => ({
       content: [{ type: "text" as const, text: await handleDiff(params) }],

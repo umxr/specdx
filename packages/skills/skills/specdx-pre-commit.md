@@ -25,8 +25,13 @@ If lint errors are found, report them and ask the user to fix before committing.
 ### Step 2: Diff
 
 ```bash
-npx specdx diff
+npx specdx diff --working
 ```
+
+`--working` is required at this step. You are about to commit, so the changes in
+question are still in the working tree. Plain `npx specdx diff` compares
+committed refs only and would report "no spec changes" for the very edits being
+committed — a false all-clear.
 
 If the command fails (e.g. no git history), skip this step and note it.
 
@@ -34,6 +39,10 @@ If the command fails (e.g. no git history), skip this step and note it.
 
 **If no spec changes detected:**
 > "No spec changes — safe to commit."
+
+Only say this after a `--working` run. If the diff warns that spec files in the
+working tree were not covered, the run was not `--working`. Re-run it before
+reporting anything.
 
 **If changes detected, present a summary:**
 - Which specs changed and what sections were modified
@@ -54,3 +63,4 @@ Respect the user's decision either way.
 | "There are no spec files in the diff" | Code changes can still drift from specs. Run the check. |
 | "I already ran lint earlier" | Specs may have changed since. Run it again. |
 | "The diff command failed, so skip everything" | Report the lint results at minimum. |
+| "`specdx diff` said no changes, so we're clear" | Without `--working` it never looked at the working tree. Re-run with the flag. |

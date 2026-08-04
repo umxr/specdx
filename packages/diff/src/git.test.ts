@@ -297,6 +297,99 @@ Updated goals.
     expect(prdImpact!.downstream.map((d) => d.specId)).toContain("story-one");
   });
 
+  // A ref-to-ref comparison cannot see the working tree, so an uncommitted spec
+  // edit used to produce a bare "no changes" -- a false green at exactly the
+  // moment specdx-pre-commit asks the question.
+  describe("working tree", () => {
+    async function editPrdWithoutCommitting() {
+      await writeFile(
+        join(tmpDir, "specs/prd.md"),
+        `---
+id: prd
+type: prd
+title: "Test PRD"
+status: approved
+version: "0.2"
+created: "2026-01-01"
+authors: ["test"]
+---
+
+## Problem Statement
+Uncommitted problem.
+
+## Goals
+Original goals.
+`,
+      );
+    }
+
+    it("reports uncommitted spec files the compared refs do not cover", async () => {
+      await setupRepo();
+      await editPrdWithoutCommitting();
+
+      const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD");
+      expect(result.diffs).toHaveLength(0);
+      expect(result.uncommittedSpecFiles).toContain("specs/prd.md");
+    });
+
+    it("ignores uncommitted changes to files outside the spec suite", async () => {
+      await setupRepo();
+      await writeFile(join(tmpDir, "README.md"), "not a spec");
+
+      const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD");
+      expect(result.uncommittedSpecFiles).toHaveLength(0);
+    });
+
+    it("diffs a ref against the working tree when working is set", async () => {
+      await setupRepo();
+      await editPrdWithoutCommitting();
+
+      const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD", {
+        working: true,
+      });
+      const prdDiff = result.diffs.find((d) => d.specId === "prd");
+      expect(prdDiff).toBeDefined();
+      expect(prdDiff!.frontmatter.length).toBeGreaterThan(0);
+      // The change is covered by the comparison, so it is not also a warning.
+      expect(result.uncommittedSpecFiles).toHaveLength(0);
+    });
+
+    it("treats an untracked spec file as added in working mode", async () => {
+      await setupGlobRepo();
+      await writeFile(
+        join(tmpDir, "specs/stories/story-new.md"),
+        `---
+id: story-new
+type: user-story
+title: "Story New"
+status: draft
+version: "0.1"
+created: "2026-01-01"
+authors: ["test"]
+---
+
+## Acceptance Criteria
+Never committed.
+`,
+      );
+
+      const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD", {
+        working: true,
+      });
+      expect(result.added).toContain("story-new");
+    });
+
+    it("treats a spec deleted from the working tree as removed in working mode", async () => {
+      await setupRepo();
+      await rm(join(tmpDir, "specs/tech.md"));
+
+      const result = await diffBetweenRefs(join(tmpDir, "spec.config.yaml"), "base", "HEAD", {
+        working: true,
+      });
+      expect(result.removed).toContain("tech");
+    });
+  });
+
   it("generates a summary string", async () => {
     await setupRepo();
     await writeFile(
