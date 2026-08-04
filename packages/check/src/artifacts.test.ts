@@ -160,6 +160,51 @@ describe("checkArtifacts", () => {
     expect(result.pending).toBe(1);
   });
 
+  it("treats a missing export on an existing file as pending for a draft spec (issue #19)", async () => {
+    // The spec plans to add an export to a file that already exists — the same
+    // situation as a planned file, reached by a different path.
+    const spec = makeSpec(
+      "planned",
+      [{ path: "middleware.ts", exports: ["onRequest", "logBotHit"] }],
+      "draft",
+    );
+    const result = await checkArtifacts([spec], fixtureDir, true);
+
+    expect(result.findings.filter((f) => f.severity === "error")).toHaveLength(0);
+    const planned = result.findings.find((f) => f.expected.includes("logBotHit"))!;
+    expect(planned.severity).toBe("info");
+    expect(planned.type).toBe("pending");
+    expect(planned.suggestion ?? "").toMatch(/planned|not yet/i);
+    expect(planned.suggestion ?? "").not.toMatch(/^Export /);
+
+    // The file and its one real export are still verified assertions
+    expect(result.total).toBe(2);
+    expect(result.pending).toBe(1);
+  });
+
+  it("still errors on a missing export for an approved spec (issue #19)", async () => {
+    const spec = makeSpec(
+      "built",
+      [{ path: "middleware.ts", exports: ["onRequest", "logBotHit"] }],
+      "approved",
+    );
+    const result = await checkArtifacts([spec], fixtureDir, true);
+
+    const missing = result.findings.find((f) => f.expected.includes("logBotHit"))!;
+    expect(missing.severity).toBe("error");
+    expect(result.total).toBe(3);
+    expect(result.pending).toBe(0);
+  });
+
+  it("counts exports that exist for a draft spec (issue #19)", async () => {
+    const spec = makeSpec("planned", [{ path: "middleware.ts", exports: ["onRequest"] }], "draft");
+    const result = await checkArtifacts([spec], fixtureDir, true);
+
+    expect(result.findings).toEqual([]);
+    expect(result.total).toBe(2);
+    expect(result.pending).toBe(0);
+  });
+
   it("discloses pending artifacts in the notes (issue #17)", async () => {
     const spec = makeSpec("planned", [{ path: "a.ts" }, { path: "b.ts" }], "draft");
     const result = await checkArtifacts([spec], fixtureDir, true);

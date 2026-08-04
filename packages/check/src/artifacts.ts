@@ -142,8 +142,16 @@ export async function checkArtifacts(
       }
 
       for (const name of artifact.exports) {
-        total += 1;
-        if (!exported.has(name)) {
+        // An export that exists is a verified assertion whatever the status.
+        if (exported.has(name)) {
+          total += 1;
+          continue;
+        }
+
+        // An absent export follows the same status rule as an absent file: a
+        // spec that is not yet approved is planning it, not missing it (#19).
+        if (enforced) {
+          total += 1;
           findings.push({
             type: "missing",
             category: "artifact",
@@ -152,6 +160,17 @@ export async function checkArtifacts(
             expected: `export "${name}" from ${artifact.path}`,
             severity: "error",
             suggestion: `Export ${name} from ${artifact.path} or update the artifacts list in ${specId}.`,
+          });
+        } else {
+          pending += 1;
+          findings.push({
+            type: "pending",
+            category: "artifact",
+            specId,
+            codeLocation: { file: artifact.path, line: 1 },
+            expected: `export "${name}" from ${artifact.path}`,
+            severity: "info",
+            suggestion: `planned by ${specId} (status: ${String(status)}) — not yet implemented; enforced once the spec is approved.`,
           });
         }
       }
@@ -166,7 +185,7 @@ export async function checkArtifacts(
 
   if (pending > 0) {
     notes.push(
-      `${pending} declared artifact(s) pending: planned by specs that are not yet approved. They are excluded from the score and become enforceable when the spec status changes to approved.`,
+      `${pending} declared artifact assertion(s) pending: files or exports planned by specs that are not yet approved. They are excluded from the score and become enforceable when the spec status changes to approved.`,
     );
   }
 

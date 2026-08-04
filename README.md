@@ -187,12 +187,12 @@ artifacts:
 
 **Enforcement follows the spec's `status`**, so you can declare artifacts in a spec written before the code exists:
 
-| Spec status | Declared file missing | Exit code |
+| Spec status | Declared file or export missing | Exit code |
 |---|---|---|
 | `draft`, `review`, `superseded` | reported as **pending** — planned, not yet built. Excluded from the score. | 0 |
 | `approved` | reported as a **missing** error — the spec says this should exist | 1 |
 
-Artifacts that *do* exist are always verified, whatever the status. Flipping a spec to `approved` is what makes its contract enforceable, so `check` can tell "this is a plan for unbuilt work" apart from "this was approved but three of its five artifacts are missing".
+The rule applies identically to a planned `path` and a planned entry in `exports`, so a spec can declare that an existing file will gain a new export. Files and exports that *do* exist are always verified, whatever the status. Flipping a spec to `approved` is what makes its contract enforceable, so `check` can tell "this is a plan for unbuilt work" apart from "this was approved but three of its five artifacts are missing".
 
 ---
 
