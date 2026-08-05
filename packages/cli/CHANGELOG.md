@@ -1,5 +1,25 @@
 # specdx
 
+## 0.4.0-alpha.12
+
+### Minor Changes
+
+- b16e0e0: feat(diff): add `--working` and stop reporting a false all-clear on uncommitted specs
+
+  `diff` compares committed refs, so uncommitted spec edits were invisible — and reported as "✓ No spec changes detected". `specdx-pre-commit` turned that into "safe to commit" at the one moment the check exists to prevent drift.
+
+  Two changes:
+  - `diff` now lists spec files changed in the working tree that the compared refs do not cover, so the green is never unqualified. Exit code is unchanged.
+  - New `--working` flag (and `working` on the MCP `sdx_diff` tool) compares the base ref against the working tree, including staged, unstaged, and untracked spec files.
+
+  The `specdx-pre-commit` and `specdx-check-drift` skills now use `--working`.
+
+### Patch Changes
+
+- 51aa872: fix(diff): resolve spec entries declared by a glob path
+
+  `diff` matched changed files against config `path` values by string equality, so a glob entry (`specs/stories/*.md`) matched nothing and every spec behind it was invisible — reported as "no spec changes detected" and omitted from downstream impact. Paths are now matched as patterns, and globs expand against the compared ref rather than the working tree. Spec ids for added and removed files come from their frontmatter instead of the config entry key. Affects CLI `diff`, CLI `changelog`, the MCP `diff` tool, and the GitHub Action.
+
 ## 0.4.0-alpha.11
 
 ### Patch Changes

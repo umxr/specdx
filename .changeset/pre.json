@@ -16,7 +16,9 @@
   "changesets": [
     "checkable-artifacts",
     "context-engine-focus",
+    "diff-working-tree",
     "dogfood-issue-batch",
+    "glob-aware-diff",
     "honest-trims-and-cycles",
     "pending-exports",
     "planned-artifacts",
