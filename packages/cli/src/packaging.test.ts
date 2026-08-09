@@ -71,13 +71,25 @@ describe("Claude Code plugin manifest", () => {
     expect(manifest.commands).toBeUndefined();
   });
 
-  it("does not carry a version that can drift from package.json", () => {
-    // Only `name` is required. A hand-maintained version silently fell 13
-    // releases behind, so it is either absent or correct -- never stale.
-    if (manifest.version === undefined) return;
+  it("carries a version in step with package.json", () => {
+    // Hand-maintained, this silently fell 13 releases behind, and
+    // `claude plugin validate --strict` warns when it is absent -- so it is
+    // stamped by scripts/sync-plugin-version.mjs during `changeset version`.
     const pkgVersion = (
       JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf-8")) as { version: string }
     ).version;
     expect(manifest.version).toBe(pkgVersion);
+  });
+
+  it("points hooks at a manifest keyed by event name", () => {
+    // The schema wants a record of event -> matchers. Ours was an array, so
+    // `claude plugin validate --strict` failed and the SessionStart hook never
+    // loaded for plugin users.
+    expect(manifest.hooks).toBe("./hooks/hooks.json");
+    const hooks = JSON.parse(readFileSync(join(pkgRoot, "hooks", "hooks.json"), "utf-8")) as {
+      hooks: Record<string, unknown>;
+    };
+    expect(Array.isArray(hooks.hooks)).toBe(false);
+    expect(Object.keys(hooks.hooks)).toContain("SessionStart");
   });
 });

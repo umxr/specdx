@@ -12,8 +12,9 @@
     "format": "prettier --write \"packages/*/src/**/*.ts\"",
     "format:check": "prettier --check \"packages/*/src/**/*.ts\"",
     "changeset": "changeset",
-    "version": "changeset version",
-    "release": "pnpm build && changeset publish"
+    "version": "changeset version && node scripts/sync-plugin-version.mjs",
+    "release": "pnpm build && changeset publish",
+    "check-plugin-version": "node scripts/sync-plugin-version.mjs --check"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",

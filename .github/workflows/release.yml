@@ -31,6 +31,9 @@ jobs:
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
         with:
+          # Runs `changeset version`, then stamps the bumped version into the
+          # plugin manifests so they cannot drift behind package.json.
+          version: pnpm run version
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

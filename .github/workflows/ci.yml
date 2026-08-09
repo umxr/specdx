@@ -22,3 +22,6 @@ jobs:
       - run: pnpm lint:code
       - run: pnpm format:check
       - run: pnpm test
+      # The plugin manifest and hooks schema are only validated by the Claude
+      # Code CLI. A malformed hooks.json shipped undetected until this ran.
+      - run: pnpm check-plugin-version
