@@ -13,10 +13,11 @@ Walk a new developer through the project's spec suite so they understand what ex
 ### Step 1: Get the overview
 
 ```bash
-npx specdx explain --format json
+npx specdx status --format json
+npx specdx graph
 ```
 
-This returns the project name, spec count, types, statuses, a brief description of each spec, and the dependency graph.
+`status` returns the project name, spec count, statuses, lint health, and stale specs. `graph` returns how the specs relate — both config `requires` edges and frontmatter `references`.
 
 ### Step 2: Load full spec content
 

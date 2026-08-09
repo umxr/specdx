@@ -133,10 +133,12 @@ specdx diff --working
 ### Onboarding New Team Members
 
 ```bash
-specdx explain
+specdx status
+specdx graph
+specdx pack --full
 ```
 
-Prints a human-readable overview of the spec suite: what specs exist, their types and statuses, how they relate to each other, and a brief summary of each one. A new developer can understand the project's intent in one command.
+`status` reports what specs exist and how healthy they are, `graph` shows how they relate, and `pack --full` loads the content itself. A new developer can understand the project's intent without opening a spec file. The `specdx-onboard` skill drives this sequence as a guided tour.
 
 ### CI Integration
 
@@ -398,7 +400,6 @@ ci:
 | `specdx diff` | Show spec changes and downstream impact (`--working`, `--format changelog`) |
 | `specdx graph` | Print the dependency graph |
 | `specdx ready` | Check if specs are ready for implementation |
-| `specdx explain` | *(experimental)* Print a human-readable spec suite overview |
 | `specdx generate story --from <id>` | Generate user story stubs from a PRD |
 | `specdx generate test-plan` | *(experimental)* Generate test plan stub from stories |
 | `specdx update` | *(experimental)* Suggest spec updates based on code drift |
