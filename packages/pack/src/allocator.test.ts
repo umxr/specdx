@@ -323,3 +323,75 @@ describe("trim before exclusion (issue #9)", () => {
     expect(included).toContain("bbb");
   });
 });
+
+/**
+ * Compression exists to fit content into a budget. Applied when the budget is
+ * not under pressure it is pure loss: the caller asked for context and got
+ * stubs instead, while the stats reported a barely-touched budget (issue #33).
+ */
+describe("allocate — staleness collapse is budget-driven", () => {
+  const stale: CompressionOptions = { ...defaultCompression, stableDays: 7 };
+  const oldSpec = { updated: "2020-01-01" };
+
+  it("keeps stale content when it fits the budget", () => {
+    const specs = [
+      makeSpec("s1", [sec("Context", "real context content", 100)], oldSpec),
+      makeSpec("s2", [sec("Design", "real design content", 100)], oldSpec),
+    ];
+    const scores = [makeScore("s1", 0.9), makeScore("s2", 0.8)];
+
+    const result = allocate(specs, scores, { budget: 1000, full: false, compression: stale });
+
+    expect(result.stats.sectionsCompressed).toBe(0);
+    expect(result.specs.flatMap((s) => s.sections).map((s) => s.content)).toEqual([
+      "real context content",
+      "real design content",
+    ]);
+  });
+
+  it("collapses stale content when the budget cannot hold it", () => {
+    const specs = [
+      makeSpec("s1", [sec("Context", "real context content", 100)], oldSpec),
+      makeSpec("s2", [sec("Design", "real design content", 100)], oldSpec),
+    ];
+    const scores = [makeScore("s1", 0.9), makeScore("s2", 0.8)];
+
+    const result = allocate(specs, scores, { budget: 120, full: false, compression: stale });
+
+    expect(result.stats.sectionsCompressed).toBeGreaterThan(0);
+    expect(result.stats.used).toBeLessThanOrEqual(120);
+  });
+
+  it("collapses the least relevant spec first", () => {
+    // Under pressure, pay for the collapse where it costs the reader least.
+    const specs = [
+      makeSpec("high", [sec("Context", "high relevance content", 100)], oldSpec),
+      makeSpec("low", [sec("Design", "low relevance content", 100)], oldSpec),
+    ];
+    const scores = [makeScore("high", 0.9), makeScore("low", 0.2)];
+
+    const result = allocate(specs, scores, { budget: 130, full: false, compression: stale });
+
+    const byId = new Map(result.specs.map((s) => [s.specId, s]));
+    expect(byId.get("high")?.sections.some((s) => s.compressed)).toBe(false);
+    expect(byId.get("low")?.sections.every((s) => s.compressed)).toBe(true);
+  });
+
+  it("still strips boilerplate when the budget is roomy", () => {
+    // Boilerplate stripping and superseded-ADR collapse are hygiene, not
+    // budget management -- a Changelog section is noise at any budget.
+    const specs = [
+      makeSpec("s1", [sec("Changelog", "v1 v2 v3", 50), sec("Context", "real content", 50)], {
+        updated: "2020-01-01",
+      }),
+    ];
+
+    const result = allocate(specs, [makeScore("s1", 0.9)], {
+      budget: 1000,
+      full: false,
+      compression: stale,
+    });
+
+    expect(result.specs[0]?.sections.map((s) => s.heading)).toEqual(["Context"]);
+  });
+});

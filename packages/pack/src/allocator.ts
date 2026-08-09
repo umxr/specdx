@@ -149,6 +149,16 @@ export function allocate(
     relevance: number;
     tokens: number;
     idMatched: boolean;
+    /**
+     * Staleness-collapsed variant, spent only under budget pressure (issue #33).
+     * Undefined when there is nothing to collapse, or in full mode.
+     */
+    stale?: { spec: CompressedSpec; tokens: number };
+  }
+
+  function tokensOf(compressed: CompressedSpec): number {
+    if (compressed.collapsed) return countTokens(compressed.collapsedSummary ?? "");
+    return compressed.sections.reduce((sum, section) => sum + section.tokens, 0);
   }
 
   const items: ScoredCompressed[] = [];
@@ -158,6 +168,7 @@ export function allocate(
     if (!spec) continue;
 
     let compressed: CompressedSpec;
+    let stale: ScoredCompressed["stale"];
 
     if (options.full) {
       // No compression: pass through sections unchanged
@@ -175,33 +186,54 @@ export function allocate(
         collapsed: false,
       };
     } else {
-      compressed = compressSpec(
-        score.specId,
-        String(spec.frontmatter.type),
-        String(spec.frontmatter.title),
-        spec.frontmatter.status as string | undefined,
-        spec.frontmatter.updated as string | undefined,
-        spec.parsedSections,
-        options.compression,
-      );
-    }
+      const compress = (compression: CompressionOptions): CompressedSpec =>
+        compressSpec(
+          score.specId,
+          String(spec.frontmatter.type),
+          String(spec.frontmatter.title),
+          spec.frontmatter.status as string | undefined,
+          spec.frontmatter.updated as string | undefined,
+          spec.parsedSections,
+          compression,
+        );
 
-    // 3. Calculate token count
-    let tokens: number;
-    if (compressed.collapsed) {
-      tokens = countTokens(compressed.collapsedSummary ?? "");
-    } else {
-      tokens = 0;
-      for (const section of compressed.sections) {
-        tokens += section.tokens;
+      // Boilerplate stripping and superseded-ADR collapse are hygiene, not
+      // budget management -- they apply either way. Only the staleness collapse
+      // is held back until the budget actually needs it.
+      compressed = compress({ ...options.compression, stableDays: 0 });
+
+      if (options.compression.stableDays > 0) {
+        const collapsed = compress(options.compression);
+        const collapsedTokens = tokensOf(collapsed);
+        if (collapsedTokens < tokensOf(compressed)) {
+          stale = { spec: collapsed, tokens: collapsedTokens };
+        }
       }
     }
 
-    items.push({ compressed, relevance: score.score, tokens, idMatched: score.idMatched ?? false });
+    items.push({
+      compressed,
+      relevance: score.score,
+      tokens: tokensOf(compressed),
+      idMatched: score.idMatched ?? false,
+      stale,
+    });
   }
 
   // 4. Sort by relevance descending; ties prefer specs the task named explicitly
   items.sort((a, b) => b.relevance - a.relevance || Number(b.idMatched) - Number(a.idMatched));
+
+  // 4b. Collapse stale specs only while the budget is short, least relevant
+  // first. Compression is a response to pressure: applied without it, the
+  // caller asked for context and got stubs against a barely-touched budget.
+  let projected = items.reduce((sum, item) => sum + item.tokens, 0);
+  for (let i = items.length - 1; i >= 0 && projected > options.budget; i--) {
+    const item = items[i]!;
+    if (!item.stale) continue;
+    projected -= item.tokens - item.stale.tokens;
+    item.compressed = item.stale.spec;
+    item.tokens = item.stale.tokens;
+  }
 
   // 5. Greedy selection within budget
   const totalTokens = items.reduce((sum, item) => sum + item.tokens, 0);
