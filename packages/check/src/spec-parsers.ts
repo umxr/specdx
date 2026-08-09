@@ -180,6 +180,12 @@ export function parseTypeDefinitions(content: string): SpecTypeDefinition[] {
       fields.push({ name: fieldName, type, optional });
     }
 
+    // A table is the third way people write a data model, and reading only the
+    // bullet forms meant a table-shaped type contributed nothing to the score
+    // and drew no note -- the note fires per spec, so one readable type hid
+    // every unreadable one beside it.
+    if (fields.length === 0) fields.push(...parseFieldTable(block));
+
     // A heading with no fields beneath it asserts only that a name exists, and
     // in practice it is prose -- `### Indexes`, `### Migration notes`. Matching
     // it against code turns an explanatory sub-section into a check error, so a
@@ -190,6 +196,87 @@ export function parseTypeDefinitions(content: string): SpecTypeDefinition[] {
   }
 
   return results;
+}
+
+/** A markdown table row split into trimmed cells, or null when the line is not one. */
+function tableCells(line: string): string[] | null {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|")) return null;
+  return trimmed
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim().replace(/^`|`$/g, ""));
+}
+
+/** True for the `|---|---|` rule under a table's header row. */
+function isTableRule(cells: string[]): boolean {
+  return cells.every((cell) => /^:?-{2,}:?$/.test(cell));
+}
+
+/**
+ * Fields from a markdown table inside a `### TypeName` block.
+ *
+ * Needs a header naming both a field column and a type column; anything else is
+ * a table about something other than the shape of the type, and is left alone.
+ */
+function parseFieldTable(block: string): SpecTypeDefinition["fields"] {
+  const rows = block.split("\n").map(tableCells);
+  const headerIndex = rows.findIndex((r) => r !== null);
+  if (headerIndex === -1) return [];
+
+  const header = rows[headerIndex]!;
+  const nameColumn = header.findIndex((h) => /^(field|name|property|attribute|key)s?$/i.test(h));
+  const typeColumn = header.findIndex((h) => /^types?$/i.test(h));
+  if (nameColumn === -1 || typeColumn === -1) return [];
+
+  const fields: SpecTypeDefinition["fields"] = [];
+  for (const cells of rows.slice(headerIndex + 1)) {
+    if (cells === null) continue;
+    if (isTableRule(cells)) continue;
+
+    const rawName = cells[nameColumn];
+    const rawType = cells[typeColumn];
+    if (!rawName || !rawType) continue;
+
+    const optional = rawName.endsWith("?");
+    const name = optional ? rawName.slice(0, -1) : rawName;
+    if (!/^[A-Za-z_$][\w$]*$/.test(name)) continue;
+
+    fields.push({ name, type: rawType.replace(/\s*\(.*?\)\s*$/, "").trim(), optional });
+  }
+  return fields;
+}
+
+/**
+ * Type-shaped `### Heading`s in a Data Model that declared a table we could not
+ * read as fields.
+ *
+ * Prose blocks are deliberately absent: a heading with no field declarations at
+ * all is an explanatory sub-section, and re-flagging it would undo the fix that
+ * stopped `### Indexes` becoming a phantom type. A table, on the other hand, is
+ * an author declaring a shape in a syntax the parser missed — worth saying,
+ * because the alternative is dropping it from the score in silence.
+ */
+export function unreadableTypeBlocks(content: string): string[] {
+  const section = extractSection(content, "Data Model");
+  if (!section) return [];
+
+  const unreadable: string[] = [];
+  for (const block of section.split(/^(?=###\s)/m)) {
+    const headingMatch = /^###\s+(.+?)\s*$/m.exec(block);
+    if (!headingMatch) continue;
+
+    const name = headingMatch[1]!.trim().replace(/^`|`$/g, "");
+    if (!TYPE_NAME_SHAPE.test(name)) continue;
+
+    const hasTable = block.split("\n").some((line) => tableCells(line) !== null);
+    if (!hasTable) continue;
+
+    const parsed = parseTypeDefinitions(`## Data Model\n\n${block}`);
+    if (parsed.length === 0) unreadable.push(name);
+  }
+  return unreadable;
 }
 
 /**
@@ -216,7 +303,19 @@ export function parseTestCases(content: string): SpecTestCase[] {
     const bulletMatch = /^-\s+(.+)/.exec(line);
     if (!bulletMatch) continue;
 
-    const bulletText = bulletMatch[1]!.trim();
+    let bulletText = bulletMatch[1]!.trim();
+
+    // A test-case ID names the case in the spec; it is not part of the test a
+    // user is being asked to write. Leaving it in produced the suggestion
+    // `Add a test matching: "**TC5**: refuses to amend…"`, markup and all, and
+    // put `tc5` into the similarity comparison as if it were a word.
+    let caseId: string | undefined;
+    const idMatch = /^\*{0,2}(TC\d+)\*{0,2}\s*[:.-]\s*/i.exec(bulletText);
+    if (idMatch) {
+      caseId = idMatch[1]!.toUpperCase();
+      bulletText = bulletText.slice(idMatch[0].length).trim();
+      if (!bulletText) continue;
+    }
 
     // Split on `, ` only when it separates items after a label like "label: item1, item2"
     // Pattern: label: item1, item2, item3 → generate one entry per item
@@ -228,11 +327,15 @@ export function parseTestCases(content: string): SpecTestCase[] {
       for (const item of items) {
         const trimmed = item.trim();
         if (trimmed) {
-          results.push({ description: `${label}: ${trimmed}`, section: currentSection });
+          results.push({
+            description: `${label}: ${trimmed}`,
+            section: currentSection,
+            id: caseId,
+          });
         }
       }
     } else {
-      results.push({ description: bulletText, section: currentSection });
+      results.push({ description: bulletText, section: currentSection, id: caseId });
     }
   }
 

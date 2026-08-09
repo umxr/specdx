@@ -33,3 +33,30 @@ describe("extractPrismaModels", () => {
     expect(user!.fields.find((f) => f.name === "posts")).toBeUndefined();
   });
 });
+
+describe("extractPrismaModels — schema location", () => {
+  const at = (name: string) => join(import.meta.dirname, "../../test/fixtures", name);
+
+  // Only the project root was read, and `prisma init` writes prisma/schema.prisma.
+  // So a real Prisma project's models were invisible, every one of them was
+  // reported unimplemented, and the coverage score dropped to match.
+  it("reads prisma/schema.prisma, the layout `prisma init` creates", async () => {
+    const types = await extractPrismaModels(at("prisma-project"));
+    expect(types.map((t) => t.name)).toEqual(["Order"]);
+    expect(types[0]!.fields.find((f) => f.name === "totalCents")?.type).toBe("number");
+  });
+
+  it("reads the multi-file prisma/schema/ directory", async () => {
+    const types = await extractPrismaModels(at("prisma-folder"));
+    expect(types.map((t) => t.name).sort()).toEqual(["Order", "Shipment"]);
+  });
+
+  it("still reads a schema at the project root", async () => {
+    const types = await extractPrismaModels(join(import.meta.dirname, "../../test/fixtures"));
+    expect(types.map((t) => t.name).sort()).toEqual(["Post", "User"]);
+  });
+
+  it("returns nothing when there is no schema anywhere", async () => {
+    expect(await extractPrismaModels(at("nextjs-app"))).toEqual([]);
+  });
+});

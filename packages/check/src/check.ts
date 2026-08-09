@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { CheckResult, CheckConfig, ExtractedRoute, Finding } from "./types.js";
 import type { ParsedSpec } from "@specdx/core";
 import {
@@ -5,13 +7,14 @@ import {
   parseTypeDefinitions,
   parseTestCases,
   hasEndpointsSection,
+  unreadableTypeBlocks,
 } from "./spec-parsers.js";
 import { extractExpressRoutes } from "./extractors/express.js";
 import { extractHonoRoutes } from "./extractors/hono.js";
 import { extractNextjsRoutes } from "./extractors/nextjs.js";
 import { extractTypeScriptTypes } from "./extractors/typescript.js";
 import { extractZodSchemas } from "./extractors/zod.js";
-import { extractPrismaModels } from "./extractors/prisma.js";
+import { extractPrismaModels, findPrismaSchemas } from "./extractors/prisma.js";
 import { extractTestDescriptions } from "./extractors/test-extractor.js";
 import { matchRoutes } from "./matchers/routes.js";
 import { matchTypes } from "./matchers/types.js";
@@ -19,6 +22,20 @@ import { matchTests } from "./matchers/tests.js";
 import { checkArtifacts } from "./artifacts.js";
 import { computeScore } from "./score.js";
 import { detectFramework } from "./detect-framework.js";
+
+/** True when the project declares a Prisma dependency, so a schema is expected. */
+async function usesPrisma(projectDir: string): Promise<boolean> {
+  try {
+    const pkg = JSON.parse(await readFile(join(projectDir, "package.json"), "utf-8")) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    return "prisma" in deps || "@prisma/client" in deps;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Run implementation checks across all specs and return findings, score, and summary.
@@ -42,15 +59,21 @@ export async function runCheck(
   let codeTestCount: number | null = null;
 
   // ts-morph is an optional peer dependency; without it (e.g. under pnpm dlx,
-  // where installing into the ephemeral cache is impossible) route and TS/Zod
-  // type extraction degrade to skipped-with-a-note instead of throwing (issue #7).
+  // where installing into the ephemeral cache is impossible) route, TS/Zod type
+  // and test extraction degrade to skipped-with-a-note instead of throwing
+  // (issue #7).
+  //
+  // All three, not two. Test extraction was left unguarded, so a suite holding a
+  // single test-plan spec turned the intended note into an unhandled throw and a
+  // stack trace — on exactly the ephemeral-runner path this note describes, and
+  // on MCP's `sdx_check`, where the bare exception became the tool's only output.
   const tsMorphAvailable = await import("ts-morph").then(
     () => true,
     () => false,
   );
   if (!tsMorphAvailable) {
     notes.push(
-      "route and type extraction skipped: ts-morph is not installed. " +
+      "route, type and test extraction skipped: ts-morph is not installed. " +
         "Install specdx and ts-morph as devDependencies (pnpm add -D specdx ts-morph) — " +
         "an ephemeral runner like pnpm dlx cannot provide it.",
     );
@@ -100,6 +123,19 @@ export async function runCheck(
     ];
     codeTypeCount = codeTypes.length;
 
+    // A project that depends on Prisma but whose schema we could not find is
+    // worth saying out loud. Silence here read as "these models are not
+    // implemented", which is the opposite of what happened.
+    if (
+      (await usesPrisma(projectDir)) &&
+      (await findPrismaSchemas(projectDir)).length === 0 // no schema at any known layout
+    ) {
+      notes.push(
+        "a prisma dependency is declared but no schema was found at prisma/schema.prisma, " +
+          "schema.prisma or prisma/schema/*.prisma — Prisma models were not assessed.",
+      );
+    }
+
     for (const spec of designSpecs) {
       const specTypes = parseTypeDefinitions(spec.content);
       const fieldCount = specTypes.reduce((sum, t) => sum + t.fields.length, 0);
@@ -115,12 +151,22 @@ export async function runCheck(
             "Write fields as `- name: type` (one per line, under a `### TypeName` heading).",
         );
       }
+
+      // The note above is per spec, so one readable type used to silence every
+      // unreadable one beside it — a table-shaped type left the denominator with
+      // nothing said, and the percentage did not move.
+      for (const name of unreadableTypeBlocks(spec.content)) {
+        notes.push(
+          `${spec.frontmatter.id as string}: no fields recognised under \`### ${name}\`, so that type was not assessed. ` +
+            "A table needs a field column and a type column, or write fields as `- name: type`.",
+        );
+      }
     }
   }
 
   // 3. Test checking: find test-plan specs
   const testPlanSpecs = specs.filter((s) => s.frontmatter.type === "test-plan");
-  if (testPlanSpecs.length > 0) {
+  if (testPlanSpecs.length > 0 && tsMorphAvailable) {
     const codeTests = await extractTestDescriptions(projectDir, config.tests_dir);
     codeTestCount = codeTests.length;
 

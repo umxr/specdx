@@ -1,0 +1,4 @@
+model Shipment {
+  id      String @id @default(uuid())
+  carrier String
+}

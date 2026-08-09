@@ -81,6 +81,8 @@ export interface SpecTypeDefinition {
 export interface SpecTestCase {
   description: string;
   section?: string;
+  /** The `TC<N>` label the spec gave this case, when it gave one. */
+  id?: string;
 }
 
 export interface CheckConfig {

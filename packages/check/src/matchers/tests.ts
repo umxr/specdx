@@ -56,7 +56,10 @@ export function matchTests(
         category: "test",
         specId,
         specSection: specCase.section,
-        expected: specCase.description,
+        // `expected` keeps the case ID so the finding can be traced back to a
+        // line in the test plan; the suggestion is the test name to write, and
+        // the spec's own label is no part of that.
+        expected: specCase.id ? `${specCase.id}: ${specCase.description}` : specCase.description,
         severity: "warn",
         suggestion: `Add a test matching: "${specCase.description}"`,
       });
