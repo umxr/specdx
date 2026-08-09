@@ -174,7 +174,8 @@ describe("sdx_status", () => {
   it("reports suite health with verdict and counts", async () => {
     const result = JSON.parse(await handleStatus());
     expect(result.project).toBe("mcp-fixture");
-    expect(result.specCount).toBe(2);
+    expect(result.specFiles).toBe(2);
+    expect(result.specCount).toBeUndefined();
     expect(result.lintHealth.errors).toBe(0);
     expect(["healthy", "warnings", "errors"]).toContain(result.verdict);
   });

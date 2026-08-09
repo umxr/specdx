@@ -30,4 +30,4 @@ For detailed reference on spec types and their fields, see `references/spec-type
 
 ## It's working if
 
-The spec lints clean *and* a reader who was not in the conversation could build from it. If you finished the steps but every section is one vague line, the skill ran and the spec still fails its job — `sdx lint` will now flag placeholder sections, so an empty pass means real content.
+The spec lints clean *and* a reader who was not in the conversation could build from it. If you finished the steps but every section is one vague line, the skill ran and the spec still fails its job — `specdx lint` will now flag placeholder sections, so an empty pass means real content.

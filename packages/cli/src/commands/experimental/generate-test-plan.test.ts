@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, writeFile, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { generateTestPlan } from "./generate-test-plan.js";
+import { generateTestPlan, registeredKeyFor } from "./generate-test-plan.js";
 
 describe("generateTestPlan", () => {
   let tempDir: string;
@@ -157,5 +157,113 @@ describe("generateTestPlan — refuses to manufacture an empty spec (F2)", () =>
     expect(result.testCases).toBe(0);
     expect(result.filePath).toBeUndefined();
     await expect(readFile(join(dir, "specs/test-plan.md"), "utf-8")).rejects.toThrow();
+  });
+});
+
+describe("generateTestPlan — does not destroy an existing spec", () => {
+  let dir: string;
+
+  const STORY = [
+    "---",
+    'id: "story-001"',
+    'type: "user-story"',
+    'title: "Void an invoice"',
+    'status: "approved"',
+    'version: "1.0"',
+    'created: "2026-01-01"',
+    'authors: ["dev"]',
+    "---",
+    "",
+    "## Acceptance Criteria",
+    "",
+    "- voids an open invoice",
+    "",
+  ].join("\n");
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sdx-gen-tp-force-"));
+    await mkdir(join(dir, "specs/stories"), { recursive: true });
+    await writeFile(join(dir, "specs/stories/s1.md"), STORY);
+    await writeFile(
+      join(dir, "spec.config.yaml"),
+      [
+        'version: "1.0"',
+        "specs:",
+        "  stories:",
+        "    path: specs/stories/*.md",
+        "    type: user-story",
+        "  test-001:",
+        "    path: specs/test-plan.md",
+        "    type: test-plan",
+      ].join("\n"),
+    );
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true });
+  });
+
+  it("refuses to overwrite a hand-written test plan", async () => {
+    // This replaced an approved v1.0.0 spec -- registered in the config, with a
+    // filled-in coverage matrix -- with a draft stub, silently and with exit 0.
+    // It was recoverable only because the project happened to use git.
+    const original = "---\nid: test-001\n---\n\n## Scope\n\nHand written.\n";
+    await writeFile(join(dir, "specs/test-plan.md"), original);
+
+    const result = await generateTestPlan({ configDir: dir });
+
+    expect(result.filePath).toBeUndefined();
+    expect(result.blockedBy).toBe(join(dir, "specs/test-plan.md"));
+    expect(await readFile(join(dir, "specs/test-plan.md"), "utf-8")).toBe(original);
+  });
+
+  it("overwrites when the author asks for it", async () => {
+    await writeFile(join(dir, "specs/test-plan.md"), "old\n");
+
+    const result = await generateTestPlan({ configDir: dir, force: true });
+
+    expect(result.blockedBy).toBeUndefined();
+    expect(result.filePath).toBe(join(dir, "specs/test-plan.md"));
+    expect(await readFile(join(dir, "specs/test-plan.md"), "utf-8")).toContain(
+      "## Coverage Matrix",
+    );
+  });
+
+  it("writes freely when nothing is there", async () => {
+    const result = await generateTestPlan({ configDir: dir });
+    expect(result.blockedBy).toBeUndefined();
+    expect(result.filePath).toBe(join(dir, "specs/test-plan.md"));
+  });
+});
+
+describe("registeredKeyFor", () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sdx-gen-tp-key-"));
+    await mkdir(join(dir, "specs"), { recursive: true });
+    await writeFile(join(dir, "specs/test-plan.md"), "x\n");
+    await writeFile(
+      join(dir, "spec.config.yaml"),
+      [
+        'version: "1.0"',
+        "specs:",
+        "  test-001:",
+        "    path: specs/test-plan.md",
+        "    type: test-plan",
+      ].join("\n"),
+    );
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true });
+  });
+
+  it("finds the key already pointing at the file", async () => {
+    // Advising a *new* key for a path the config already maps produces two
+    // entries for one file, which is how an id and its key come to disagree.
+    expect(await registeredKeyFor(dir, join(dir, "specs/test-plan.md"))).toBe("test-001");
+  });
+
+  it("returns undefined for an unregistered path", async () => {
+    expect(await registeredKeyFor(dir, join(dir, "specs/other.md"))).toBeUndefined();
   });
 });

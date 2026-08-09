@@ -1,6 +1,11 @@
 import type { CheckResult, CheckConfig, ExtractedRoute, Finding } from "./types.js";
 import type { ParsedSpec } from "@specdx/core";
-import { parseEndpoints, parseTypeDefinitions, parseTestCases } from "./spec-parsers.js";
+import {
+  parseEndpoints,
+  parseTypeDefinitions,
+  parseTestCases,
+  hasEndpointsSection,
+} from "./spec-parsers.js";
 import { extractExpressRoutes } from "./extractors/express.js";
 import { extractHonoRoutes } from "./extractors/hono.js";
 import { extractNextjsRoutes } from "./extractors/nextjs.js";
@@ -67,6 +72,16 @@ export async function runCheck(
       const specEndpoints = parseEndpoints(spec.content);
       routeTotal += specEndpoints.length;
       findings.push(...matchRoutes(specEndpoints, codeRoutes, spec.frontmatter.id as string));
+
+      // An Endpoints section we cannot read drops routes out of the score
+      // entirely, which *raises* the percentage. Saying nothing presents that
+      // as full coverage of a category never assessed.
+      if (specEndpoints.length === 0 && hasEndpointsSection(spec.content)) {
+        notes.push(
+          `${spec.frontmatter.id as string}: no endpoints recognised in its Endpoints section, so routes were not assessed. ` +
+            "Write each endpoint as `- GET /path — description` or as a `### GET /path` heading.",
+        );
+      }
     }
     if (framework === null) {
       notes.push(

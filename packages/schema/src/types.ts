@@ -1,3 +1,13 @@
+/**
+ * The `version` a `spec.config.yaml` is expected to declare.
+ *
+ * The field was accepted with any value at all, so `migrate` printed whatever
+ * it read and then said "no migration needed" regardless -- a config claiming
+ * `0.9` passed as readily as a current one. A version field nothing checks is
+ * a field that cannot do its job when a real migration arrives.
+ */
+export const SUPPORTED_CONFIG_VERSION = "1.0";
+
 export const SPEC_TYPES = [
   "prd",
   "technical-design",

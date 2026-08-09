@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import pkg from "../../../package.json" with { type: "json" };
 
 export default defineCommand({
   meta: { name: "mcp", description: "Start the specdx MCP server (stdio transport)" },
@@ -22,7 +23,7 @@ export default defineCommand({
       process.exit(1);
     }
 
-    const server = mcp.createMcpServer();
+    const server = mcp.createMcpServer(pkg.version);
     await server.connect(new stdio.StdioServerTransport());
   },
 });

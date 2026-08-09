@@ -1,4 +1,5 @@
 export {
+  SUPPORTED_CONFIG_VERSION,
   type BaseSpec,
   type PrdSpec,
   type TechnicalDesignSpec,

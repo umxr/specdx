@@ -70,3 +70,50 @@ describe("edgeCaseCoverageRule", () => {
     expect(result).toHaveLength(0);
   });
 });
+
+describe("edge-case-coverage — error status codes", () => {
+  // The keyword list held `404` and `500` and no other code, so a story whose
+  // error path was a 409 read as having no error handling at all. Changing that
+  // one token to 404, with nothing else altered, silenced the warning.
+  const base =
+    "## Description\n\nFinance voids an invoice.\n\n## Acceptance Criteria\n\n" +
+    "- Given an open invoice, when I void it, then its status becomes void.\n" +
+    "- Given a paid invoice, when I void it, then the response is ";
+
+  const run = (body: string) => {
+    const spec = makeSpec("user-story", body);
+    return edgeCaseCoverageRule.run({ spec, allSpecs: [spec] });
+  };
+
+  it("accepts any 4xx as naming an error path", () => {
+    for (const code of ["400", "401", "403", "409", "422", "429"]) {
+      expect(run(`${base}${code}.`), `status ${code}`).toEqual([]);
+    }
+  });
+
+  it("accepts any 5xx as naming an error path", () => {
+    for (const code of ["500", "502", "503"]) {
+      expect(run(`${base}${code}.`), `status ${code}`).toEqual([]);
+    }
+  });
+
+  it("accepts vocabulary that names a failure without a status code", () => {
+    for (const word of ["a conflict", "denied", "expired", "unavailable"]) {
+      expect(run(`${base}${word}.`), word).toEqual([]);
+    }
+  });
+
+  it("still warns when no failure path is described at all", () => {
+    const body =
+      "## Description\n\nFinance lists invoices.\n\n## Acceptance Criteria\n\n" +
+      "- Given invoices exist, when I list them, then each one is returned.";
+    expect(run(body)).toHaveLength(1);
+  });
+
+  it("does not treat an ordinary number as a status code", () => {
+    const body =
+      "## Description\n\nFinance lists invoices.\n\n## Acceptance Criteria\n\n" +
+      "- The list returns up to 250 rows per page, sorted by due date.";
+    expect(run(body)).toHaveLength(1);
+  });
+});

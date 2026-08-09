@@ -78,13 +78,33 @@ function extractFeatureSection(content: string): string | null {
  * then reported as "all features have stories" over an empty set.
  */
 export function parseFeatures(content: string): string[] {
+  return parseFeatureEntries(content).map((f) => f.text);
+}
+
+/** A PRD feature, with its `F<N>` number when the author gave it one. */
+export interface FeatureEntry {
+  /** The feature description, with any ID prefix removed. */
+  text: string;
+  /** The `N` from `**F<N>**:`, when present. */
+  num?: string;
+}
+
+/**
+ * The single source of truth for what counts as a feature in a PRD.
+ *
+ * `generate story` used to carry its own regex requiring `**F<N>**:`, so on a
+ * PRD without those IDs the lint rule reported three features and the generator
+ * reported none -- two commands in the same suite contradicting each other over
+ * one file. Anything that needs to know what a PRD's features are calls this.
+ */
+export function parseFeatureEntries(content: string): FeatureEntry[] {
   const section = extractFeatureSection(content);
   if (section === null) return [];
 
   /** `**F1**:`, `F1:`, `F1 -` — an optional feature ID prefix. */
-  const ID_PREFIX = /^\*{0,2}F\d+\*{0,2}\s*[:.-]\s*/i;
+  const ID_PREFIX = /^\*{0,2}F(\d+)\*{0,2}\s*[:.-]\s*/i;
 
-  const features: string[] = [];
+  const features: FeatureEntry[] = [];
   for (const rawLine of section.split("\n")) {
     const line = rawLine.trim();
     if (!line) continue;
@@ -96,8 +116,9 @@ export function parseFeatures(content: string): string[] {
     const text = bullet ? (bullet[1] ?? "").trim() : ID_PREFIX.test(line) ? line : "";
     if (!text) continue;
 
+    const idMatch = ID_PREFIX.exec(text);
     const stripped = text.replace(ID_PREFIX, "").trim();
-    if (stripped) features.push(stripped);
+    if (stripped) features.push({ text: stripped, num: idMatch?.[1] });
   }
   return features;
 }

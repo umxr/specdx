@@ -57,6 +57,47 @@ Do NOT skip the lint step between sections. Run `npx specdx lint --path <file>`
 after every 2-3 sections. Do NOT write the entire spec and lint at the end.
 </HARD-GATE>
 
+## Sections `specdx check` parses
+
+Three sections are read by `specdx check` and compared against code. Prose in
+them is fine, but the entries themselves must take one of these shapes or the
+section is reported as not assessed — which silently removes it from the
+coverage score.
+
+**`## Endpoints`** (api-contract) — a bullet per endpoint, a `###` heading per
+endpoint, or both:
+
+```markdown
+- `GET /invoices` — list invoices
+- POST /invoices — create an invoice
+
+### DELETE /invoices/:id
+
+Void an invoice.
+```
+
+**`## Data Model`** (technical-design) — a `###` heading per type, one field per
+line as `- name: type`. Backticks are optional. The heading must be a single
+identifier: `### Notes on the model` is read as prose, not as a type.
+
+```markdown
+### Invoice
+
+- id: string
+- `amountCents`: number
+- paidAt?: Date
+```
+
+**`## Test Cases`** (test-plan) — one bullet per case, optionally grouped under
+`###` headings:
+
+```markdown
+### Invoices
+
+- creates an invoice with a valid payload
+- rejects an invoice with a negative amount
+```
+
 ## Rationalizations to Resist
 
 | Thought | Reality |

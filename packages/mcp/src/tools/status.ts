@@ -67,8 +67,10 @@ export async function handleStatus(): Promise<string> {
 
   return JSON.stringify({
     project: config.project?.name ?? "unknown",
+    // `specFiles` only. A second field named `specCount` gives a consumer no
+    // way to know whether it counts config entries or resolved files -- the
+    // ambiguity `sdx_validate` was already cleaned up to avoid.
     specFiles: specs.length,
-    specCount: specs.length,
     byStatus,
     lintHealth: { errors, warnings, passing: specs.length - errors },
     staleSpecs,

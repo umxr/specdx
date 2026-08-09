@@ -409,3 +409,93 @@ describe("runCheck — an unparseable Data Model is reported, not ignored (F8)",
     expect(result.notes.some((n) => /data model/i.test(n))).toBe(false);
   });
 });
+
+describe("check — an Endpoints section it cannot read", () => {
+  // The worst shape of this bug: routes leave the denominator, so understanding
+  // *less* raised the score. A bulleted contract reported 0/0 routes, flagged
+  // every real route as unspecified, and never mentioned the endpoint that was
+  // genuinely absent from the code.
+  it("reads a bulleted Endpoints section", async () => {
+    const spec = makeSpec(
+      { id: "api-bullets", type: "api-contract" },
+      [
+        "## Endpoints",
+        "",
+        "- `GET /api/users` — list users",
+        "- `GET /nonexistent/route` — not implemented anywhere",
+      ].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    expect(result.score.byCategory["routes"]!.total).toBe(2);
+
+    const missing = result.findings.filter((f) => f.type === "missing" && f.category === "route");
+    expect(missing).toHaveLength(1);
+    expect(missing[0]!.expected).toContain("GET /nonexistent/route");
+  });
+
+  it("does not report real routes as unspecified when the bullets parse", async () => {
+    const spec = makeSpec(
+      { id: "api-bullets-2", type: "api-contract" },
+      ["## Endpoints", "", "- GET /api/users — list users"].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+    const extras = result.findings.filter(
+      (f) => f.type === "extra" && f.category === "route" && f.actual === "GET /api/users",
+    );
+    expect(extras).toHaveLength(0);
+  });
+
+  it("notes a populated Endpoints section that yields nothing", async () => {
+    const spec = makeSpec(
+      { id: "api-prose", type: "api-contract" },
+      ["## Endpoints", "", "See the OpenAPI document in docs/openapi.yaml."].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    expect(result.notes.join("\n")).toContain("no endpoints recognised");
+    expect(result.notes.join("\n")).toContain("api-prose");
+  });
+
+  it("says nothing when there is no Endpoints section to read", async () => {
+    const spec = makeSpec({ id: "api-none", type: "api-contract" }, "## Auth\n\nBearer token.\n");
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+    expect(result.notes.join("\n")).not.toContain("no endpoints recognised");
+  });
+});
+
+describe("check — prose sub-headings in a Data Model", () => {
+  it("does not demand code implement an explanatory heading", async () => {
+    // `### Notes on the model` registered a type called "Notes", reported as an
+    // error telling the author to implement it -- a clean spec failing CI.
+    const spec = makeSpec(
+      { id: "td-prose", type: "technical-design" },
+      [
+        "## Data Model",
+        "",
+        "### User",
+        "- `id`: string",
+        "- `name`: string",
+        "",
+        "### Notes on the model",
+        "",
+        "- Users are soft-deleted, never removed.",
+        "",
+        "### Indexes",
+        "",
+        "We index on email.",
+      ].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    const missingTypes = result.findings.filter(
+      (f) => f.type === "missing" && f.category === "type",
+    );
+    expect(missingTypes.map((f) => f.expected).join(" ")).not.toContain("Notes");
+    expect(missingTypes.map((f) => f.expected).join(" ")).not.toContain("Indexes");
+  });
+});

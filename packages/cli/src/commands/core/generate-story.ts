@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { loadConfig, parseSpec, resolveGlob, createLogger } from "@specdx/core";
 import type { ParsedSpec } from "@specdx/core";
 import { REQUIRED_SECTIONS } from "@specdx/schema";
-import { uncoveredFeatures } from "@specdx/lint";
+import { uncoveredFeatures, parseFeatureEntries } from "@specdx/lint";
 
 export interface GenerateStoriesOptions {
   configDir: string;
@@ -122,19 +122,16 @@ export async function generateStories(
 
   const prd = await parseSpec(prdFilePath);
 
-  // Find the Features section content
-  const featuresSection = prd.parsedSections.find((s) => s.heading === "Features");
-  if (!featuresSection) {
-    return { generated: [], skipped: [] };
-  }
-
-  // Parse features using the required regex pattern
-  const featureRegex = /\*\*F(\d+)\*\*:\s*(.+)/g;
-  const features: Array<{ num: string; text: string }> = [];
-  let match: RegExpExecArray | null;
-  while ((match = featureRegex.exec(featuresSection.content)) !== null) {
-    features.push({ num: match[1]!, text: match[2]! });
-  }
+  // The same parser the lint rule and `ready` use. Carrying a second one here
+  // meant this command reported "no features found" for a PRD that lint was
+  // simultaneously reporting three features in.
+  const entries = parseFeatureEntries(prd.content);
+  const features = entries.map((entry, i) => ({
+    // Un-numbered features still need a stable filename, so fall back to
+    // position. Authors who do use `**F<N>**:` keep their numbering.
+    num: entry.num ?? String(i + 1),
+    text: entry.text,
+  }));
 
   if (features.length === 0) {
     return { generated: [], skipped: [] };
@@ -190,7 +187,7 @@ export async function generateStories(
 
 export const defineCommandExport = defineCommand({
   meta: {
-    name: "generate story",
+    name: "story",
     description: "Generate user story stub files from a PRD's Features section",
   },
   args: {

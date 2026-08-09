@@ -8,10 +8,17 @@ import { handleCheck } from "./tools/check.js";
 import { handleDiff } from "./tools/diff.js";
 import { handleGraph } from "./tools/graph.js";
 
-export function createMcpServer(): McpServer {
+/**
+ * Build the MCP server.
+ *
+ * `version` is passed in rather than hardcoded: a literal here advertised
+ * `0.4.0` from every prerelease build, so every MCP client logged a version
+ * that was never published. The CLI owns the real number and hands it over.
+ */
+export function createMcpServer(version = "0.0.0-unknown"): McpServer {
   const server = new McpServer({
     name: "specdx",
-    version: "0.4.0",
+    version,
   });
 
   server.tool(
