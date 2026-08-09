@@ -14,6 +14,7 @@
     "@specdx/skills": "0.0.0"
   },
   "changesets": [
+    "agent-skills-spec",
     "checkable-artifacts",
     "context-engine-focus",
     "diff-working-tree",
@@ -26,6 +27,7 @@
     "pending-exports",
     "placeholder-sections-rule",
     "planned-artifacts",
+    "plugin-manifest-fixes",
     "relations-unification",
     "story-filename-word-boundary",
     "vacuous-pass-audit"
