@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 import { join } from "node:path";
 import { diffBetweenRefs, DEFAULT_DIFF_CONFIG, DiffError } from "@specdx/diff";
 import { loadConfig } from "@specdx/core";
-import { formatChangelog } from "../formatters/changelog.js";
+import { formatChangelog } from "../../formatters/changelog.js";
 import type { DiffResult } from "@specdx/diff";
 
 export interface RunDiffOptions {

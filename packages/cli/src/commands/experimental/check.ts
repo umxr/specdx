@@ -3,13 +3,13 @@ import { loadConfig, parseSpec, resolveGlob, createLogger } from "@specdx/core";
 import { runCheck } from "@specdx/check";
 import type { ParsedSpec } from "@specdx/core";
 import type { CheckConfig } from "@specdx/check";
-import { sharedArgs } from "../shared-args.js";
+import { sharedArgs } from "../../shared-args.js";
 
 export default defineCommand({
   meta: {
     name: "check",
     description:
-      "[experimental] Check spec-to-implementation drift. Exit codes: 0 ok, 1 errors found, 3 nothing checkable (coverage not assessed)",
+      "Check spec-to-implementation drift. Exit codes: 0 ok, 1 errors found, 3 nothing checkable (coverage not assessed)",
   },
   args: {
     ...sharedArgs,
@@ -17,7 +17,7 @@ export default defineCommand({
     framework: { type: "string", description: "Framework override: express, hono, nextjs" },
     ai: {
       type: "boolean",
-      description: "[experimental] Use AI to assess findings (requires ANTHROPIC_API_KEY)",
+      description: "Use AI to assess findings (requires ANTHROPIC_API_KEY)",
     },
   },
   async run({ args }) {

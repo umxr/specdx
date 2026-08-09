@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@specdx/core";
 import { pack, type PackResult } from "@specdx/pack";
 import type { ParsedSpec } from "@specdx/core";
-import { sharedArgs } from "../shared-args.js";
+import { sharedArgs } from "../../shared-args.js";
 import { writeFile } from "node:fs/promises";
 import { execSync } from "node:child_process";
 

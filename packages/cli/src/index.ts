@@ -1,5 +1,5 @@
-export { scaffoldProject } from "./commands/init.js";
-export { runLint } from "./commands/lint.js";
-export { runPack } from "./commands/pack.js";
-export { runDiff } from "./commands/diff.js";
-export { runStatus } from "./commands/status.js";
+export { scaffoldProject } from "./commands/core/init.js";
+export { runLint } from "./commands/core/lint.js";
+export { runPack } from "./commands/core/pack.js";
+export { runDiff } from "./commands/core/diff.js";
+export { runStatus } from "./commands/core/status.js";

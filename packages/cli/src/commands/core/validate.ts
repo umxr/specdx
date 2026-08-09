@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import { loadConfig, buildGraph, resolveGlob, ConfigError, GraphError } from "@specdx/core";
-import { sharedArgs } from "../shared-args.js";
+import { sharedArgs } from "../../shared-args.js";
 
 export interface ValidateResult {
   valid: boolean;

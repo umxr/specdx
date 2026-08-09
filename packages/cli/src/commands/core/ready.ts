@@ -3,7 +3,7 @@ import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@s
 import { createLintEngine, getPreset } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 import { DEFAULT_DIFF_CONFIG } from "@specdx/diff";
-import { sharedArgs } from "../shared-args.js";
+import { sharedArgs } from "../../shared-args.js";
 
 export interface ReadyCheck {
   name: string;

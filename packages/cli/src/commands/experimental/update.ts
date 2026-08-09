@@ -3,7 +3,7 @@ import { loadConfig, parseSpec, resolveGlob, createLogger } from "@specdx/core";
 import { runCheck } from "@specdx/check";
 import type { Finding } from "@specdx/check";
 import type { ParsedSpec } from "@specdx/core";
-import { sharedArgs } from "../shared-args.js";
+import { sharedArgs } from "../../shared-args.js";
 
 export interface UpdateSuggestion {
   specId: string;
@@ -104,7 +104,7 @@ function printSuggestionsPretty(suggestions: UpdateSuggestion[]): void {
 export default defineCommand({
   meta: {
     name: "update",
-    description: "[experimental] Suggest spec updates based on sdx check findings (--from-code)",
+    description: "Suggest spec updates based on sdx check findings (--from-code)",
   },
   args: {
     ...sharedArgs,

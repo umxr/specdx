@@ -2,10 +2,10 @@ import { defineCommand } from "citty";
 import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@specdx/core";
 import { createLintEngine, getPreset, type LintResults } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
-import { sharedArgs } from "../shared-args.js";
-import { formatPretty } from "../formatters/pretty.js";
-import { formatJson } from "../formatters/json.js";
-import { formatGithub } from "../formatters/github.js";
+import { sharedArgs } from "../../shared-args.js";
+import { formatPretty } from "../../formatters/pretty.js";
+import { formatJson } from "../../formatters/json.js";
+import { formatGithub } from "../../formatters/github.js";
 
 export interface RunLintOptions {
   configDir: string;

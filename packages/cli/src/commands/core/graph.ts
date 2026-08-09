@@ -9,7 +9,7 @@ import {
   findUnreflectedReferences,
 } from "@specdx/core";
 import type { ParsedSpec } from "@specdx/core";
-import { sharedArgs } from "../shared-args.js";
+import { sharedArgs } from "../../shared-args.js";
 
 export default defineCommand({
   meta: { name: "graph", description: "Print the spec dependency graph" },
