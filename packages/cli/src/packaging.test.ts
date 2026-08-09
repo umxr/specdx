@@ -57,3 +57,27 @@ describe("published package dependencies", () => {
     expect(new Set(normalized).size).toBe(1);
   });
 });
+
+describe("Claude Code plugin manifest", () => {
+  const manifest = JSON.parse(
+    readFileSync(join(pkgRoot, ".claude-plugin", "plugin.json"), "utf-8"),
+  ) as Record<string, unknown>;
+
+  it("declares the bundled skills as skills, not commands", () => {
+    // Skills are directories containing SKILL.md; commands are flat markdown
+    // files. Declaring the skills directory under `commands` made Claude Code
+    // load them as slash commands instead.
+    expect(manifest.skills).toBe("./dist/skills");
+    expect(manifest.commands).toBeUndefined();
+  });
+
+  it("does not carry a version that can drift from package.json", () => {
+    // Only `name` is required. A hand-maintained version silently fell 13
+    // releases behind, so it is either absent or correct -- never stale.
+    if (manifest.version === undefined) return;
+    const pkgVersion = (
+      JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf-8")) as { version: string }
+    ).version;
+    expect(manifest.version).toBe(pkgVersion);
+  });
+});

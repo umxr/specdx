@@ -1,7 +1,7 @@
 ---
 name: specdx-verify
 description: "[experimental — built on sdx check, whose static analysis can be noisy] Use when the user says 'verify', 'check against spec', 'does this match the spec', 'review implementation', or after completing a feature. Runs spec-to-implementation analysis and reviews findings."
-allowed-tools: Bash(npx specdx *), Read
+allowed-tools: Bash(npx specdx:*) Read
 ---
 
 # Verify Implementation Against Specs

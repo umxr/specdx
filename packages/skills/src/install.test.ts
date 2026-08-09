@@ -28,7 +28,7 @@ describe("installSkills", () => {
     expect(SKILL_NAMES).toHaveLength(9);
   });
 
-  it("creates skill files in .claude/commands/", async () => {
+  it("creates skill directories in .claude/skills/", async () => {
     const result = await installSkills(targetDir);
 
     expect(result.installed).toHaveLength(9);
@@ -41,7 +41,7 @@ describe("installSkills", () => {
 
     for (const skill of SKILL_NAMES) {
       const content = await readFile(
-        join(targetDir, ".claude", "commands", `${skill}.md`),
+        join(targetDir, ".claude", "skills", skill, "SKILL.md"),
         "utf-8",
       );
       expect(content.length).toBeGreaterThan(100);
@@ -53,7 +53,7 @@ describe("installSkills", () => {
 
     for (const skill of SKILL_NAMES) {
       const content = await readFile(
-        join(targetDir, ".claude", "commands", `${skill}.md`),
+        join(targetDir, ".claude", "skills", skill, "SKILL.md"),
         "utf-8",
       );
       expect(content).toMatch(/^---\n/);
@@ -66,7 +66,7 @@ describe("installSkills", () => {
     await installSkills(targetDir);
 
     const content = await readFile(
-      join(targetDir, ".claude", "commands", "specdx-start-task.md"),
+      join(targetDir, ".claude", "skills", "specdx-start-task", "SKILL.md"),
       "utf-8",
     );
     expect(content).toContain("npx specdx pack");
@@ -76,7 +76,7 @@ describe("installSkills", () => {
     await installSkills(targetDir);
 
     const content = await readFile(
-      join(targetDir, ".claude", "commands", "specdx-author-spec.md"),
+      join(targetDir, ".claude", "skills", "specdx-author-spec", "SKILL.md"),
       "utf-8",
     );
     expect(content).toContain("step-01-frontmatter.md");
@@ -92,9 +92,26 @@ describe("installSkills", () => {
     expect(second.updated).toHaveLength(9);
   });
 
+  it("installs bundled reference files alongside SKILL.md", async () => {
+    await installSkills(targetDir);
+
+    const reference = await readFile(
+      join(
+        targetDir,
+        ".claude",
+        "skills",
+        "specdx-author-spec",
+        "references",
+        "step-01-frontmatter.md",
+      ),
+      "utf-8",
+    );
+    expect(reference.length).toBeGreaterThan(100);
+  });
+
   it("overwrites modified files and reports as updated", async () => {
     await installSkills(targetDir);
-    const skillPath = join(targetDir, ".claude", "commands", "specdx-start-task.md");
+    const skillPath = join(targetDir, ".claude", "skills", "specdx-start-task", "SKILL.md");
 
     await writeFile(skillPath, "modified content");
 

@@ -1,7 +1,7 @@
 ---
 name: specdx-onboard
 description: "Use when a new developer joins the project, asks 'what is this project', 'explain the specs', 'how does this codebase work', 'what specs exist', or wants an overview of the spec suite. Provides a guided tour of the project's specs."
-allowed-tools: Bash(npx specdx *)
+allowed-tools: Bash(npx specdx:*)
 ---
 
 # Onboard — Spec Suite Overview

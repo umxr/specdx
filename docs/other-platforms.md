@@ -132,7 +132,7 @@ Use the specdx-start-task skill to load context for adding email authentication.
 
 | Platform | Directory | Scope |
 |---|---|---|
-| Claude Code | `.claude/commands/` | Project |
+| Claude Code | `.claude/skills/<name>/SKILL.md` | Project |
 | Cursor | `.cursor/commands/` | Project |
 | Gemini CLI | `.gemini/commands/` | Project |
 | Codex | `~/.agents/skills/` | Global |

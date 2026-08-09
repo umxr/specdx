@@ -1,7 +1,7 @@
 ---
 name: specdx-check-drift
 description: "[experimental — built on sdx check, whose static analysis can be noisy] Use when the user says 'check drift', 'did I drift from spec', 'am I still aligned', or as part of a pre-commit check. Compares recent code changes against spec definitions."
-allowed-tools: Bash(npx specdx *), Read
+allowed-tools: Bash(npx specdx:*) Read
 ---
 
 # Check Spec Drift

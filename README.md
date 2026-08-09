@@ -217,6 +217,9 @@ Or install skills manually:
 specdx skills install
 ```
 
+Skills install to `.claude/skills/<name>/SKILL.md` and follow the
+[Agent Skills specification](https://agentskills.io/specification).
+
 ### Skills
 
 | Skill | What it does |

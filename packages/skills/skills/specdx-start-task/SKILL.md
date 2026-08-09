@@ -1,7 +1,7 @@
 ---
 name: specdx-start-task
 description: Use when the user describes work they're about to do, mentions implementing a feature, asks to start a task, or says 'implement', 'build', 'add', 'fix', or 'refactor'. Loads relevant spec context before coding.
-allowed-tools: Bash(npx specdx *)
+allowed-tools: Bash(npx specdx:*)
 ---
 
 # Load Spec Context

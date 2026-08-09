@@ -1,7 +1,7 @@
 ---
 name: specdx-sprint-review
 description: "Use when the user asks for a summary, sprint review, spec health report, progress update, or says 'how are specs looking', 'spec health', or 'what changed'. Generates a shareable spec health report."
-allowed-tools: Bash(npx specdx *)
+allowed-tools: Bash(npx specdx:*)
 ---
 
 # Sprint Review — Spec Health Report

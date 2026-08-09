@@ -22,7 +22,7 @@ export default defineCommand({
           }
           for (const file of result.installed) console.log(`  ✓ Installed ${file}`);
           for (const file of result.updated) console.log(`  ✓ Updated ${file}`);
-          console.log(`\n  Skills installed to .claude/commands/`);
+          console.log(`\n  Skills installed to .claude/skills/`);
         } catch (err) {
           console.error(`\n  ✗ ${(err as Error).message}\n`);
           process.exit(1);

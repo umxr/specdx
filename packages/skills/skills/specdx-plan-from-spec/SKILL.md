@@ -1,7 +1,7 @@
 ---
 name: specdx-plan-from-spec
 description: "Use when the user asks to plan implementation, create a plan from specs, or says 'how should I build this', 'plan this', 'create an implementation plan', or 'what's the approach'. Generates a step-by-step plan grounded in project specs."
-allowed-tools: Bash(npx specdx *)
+allowed-tools: Bash(npx specdx:*)
 ---
 
 # Plan From Spec

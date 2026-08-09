@@ -19,7 +19,7 @@ Ask what kind of spec they need:
 | `adr` | Recording a decision | Context, Decision, Status, Consequences |
 | `api-contract` | Defining an API | Endpoints, Request/Response Schemas, Auth, Error Codes |
 
-For detailed guidance on each type, read `spec-type-reference.md` in the parent directory.
+For detailed guidance on each type, read `spec-type-reference.md` in this directory.
 
 ## Check existing specs
 

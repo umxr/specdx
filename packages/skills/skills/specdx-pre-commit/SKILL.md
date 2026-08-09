@@ -1,7 +1,7 @@
 ---
 name: specdx-pre-commit
 description: "Use when the user is about to commit, mentions committing, or says 'let's commit', 'ready to commit', 'wrap up', or 'commit this'. Checks spec health and flags drift before committing."
-allowed-tools: Bash(npx specdx *)
+allowed-tools: Bash(npx specdx:*)
 ---
 
 # Pre-Commit Spec Check

@@ -1,7 +1,7 @@
 ---
 name: specdx-review-spec
 description: "Use when the user asks to review a spec, says 'is this spec good enough', 'review my spec', 'check spec quality', or 'audit this spec'. Runs multi-layer spec quality review."
-allowed-tools: Bash(npx specdx *), Read, Agent
+allowed-tools: Bash(npx specdx:*) Read Agent
 ---
 
 # Review Spec Quality
