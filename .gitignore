@@ -20,3 +20,7 @@ docs/superpowers/
 !packages/github-action/test/fixture-project/spec.config.yaml
 !packages/github-action/test/fixture-project/specs/
 !packages/github-action/test/fixture-project/specs/**
+
+# Copied from the repo root at build time so the published package carries them.
+packages/cli/README.md
+packages/cli/LICENSE
