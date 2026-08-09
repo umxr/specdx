@@ -16,6 +16,7 @@
   "changesets": [
     "agent-skills-spec",
     "audit-fixes",
+    "audit-rerun-fixes",
     "checkable-artifacts",
     "command-buckets",
     "context-engine-focus",
