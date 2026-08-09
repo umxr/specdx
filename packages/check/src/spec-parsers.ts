@@ -69,6 +69,12 @@ export function parseEndpoints(content: string): SpecEndpoint[] {
 }
 
 /**
+ * An identifier, or identifiers joined by `|` / `&` -- what a type annotation
+ * looks like, as opposed to a sentence.
+ */
+const TYPE_SHAPE = /^[A-Za-z_$][\w$.<>[\]]*(?:\s*[|&]\s*[A-Za-z_$][\w$.<>[\]]*)*$/;
+
+/**
  * Parses the `## Data Model` section of a spec and returns structured type definitions.
  */
 export function parseTypeDefinitions(content: string): SpecTypeDefinition[] {
@@ -87,18 +93,30 @@ export function parseTypeDefinitions(content: string): SpecTypeDefinition[] {
     const name = headingMatch[1]!;
     const fields: SpecTypeDefinition["fields"] = [];
 
-    // Field lines: `- \`fieldName?\`: type description`
-    const fieldPattern = /^-\s+`([^`]+)`\s*:\s*(.+)/gm;
+    // Field lines, backticked or not: `- \`fieldName?\`: type` / `- fieldName?: type`.
+    //
+    // Requiring backticks meant an ordinary markdown Data Model parsed to zero
+    // fields, which `check` then dropped from coverage without saying so. The
+    // un-backticked form is deliberately strict -- a single identifier only --
+    // so prose like "- Note: this table is partitioned" is not read as a field.
+    const fieldPattern = /^-\s+(?:`([^`]+)`|([A-Za-z_$][\w$]*\??))\s*:\s*(.+)/gm;
     let fieldMatch: RegExpExecArray | null;
 
     while ((fieldMatch = fieldPattern.exec(block)) !== null) {
-      const rawName = fieldMatch[1]!;
+      const backticked = fieldMatch[1] !== undefined;
+      const rawName = (fieldMatch[1] ?? fieldMatch[2])!;
       const optional = rawName.endsWith("?");
       const fieldName = optional ? rawName.slice(0, -1) : rawName;
 
       // Type is everything before optional parenthetical notes like "(UUID)"
-      const rawType = fieldMatch[2]!.trim();
+      const rawType = fieldMatch[3]!.trim();
       const type = rawType.replace(/\s*\(.*?\)\s*$/, "").trim();
+
+      // Backticks are the author saying "this is a field", so the type is taken
+      // as written. Without them the line is only a field if the type also
+      // looks like one -- otherwise "- Note: this table is partitioned by
+      // tenant" would become a field named Note.
+      if (!backticked && !TYPE_SHAPE.test(type)) continue;
 
       fields.push({ name: fieldName, type, optional });
     }

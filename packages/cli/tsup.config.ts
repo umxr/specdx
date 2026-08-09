@@ -19,6 +19,11 @@ export default defineConfig([
     ],
     onSuccess: async () => {
       cpSync("../skills/skills", "./dist/skills", { recursive: true });
+      // npm only auto-includes a README from the package directory, and this
+      // package's lives at the repo root -- so the published package had none
+      // and the npm page rendered empty.
+      cpSync("../../README.md", "./README.md");
+      cpSync("../../LICENSE", "./LICENSE");
     },
   },
   {

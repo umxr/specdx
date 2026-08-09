@@ -2,7 +2,9 @@ import { defineCommand } from "citty";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { loadConfig, parseSpec, resolveGlob, createLogger } from "@specdx/core";
+import type { ParsedSpec } from "@specdx/core";
 import { REQUIRED_SECTIONS } from "@specdx/schema";
+import { uncoveredFeatures } from "@specdx/lint";
 
 export interface GenerateStoriesOptions {
   configDir: string;
@@ -12,6 +14,8 @@ export interface GenerateStoriesOptions {
 
 export interface GenerateStoriesResult {
   generated: string[];
+  /** Features left alone because an existing story already covers them. */
+  skipped: string[];
 }
 
 function slugify(text: string): string {
@@ -121,7 +125,7 @@ export async function generateStories(
   // Find the Features section content
   const featuresSection = prd.parsedSections.find((s) => s.heading === "Features");
   if (!featuresSection) {
-    return { generated: [] };
+    return { generated: [], skipped: [] };
   }
 
   // Parse features using the required regex pattern
@@ -133,7 +137,7 @@ export async function generateStories(
   }
 
   if (features.length === 0) {
-    return { generated: [] };
+    return { generated: [], skipped: [] };
   }
 
   const storiesDir = outDir ?? detectStoriesDir(configDir, config);
@@ -143,9 +147,27 @@ export async function generateStories(
   const prdAuthors = (prd.frontmatter.authors as string[] | undefined) ?? [];
   const sections = REQUIRED_SECTIONS["user-story"];
 
+  // Features an existing story already covers are left alone -- regenerating
+  // them produces a second stub for the same feature to reconcile by hand.
+  const existingStories: ParsedSpec[] = [];
+  for (const entry of Object.values(config.specs)) {
+    if (entry.type !== "user-story") continue;
+    for (const p of await resolveGlob(entry.path, configDir)) {
+      existingStories.push(await parseSpec(p));
+    }
+  }
+  const uncovered = new Set(
+    uncoveredFeatures(
+      features.map((f) => f.text),
+      existingStories,
+      from,
+    ),
+  );
+  const skipped = features.filter((f) => !uncovered.has(f.text)).map((f) => f.text);
+
   const generated: string[] = [];
 
-  for (const feature of features) {
+  for (const feature of features.filter((f) => uncovered.has(f.text))) {
     const slug = slugify(feature.text);
     const filename = `story-f${feature.num}-${slug}.md`;
     const filePath = join(storiesDir, filename);
@@ -163,7 +185,7 @@ export async function generateStories(
     generated.push(filePath);
   }
 
-  return { generated };
+  return { generated, skipped };
 }
 
 export const defineCommandExport = defineCommand({
@@ -202,12 +224,19 @@ export const defineCommandExport = defineCommand({
         outDir: args.out,
       });
 
-      if (result.generated.length === 0) {
+      if (result.generated.length === 0 && result.skipped.length > 0) {
+        logger.info(
+          `Every feature already has a story — ${result.skipped.length} feature(s) skipped, nothing generated.`,
+        );
+      } else if (result.generated.length === 0) {
         logger.info("No features found in PRD — no story stubs generated.");
       } else {
         logger.info(`Generated ${result.generated.length} story stub(s):`);
         for (const filePath of result.generated) {
           logger.info(`  ${filePath}`);
+        }
+        if (result.skipped.length > 0) {
+          logger.info(`Skipped ${result.skipped.length} feature(s) an existing story covers.`);
         }
       }
     } catch (err) {

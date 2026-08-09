@@ -14,11 +14,21 @@ import type { DiffResult, DiffOptions, SpecDiff, ImpactAnalysis } from "./types.
  * Get the real (symlink-resolved) git repo root for the given directory.
  */
 function getRepoRoot(cwd: string): string {
-  const root = execSync("git rev-parse --show-toplevel", {
-    cwd,
-    encoding: "utf-8",
-    stdio: "pipe",
-  }).trim();
+  let root: string;
+  try {
+    root = execSync("git rev-parse --show-toplevel", {
+      cwd,
+      encoding: "utf-8",
+      stdio: "pipe",
+    }).trim();
+  } catch {
+    // Without this the raw git invocation and its "fatal:" output reach the
+    // user, which reads as a crash rather than a precondition they can meet.
+    throw new DiffError(
+      "diff compares specs across git history, and this directory is not inside a git repository. " +
+        "Run `git init` first, or run diff from a checked-out project.",
+    );
+  }
   return realpathSync(root);
 }
 

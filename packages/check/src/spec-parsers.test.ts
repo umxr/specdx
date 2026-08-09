@@ -91,3 +91,57 @@ describe("parseTestCases", () => {
     expect(parseTestCases("## Scope\n\nContent.")).toEqual([]);
   });
 });
+
+describe("parseTypeDefinitions — un-backticked fields (F8)", () => {
+  it("reads fields written without backticks", () => {
+    // The obvious markdown a person writes. Requiring backticks meant a fully
+    // documented Data Model parsed to zero fields, so `check` excluded the
+    // category from coverage silently and `update` told the author to add
+    // fields that were already there.
+    const content = `## Data Model
+
+### User
+
+- id: string
+- email: string
+- createdAt: Date
+`;
+    const [user] = parseTypeDefinitions(content);
+    expect(user!.name).toBe("User");
+    expect(user!.fields.map((f) => f.name)).toEqual(["id", "email", "createdAt"]);
+    expect(user!.fields.map((f) => f.type)).toEqual(["string", "string", "Date"]);
+  });
+
+  it("still reads backticked fields, and mixes of both", () => {
+    const content = `## Data Model
+
+### Session
+
+- \`token\`: string
+- userId: string
+- \`expiresAt?\`: Date
+`;
+    const [session] = parseTypeDefinitions(content);
+    expect(session!.fields.map((f) => f.name)).toEqual(["token", "userId", "expiresAt"]);
+    expect(session!.fields.find((f) => f.name === "expiresAt")!.optional).toBe(true);
+  });
+
+  it("marks un-backticked optional fields optional too", () => {
+    const [t] = parseTypeDefinitions("## Data Model\n\n### T\n\n- nickname?: string\n");
+    expect(t!.fields[0]).toMatchObject({ name: "nickname", type: "string", optional: true });
+  });
+
+  it("does not mistake prose bullets for fields", () => {
+    // A colon in a sentence must not become a field, or every note in a Data
+    // Model section turns into a phantom type to reconcile against code.
+    const content = `## Data Model
+
+### User
+
+- id: string
+- Note: this table is partitioned by tenant and replicated to the read region
+`;
+    const [user] = parseTypeDefinitions(content);
+    expect(user!.fields.map((f) => f.name)).toEqual(["id"]);
+  });
+});

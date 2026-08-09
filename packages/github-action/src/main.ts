@@ -19,7 +19,14 @@ async function run(): Promise<void> {
     // For now, always run (trigger path filtering requires PR file list from GitHub API)
 
     // Run lint
-    const presetName = config.lint?.extends || "recommended";
+    // An explicit `preset` input wins over the config, so a workflow can run a
+    // stricter gate on pull requests than the project's default.
+    const presetInput = core.getInput("preset");
+    if (presetInput && !["minimal", "recommended", "strict"].includes(presetInput)) {
+      core.setFailed(`preset must be one of minimal, recommended, strict (got: ${presetInput})`);
+      return;
+    }
+    const presetName = presetInput || config.lint?.extends || "recommended";
     const rules = getPreset(presetName as "minimal" | "recommended" | "strict");
     const engine = createLintEngine({ rules, config, graph: buildGraph(config) });
 

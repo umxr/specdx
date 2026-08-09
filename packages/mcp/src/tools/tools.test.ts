@@ -117,10 +117,14 @@ afterAll(async () => {
 });
 
 describe("sdx_validate", () => {
-  it("reports a valid config with spec count", async () => {
+  it("reports a valid config with distinct entry and file counts", async () => {
+    // `specCount` meant config entries here and resolved files in sdx_status,
+    // so an agent reading both got two contradictory numbers for one project.
     const result = JSON.parse(await handleValidate({}));
     expect(result.valid).toBe(true);
-    expect(result.specCount).toBe(2);
+    expect(result.specEntries).toBe(2);
+    expect(result.specFiles).toBe(2);
+    expect(result.specCount).toBeUndefined();
     expect(result.project).toBe("mcp-fixture");
   });
 

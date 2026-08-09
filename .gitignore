@@ -10,3 +10,13 @@ roadmap.md
 spec.config.yaml
 specs/
 docs/superpowers/
+
+# The GitHub Action is bundled and committed: GitHub runs it straight from a
+# checkout, with no install step, so the built entrypoint must live in the ref.
+!packages/github-action/bundle/
+
+# The action fixture must reach a runner, so it is exempt from the repo-wide
+# spec.config.yaml / specs/ ignores that keep this project's own specs local.
+!packages/github-action/test/fixture-project/spec.config.yaml
+!packages/github-action/test/fixture-project/specs/
+!packages/github-action/test/fixture-project/specs/**

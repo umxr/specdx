@@ -142,3 +142,84 @@ describe("generateStories", () => {
     expect(result.generated).toHaveLength(0);
   });
 });
+
+describe("generateStories — does not duplicate covered features (F10)", () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sdx-gen-story-dup-"));
+    await mkdir(join(dir, "specs/stories"), { recursive: true });
+    await writeFile(
+      join(dir, "spec.config.yaml"),
+      [
+        'version: "1.0"',
+        "specs:",
+        "  prd:",
+        "    path: specs/prd.md",
+        "    type: prd",
+        "  stories:",
+        "    path: specs/stories/*.md",
+        "    type: user-story",
+      ].join("\n"),
+    );
+    await writeFile(
+      join(dir, "specs/prd.md"),
+      [
+        "---",
+        'id: "prd"',
+        'type: "prd"',
+        'title: "P"',
+        'status: "draft"',
+        'version: "1.0"',
+        'created: "2026-01-01"',
+        'authors: ["dev"]',
+        "---",
+        "",
+        "## Features",
+        "",
+        "- **F1**: Create a user account with an email address.",
+        "- **F2**: Export an audit log of administrative actions.",
+        "",
+      ].join("\n"),
+    );
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true });
+  });
+
+  it("skips a feature an existing story already covers", async () => {
+    await writeFile(
+      join(dir, "specs/stories/existing.md"),
+      [
+        "---",
+        'id: "story-create"',
+        'type: "user-story"',
+        'title: "Create a user account"',
+        'status: "draft"',
+        'version: "1.0"',
+        'created: "2026-01-01"',
+        'authors: ["dev"]',
+        'story_id: "US-1"',
+        'priority: "high"',
+        'estimate: "M"',
+        "references:",
+        '  - id: "prd"',
+        '    relationship: "depends-on"',
+        "---",
+        "",
+        "## Description",
+        "",
+        "Create a user account.",
+        "",
+      ].join("\n"),
+    );
+
+    const result = await generateStories({ configDir: dir, from: "prd" });
+
+    // F1 is already covered; regenerating it produces a second story for the
+    // same feature that the author then has to reconcile by hand.
+    expect(result.generated).toHaveLength(1);
+    expect(result.generated[0]).toContain("audit-log");
+    expect(result.skipped).toEqual(["Create a user account with an email address."]);
+  });
+});

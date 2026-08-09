@@ -373,3 +373,39 @@ describe("runCheck", () => {
     expect(result.summary).toMatch(/\d+ warnings/);
   });
 });
+
+describe("runCheck — an unparseable Data Model is reported, not ignored (F8)", () => {
+  it("notes a Data Model whose fields were not recognised", async () => {
+    // Silence here is what let an 88% coverage figure be reported while the
+    // whole types category contributed nothing.
+    const specs: ParsedSpec[] = [
+      makeSpec(
+        { id: "td", type: "technical-design" },
+        [
+          "## Data Model",
+          "",
+          "### User",
+          "",
+          "- Note: stored in Postgres, partitioned by tenant",
+        ].join("\n"),
+      ),
+    ];
+
+    const result = await runCheck(specs, FIXTURES_DIR, { framework: "express" });
+
+    expect(result.notes.some((n) => /data model/i.test(n))).toBe(true);
+  });
+
+  it("says nothing when the Data Model parses", async () => {
+    const specs: ParsedSpec[] = [
+      makeSpec(
+        { id: "td", type: "technical-design" },
+        ["## Data Model", "", "### User", "", "- id: string"].join("\n"),
+      ),
+    ];
+
+    const result = await runCheck(specs, FIXTURES_DIR, { framework: "express" });
+
+    expect(result.notes.some((n) => /data model/i.test(n))).toBe(false);
+  });
+});

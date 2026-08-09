@@ -9,7 +9,8 @@ export interface GenerateTestPlanOptions {
 }
 
 export interface GenerateTestPlanResult {
-  filePath: string;
+  /** Undefined when there was nothing to generate, so no file was written. */
+  filePath?: string;
   testCases: number;
 }
 
@@ -168,6 +169,13 @@ export async function generateTestPlan(
 
   const fileContent = `${frontmatter}\n\n${body}`;
 
+  // Nothing to build a plan from. Writing a spec whose every section reads
+  // "_No user stories found._" would add a file the linter then flags and the
+  // suite has to carry -- `generate story` already declines in this case.
+  if (storiesBySpec.length === 0) {
+    return { testCases: 0 };
+  }
+
   const targetPath = outPath ?? join(configDir, "specs", "test-plan.md");
   await writeFile(targetPath, fileContent, "utf-8");
 
@@ -204,7 +212,16 @@ export default defineCommand({
         outPath: args.out,
       });
 
+      if (!result.filePath) {
+        logger.info("No user stories found — no test plan generated.");
+        return;
+      }
+
       logger.info(`Generated test plan with ${result.testCases} test cases → ${result.filePath}`);
+      logger.info(
+        "Add it to spec.config.yaml so lint, status and pack can see it:\n" +
+          "  test-plan:\n    path: specs/test-plan.md\n    type: test-plan",
+      );
     } catch (err) {
       console.error(`\n  ✗ ${(err as Error).message}\n`);
       process.exit(1);

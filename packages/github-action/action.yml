@@ -4,6 +4,11 @@ inputs:
   working-directory:
     description: "Directory containing spec.config.yaml"
     default: "."
+  preset:
+    description: "Lint preset to run: minimal, recommended, or strict. Defaults to the preset in spec.config.yaml."
+    required: false
 runs:
+  # Bundled and committed: GitHub runs this file straight from a checkout, with
+  # no install step, so it must carry its own dependencies.
   using: "node20"
-  main: "dist/main.js"
+  main: "bundle/main.cjs"

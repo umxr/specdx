@@ -67,6 +67,7 @@ export async function handleStatus(): Promise<string> {
 
   return JSON.stringify({
     project: config.project?.name ?? "unknown",
+    specFiles: specs.length,
     specCount: specs.length,
     byStatus,
     lintHealth: { errors, warnings, passing: specs.length - errors },

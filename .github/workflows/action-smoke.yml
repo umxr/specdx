@@ -1,0 +1,21 @@
+name: action smoke
+
+# Runs the committed action bundle exactly as a consumer would: checkout, then
+# `uses:` the action directory. Every previous test imported the TypeScript
+# source through the workspace, so none could see that the entrypoint was
+# gitignored and its output kept unresolvable bare specifiers.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the action against a valid spec suite
+        uses: ./packages/github-action
+        with:
+          working-directory: packages/github-action/test/fixture-project
+          preset: recommended

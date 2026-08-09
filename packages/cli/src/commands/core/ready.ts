@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@specdx/core";
-import { createLintEngine, getPreset } from "@specdx/lint";
+import { createLintEngine, getPreset, parseFeatures } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 import { DEFAULT_DIFF_CONFIG } from "@specdx/diff";
 import { sharedArgs } from "../../shared-args.js";
@@ -226,12 +226,26 @@ export async function runReady(): Promise<ReadyResult> {
   const storyCoverageErrors = lintResults.diagnostics.filter(
     (d) => d.ruleId === "completeness/story-coverage",
   );
+  // A PRD with no parseable features has nothing to be covered, so asserting
+  // that every feature has a story is a claim about an empty set -- the same
+  // vacuous pass the suite-level checks were fixed for.
+  const featureCount = specs
+    .filter((s) => s.spec.frontmatter.type === "prd")
+    .reduce((sum, s) => sum + parseFeatures(s.spec.content).length, 0);
+
   if (!hasPrd) {
     checks.push({
       name: "Story coverage",
       passed: true,
       skipped: true,
       details: "skipped (no PRD in suite)",
+    });
+  } else if (featureCount === 0) {
+    checks.push({
+      name: "Story coverage",
+      passed: true,
+      skipped: true,
+      details: "skipped (no features declared in the PRD)",
     });
   } else {
     checks.push({

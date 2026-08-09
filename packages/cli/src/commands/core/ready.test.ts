@@ -283,3 +283,68 @@ describe("runReady", () => {
     expect(staleCheck?.skipped).toBe(true);
   });
 });
+
+describe("runReady — story coverage is not asserted over an empty set (F1)", () => {
+  const CWD2 = process.cwd();
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sdx-ready-f1-"));
+    await mkdir(join(dir, "specs"), { recursive: true });
+    process.chdir(dir);
+  });
+  afterEach(async () => {
+    process.chdir(CWD2);
+    await rm(dir, { recursive: true });
+  });
+
+  it("reports story coverage as skipped when the PRD declares no features", async () => {
+    await writeFile(
+      join(dir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  prd:\n    path: "specs/prd.md"\n    type: "prd"\n`,
+    );
+    await writeFile(
+      join(dir, "specs/prd.md"),
+      [
+        "---",
+        'id: "prd-001"',
+        'type: "prd"',
+        'title: "Test PRD"',
+        'status: "draft"',
+        'version: "1.0"',
+        `created: "${new Date().toISOString().slice(0, 10)}"`,
+        'authors: ["dev"]',
+        "---",
+        "",
+        "## Problem Statement",
+        "",
+        "Something.",
+        "",
+        "## Goals",
+        "",
+        "Something.",
+        "",
+        "## Non-Goals",
+        "",
+        "Something.",
+        "",
+        "## Features",
+        "",
+        "<!-- placeholder -->",
+        "",
+        "## Success Criteria",
+        "",
+        "Something.",
+        "",
+      ].join("\n"),
+    );
+
+    const result = await runReady();
+    const check = result.checks.find((c) => c.name === "Story coverage");
+    // A fresh scaffold has no features, so there is nothing to have covered.
+    // Claiming "all features have stories" over zero features is the same
+    // vacuous pass the suite-level checks were fixed for.
+    expect(check?.skipped).toBe(true);
+    expect(check?.details).toMatch(/no features/i);
+  });
+});

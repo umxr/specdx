@@ -1,0 +1,9 @@
+version: "1.0"
+project:
+  name: "action-fixture"
+specs:
+  prd:
+    path: specs/prd.md
+    type: prd
+lint:
+  extends: recommended

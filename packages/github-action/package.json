@@ -10,10 +10,11 @@
     }
   },
   "files": [
-    "dist"
+    "bundle",
+    "action.yml"
   ],
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build && tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist *.tsbuildinfo"
@@ -27,6 +28,7 @@
     "@specdx/schema": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "tsup": "^8.0.0"
   }
 }

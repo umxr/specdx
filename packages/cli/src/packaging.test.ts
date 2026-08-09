@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, cpSync, chmodSync, readdirSync, mkdtempSync, rmSync } from "node:fs";
+import { execFileSync, execSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -93,5 +95,61 @@ describe("Claude Code plugin manifest", () => {
     };
     expect(Array.isArray(hooks.hooks)).toBe(false);
     expect(Object.keys(hooks.hooks)).toContain("SessionStart");
+  });
+});
+
+describe("published artifact", () => {
+  // These assert properties of the *packed* package. Both defects they cover
+  // were invisible to every other test: the exec bit is stripped at pack time,
+  // and the README's absence only shows once npm decides what to include.
+  const packed = (() => {
+    const out = execFileSync("npm", ["pack", "--dry-run", "--json"], {
+      cwd: pkgRoot,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const parsed = JSON.parse(out) as { files: { path: string }[] }[];
+    return (parsed[0]?.files ?? []).map((f) => f.path);
+  })();
+
+  it("finds the packed file list it is meant to check", () => {
+    expect(packed.length).toBeGreaterThan(0);
+  });
+
+  it("includes a README, so the npm page is not blank", () => {
+    expect(packed.some((p) => /^README\.md$/i.test(p))).toBe(true);
+  });
+
+  it("invokes the SessionStart hook through an interpreter", () => {
+    // npm normalises non-`bin` files to 644 when packing, so a manifest that
+    // executes the script directly fails with EACCES for every plugin user.
+    const hooks = JSON.parse(readFileSync(join(pkgRoot, "hooks", "hooks.json"), "utf-8")) as {
+      hooks: { SessionStart: { hooks: { command: string }[] }[] };
+    };
+    const command = hooks.hooks.SessionStart[0]!.hooks[0]!.command;
+    expect(command.startsWith("bash ")).toBe(true);
+  });
+
+  it("runs the SessionStart hook from a non-executable copy", () => {
+    // The real proof: strip the exec bit the way npm does, then run it.
+    const staged = mkdtempSync(join(tmpdir(), "sdx-hook-"));
+    cpSync(join(pkgRoot, "hooks"), join(staged, "hooks"), { recursive: true });
+    for (const f of readdirSync(join(staged, "hooks"))) {
+      chmodSync(join(staged, "hooks", f), 0o644);
+    }
+
+    const hooks = JSON.parse(readFileSync(join(staged, "hooks", "hooks.json"), "utf-8")) as {
+      hooks: { SessionStart: { hooks: { command: string }[] }[] };
+    };
+    const command = hooks.hooks.SessionStart[0]!.hooks[0]!.command.replace(
+      /\$\{CLAUDE_PLUGIN_ROOT\}/g,
+      staged,
+    );
+
+    expect(() =>
+      execSync(command, { cwd: staged, stdio: ["ignore", "pipe", "pipe"] }),
+    ).not.toThrow();
+
+    rmSync(staged, { recursive: true, force: true });
   });
 });

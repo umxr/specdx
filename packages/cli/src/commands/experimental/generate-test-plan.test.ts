@@ -56,7 +56,7 @@ describe("generateTestPlan", () => {
 
     expect(result.filePath).toContain("test-plan.md");
 
-    const content = await readFile(result.filePath, "utf-8");
+    const content = await readFile(result.filePath!, "utf-8");
     expect(content).toContain('type: "test-plan"');
     expect(content).toContain("## Test Cases");
     expect(content).toContain("User can log in with email and password");
@@ -119,8 +119,43 @@ describe("generateTestPlan", () => {
     );
 
     const result = await generateTestPlan({ configDir: tempDir });
-    const content = await readFile(result.filePath, "utf-8");
+    expect(result.filePath).toBeDefined();
+    const content = await readFile(result.filePath!, "utf-8");
     expect(content).toContain("### story-auth");
     expect(content).toContain("### story-profile");
+  });
+});
+
+describe("generateTestPlan — refuses to manufacture an empty spec (F2)", () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sdx-gen-tp-empty-"));
+    await mkdir(join(dir, "specs/stories"), { recursive: true });
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true });
+  });
+
+  it("writes no file when there are no stories to build a plan from", async () => {
+    await writeFile(
+      join(dir, "spec.config.yaml"),
+      [
+        'version: "1.0"',
+        "specs:",
+        "  stories:",
+        "    path: specs/stories/*.md",
+        "    type: user-story",
+      ].join("\n"),
+    );
+
+    const result = await generateTestPlan({ configDir: dir });
+
+    // Its sibling `generate story` already declines in this situation. Writing
+    // a spec whose every section reads "_No user stories found._" -- including
+    // a placeholder its own linter flags -- is not a successful generation.
+    expect(result.testCases).toBe(0);
+    expect(result.filePath).toBeUndefined();
+    await expect(readFile(join(dir, "specs/test-plan.md"), "utf-8")).rejects.toThrow();
   });
 });

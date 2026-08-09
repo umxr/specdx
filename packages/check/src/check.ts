@@ -87,8 +87,19 @@ export async function runCheck(
 
     for (const spec of designSpecs) {
       const specTypes = parseTypeDefinitions(spec.content);
-      typeTotal += specTypes.reduce((sum, t) => sum + t.fields.length, 0);
+      const fieldCount = specTypes.reduce((sum, t) => sum + t.fields.length, 0);
+      typeTotal += fieldCount;
       findings.push(...matchTypes(specTypes, codeTypes, spec.frontmatter.id as string));
+
+      // A Data Model that yields no fields contributes nothing to the score.
+      // Reporting the resulting percentage without saying so presents partial
+      // coverage as whole coverage.
+      if (fieldCount === 0 && /^##\s+Data Model\s*$/im.test(spec.content)) {
+        notes.push(
+          `${spec.frontmatter.id as string}: no fields recognised in its Data Model, so types were not assessed. ` +
+            "Write fields as `- name: type` (one per line, under a `### TypeName` heading).",
+        );
+      }
     }
   }
 

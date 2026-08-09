@@ -146,8 +146,9 @@ Add spec health checks to your CI pipeline with the GitHub Action:
 
 ```yaml
 # .github/workflows/specs.yml
-- uses: umxr/specdx-action@v1
+- uses: umxr/specdx/packages/github-action@v0.4.0
   with:
+    working-directory: .
     preset: recommended
 ```
 
@@ -298,9 +299,9 @@ Our application has no authentication...
 | `test-plan` | Scope, Test Cases, Coverage Matrix, Edge Cases | — |
 | `adr` | Context, Decision, Status, Consequences | — |
 | `api-contract` | Endpoints, Request/Response Schemas, Auth, Error Codes | — |
-| `epic` | (flexible) | `epic_id`, `priority` |
-| `quick-spec` | (flexible) | — |
-| `project-context` | (flexible) | — |
+| `epic` | Overview, Stories, Acceptance Criteria, Dependencies | `epic_id`, `priority` |
+| `quick-spec` | Intent, Boundaries, Tasks | — |
+| `project-context` | Technology Stack, Critical Implementation Rules, Coding Patterns | — |
 
 ### Required Frontmatter
 
@@ -404,7 +405,7 @@ ci:
 | `specdx generate test-plan` | *(experimental)* Generate test plan stub from stories |
 | `specdx update` | *(experimental)* Suggest spec updates based on code drift |
 | `specdx migrate` | *(experimental)* Check and validate spec schema version |
-| `specdx skills install` | Install Claude Code skills |
+| `specdx skills install` | Install Claude Code skills (`--experimental` also installs the unpromoted ones) |
 | `specdx mcp` | Start the MCP server |
 
 Global flags: `--format pretty|json|github`, `--quiet`, `--verbose`.

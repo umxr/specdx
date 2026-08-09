@@ -43,7 +43,8 @@
   "files": [
     "dist",
     ".claude-plugin",
-    "hooks"
+    "hooks",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup",
@@ -80,5 +81,17 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "peerDependencies": {
+    "ts-morph": ">=20",
+    "@anthropic-ai/sdk": ">=0.30"
+  },
+  "peerDependenciesMeta": {
+    "ts-morph": {
+      "optional": true
+    },
+    "@anthropic-ai/sdk": {
+      "optional": true
+    }
   }
 }
