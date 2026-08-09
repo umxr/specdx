@@ -1,5 +1,25 @@
 # specdx
 
+## 0.4.0-alpha.13
+
+### Minor Changes
+
+- b657e67: feat(lint): flag placeholder sections, and stop declaring a scaffold READY
+
+  `specdx init` produced specs whose every section was `<!-- placeholder -->`, and `lint`, `status` and `ready` all passed them — `structure/required-sections` checks that a heading exists, never that anything was written under it.
+
+  New rule `completeness/no-placeholder-sections` (severity `warn`) flags sections whose body is empty or only a placeholder marker, matched against the whole body so prose mentioning a TODO is untouched. `ready` gains a "Specs have content" check that fails on them, since `ready` gates on errors and a warning alone would not block the verdict.
+
+### Patch Changes
+
+- aa06215: fix(mcp): ship the MCP server's runtime dependencies
+
+  `specdx mcp` failed with `ERR_MODULE_NOT_FOUND` for every npm install. `@modelcontextprotocol/sdk` and `zod` were marked external in the bundle and declared only on the unpublished `@specdx/mcp` package, so nothing supplied them at runtime. They are now dependencies of `specdx`, the import failure reports an actionable message instead of a raw stack trace on the stdio transport, and a packaging test asserts every external is either declared or an allowlisted optional dependency.
+
+- 95ff07d: fix(pack): report when nothing was packed instead of emitting an empty context
+
+  `pack` wrote an empty `<context>` to stdout and exited 0 when no spec was selected, which reads as a successful pack to whatever consumes it. It now explains why — config resolved nothing, everything scored below the relevance threshold, or all candidates were excluded — and exits 3, matching `lint` and `check`. The dry run reports the same, and both now count against the number of specs actually resolved rather than the post-threshold candidates.
+
 ## 0.4.0-alpha.12
 
 ### Minor Changes
