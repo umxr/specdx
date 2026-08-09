@@ -1,6 +1,6 @@
 {
   "name": "specdx",
-  "version": "0.4.0-alpha.18",
+  "version": "0.4.0-alpha.19",
   "description": "Spec-driven development skills for Cursor",
   "commands": "./dist/skills/core",
   "hooks": [
