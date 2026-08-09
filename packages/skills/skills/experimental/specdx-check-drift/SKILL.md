@@ -71,3 +71,7 @@ For each drift:
 | "No specs changed, so no drift" | Code can drift even when specs don't change. Run the check. |
 | "The check score is high enough" | Even 95% means 5% drift. Review the findings. |
 | "I'll check drift later" | Drift compounds. Check now. |
+
+## It's working if
+
+You can say, for each finding, whether the code or the spec should change. A list of findings with no direction is a report, not a drift check.

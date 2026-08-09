@@ -67,7 +67,9 @@ describe("Claude Code plugin manifest", () => {
     // Skills are directories containing SKILL.md; commands are flat markdown
     // files. Declaring the skills directory under `commands` made Claude Code
     // load them as slash commands instead.
-    expect(manifest.skills).toBe("./dist/skills");
+    // The promoted bucket only -- the plugin must never ship experimental
+    // skills, and pointing at the skills root would ship all of them.
+    expect(manifest.skills).toBe("./dist/skills/core");
     expect(manifest.commands).toBeUndefined();
   });
 

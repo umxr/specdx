@@ -79,3 +79,7 @@ Do NOT skip Step 1. Always run `npx specdx check` before reviewing. Do not rely 
 | "There are too many findings to review" | Group by category, prioritize errors over warnings. Review all errors. |
 | "The check failed, so skip it" | Report the failure. Partial results are still valuable. |
 | "The user didn't ask for verification" | If you just finished implementing, verify. It's part of the job. |
+
+## It's working if
+
+Every error-level finding is either resolved or consciously accepted with a reason. Warnings from prose-heavy test plans are expected noise — say so rather than treating the score as a grade.

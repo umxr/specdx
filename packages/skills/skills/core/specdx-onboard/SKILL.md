@@ -47,3 +47,7 @@ Guide the developer through:
 - If a spec is marked `draft`, note that it's tentative and may change
 - If a spec is marked `superseded`, briefly mention what replaced it
 - Use the dependency graph to explain why specs exist (e.g. "The test plan depends on the technical design because test cases reference the API endpoints defined there")
+
+## It's working if
+
+The reader can name what the project is for, which specs are authoritative, and where to look next — without opening a spec file. If your summary is a restatement of the spec list, it has not oriented anyone.

@@ -56,3 +56,7 @@ For the rest of the session:
 2. **Flag drift** — if the code or the user's request contradicts a spec, surface it clearly. Do NOT silently ignore contradictions.
 3. **Note gaps** — if the task needs decisions not covered by any spec, say so
 4. **Respect status** — `approved` specs are current truth; `draft` specs are tentative; `superseded` specs show as collapsed one-liners
+
+## It's working if
+
+You can name the specs governing the task and any constraint they impose, before the first edit. If `pack` returned no specs, that is a signal to check the task wording — not a licence to code without context.

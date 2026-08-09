@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { SKILL_NAMES } from "./install.js";
+import { SKILL_NAMES, CORE_SKILL_NAMES, bucketOf } from "./install.js";
 
 const skillsRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "skills");
 
@@ -27,18 +27,39 @@ function frontmatterOf(skillMd: string): Record<string, string> {
 }
 
 describe("Agent Skills specification conformance", () => {
-  const dirs = readdirSync(skillsRoot).filter((e) => statSync(join(skillsRoot, e)).isDirectory());
+  const buckets = readdirSync(skillsRoot).filter((e) =>
+    statSync(join(skillsRoot, e)).isDirectory(),
+  );
+  const dirs = buckets.flatMap((bucket) => readdirSync(join(skillsRoot, bucket)));
 
-  it("ships every skill as a directory, with no loose files at the root", () => {
-    const looseFiles = readdirSync(skillsRoot).filter(
-      (e) => !statSync(join(skillsRoot, e)).isDirectory(),
-    );
-    expect(looseFiles).toEqual([]);
+  it("organises skills into buckets, with no loose files anywhere", () => {
+    expect(buckets.sort()).toEqual(["core", "experimental"]);
+    for (const dir of [skillsRoot, ...buckets.map((b) => join(skillsRoot, b))]) {
+      expect(readdirSync(dir).filter((e) => !statSync(join(dir, e)).isDirectory())).toEqual([]);
+    }
     expect(dirs.sort()).toEqual([...SKILL_NAMES].sort());
   });
 
+  it("places every skill in the bucket its promotion says", () => {
+    for (const bucket of buckets) {
+      for (const skill of readdirSync(join(skillsRoot, bucket))) {
+        expect(bucketOf(skill)).toBe(bucket);
+      }
+    }
+  });
+
+  it("keeps the experimental caveat out of promoted skills", () => {
+    // Promotion is the folder. A promoted skill still describing itself as
+    // experimental means the two sources of truth have drifted apart.
+    for (const skill of CORE_SKILL_NAMES) {
+      const body = readFileSync(join(skillsRoot, "core", skill, "SKILL.md"), "utf-8");
+      const description = frontmatterOf(body).description ?? "";
+      expect(description.toLowerCase()).not.toContain("[experimental");
+    }
+  });
+
   describe.each(dirs)("%s", (dir) => {
-    const skillPath = join(skillsRoot, dir, "SKILL.md");
+    const skillPath = join(skillsRoot, bucketOf(dir), dir, "SKILL.md");
 
     it("contains a SKILL.md", () => {
       expect(() => readFileSync(skillPath, "utf-8")).not.toThrow();
@@ -64,8 +85,14 @@ describe("Agent Skills specification conformance", () => {
       expect(allowed).not.toContain(",");
     });
 
+    it("states a falsifiable success signal", () => {
+      // Borrowed from mattpocock/skills' docs template: a skill that cannot say
+      // what success looks like cannot be judged to have failed.
+      expect(readFileSync(skillPath, "utf-8")).toContain("## It's working if");
+    });
+
     it("keeps bundled resources in a conventional directory", () => {
-      const entries = readdirSync(join(skillsRoot, dir));
+      const entries = readdirSync(join(skillsRoot, bucketOf(dir), dir));
       const unexpected = entries.filter(
         (e) => e !== "SKILL.md" && !["references", "scripts", "assets"].includes(e),
       );

@@ -12,10 +12,15 @@ export default defineCommand({
           description: "Target directory (default: current directory)",
           default: ".",
         },
+        experimental: {
+          type: "boolean",
+          description: "Also install experimental skills (built on the experimental check command)",
+          default: false,
+        },
       },
       async run({ args }) {
         try {
-          const result = await installSkills(args.dir);
+          const result = await installSkills(args.dir, { experimental: args.experimental });
           if (result.installed.length === 0 && result.updated.length === 0) {
             console.log("  No skill files to install.");
             return;

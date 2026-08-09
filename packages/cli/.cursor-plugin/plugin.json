@@ -2,7 +2,7 @@
   "name": "specdx",
   "version": "0.4.0-alpha.15",
   "description": "Spec-driven development skills for Cursor",
-  "commands": "./dist/skills",
+  "commands": "./dist/skills/core",
   "hooks": [
     {
       "event": "session_start",

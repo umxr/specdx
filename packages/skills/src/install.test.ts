@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { rm, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { installSkills, SKILL_NAMES } from "./install.js";
+import { installSkills, SKILL_NAMES, CORE_SKILL_NAMES } from "./install.js";
 
 describe("installSkills", () => {
   let targetDir: string;
@@ -25,13 +25,15 @@ describe("installSkills", () => {
     expect(SKILL_NAMES).toContain("specdx-sprint-review");
     expect(SKILL_NAMES).toContain("specdx-plan-from-spec");
     expect(SKILL_NAMES).toContain("specdx-onboard");
-    expect(SKILL_NAMES).toHaveLength(9);
+    expect(SKILL_NAMES).toHaveLength(10);
+    expect(CORE_SKILL_NAMES).toHaveLength(8);
+    expect(SKILL_NAMES).toContain("specdx-router");
   });
 
   it("creates skill directories in .claude/skills/", async () => {
     const result = await installSkills(targetDir);
 
-    expect(result.installed).toHaveLength(9);
+    expect(result.installed).toHaveLength(8);
     expect(result.updated).toHaveLength(0);
     expect(result.installed).toContain("specdx-start-task");
     expect(result.installed).toContain("specdx-author-spec");
@@ -39,7 +41,7 @@ describe("installSkills", () => {
     expect(result.installed).toContain("specdx-sprint-review");
     expect(result.installed).toContain("specdx-plan-from-spec");
 
-    for (const skill of SKILL_NAMES) {
+    for (const skill of CORE_SKILL_NAMES) {
       const content = await readFile(
         join(targetDir, ".claude", "skills", skill, "SKILL.md"),
         "utf-8",
@@ -51,7 +53,7 @@ describe("installSkills", () => {
   it("skill files have valid frontmatter", async () => {
     await installSkills(targetDir);
 
-    for (const skill of SKILL_NAMES) {
+    for (const skill of CORE_SKILL_NAMES) {
       const content = await readFile(
         join(targetDir, ".claude", "skills", skill, "SKILL.md"),
         "utf-8",
@@ -84,12 +86,34 @@ describe("installSkills", () => {
 
   it("reports 'updated' on second install", async () => {
     const first = await installSkills(targetDir);
-    expect(first.installed).toHaveLength(9);
+    expect(first.installed).toHaveLength(8);
     expect(first.updated).toHaveLength(0);
 
     const second = await installSkills(targetDir);
     expect(second.installed).toHaveLength(0);
-    expect(second.updated).toHaveLength(9);
+    expect(second.updated).toHaveLength(8);
+  });
+
+  it("installs only promoted skills by default", async () => {
+    const result = await installSkills(targetDir);
+
+    expect(result.installed).not.toContain("specdx-verify");
+    expect(result.installed).not.toContain("specdx-check-drift");
+    await expect(
+      readFile(join(targetDir, ".claude", "skills", "specdx-verify", "SKILL.md"), "utf-8"),
+    ).rejects.toThrow();
+  });
+
+  it("installs experimental skills when asked", async () => {
+    const result = await installSkills(targetDir, { experimental: true });
+
+    expect(result.installed).toHaveLength(10);
+    expect(result.installed).toContain("specdx-verify");
+    const content = await readFile(
+      join(targetDir, ".claude", "skills", "specdx-check-drift", "SKILL.md"),
+      "utf-8",
+    );
+    expect(content.length).toBeGreaterThan(100);
   });
 
   it("installs bundled reference files alongside SKILL.md", async () => {

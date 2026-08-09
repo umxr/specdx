@@ -70,3 +70,7 @@ If the user doesn't have superpowers, use a simpler numbered list format.
 2. **Flag gaps** — if the task needs decisions not covered by any spec, say so
 3. **Respect non-goals** — if the PRD says "not X", don't plan for X
 4. **Note risks** — if the technical design lists risks relevant to the task, address them in the plan
+
+## It's working if
+
+Every step traces to a spec section or is explicitly flagged as a gap the specs do not cover. A plan with steps that trace to neither is invention, not planning.

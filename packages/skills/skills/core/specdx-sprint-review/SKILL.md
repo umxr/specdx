@@ -67,3 +67,7 @@ The `diff --format json` output looks like:
   "summary": "1 spec changed, 1 downstream affected"
 }
 ```
+
+## It's working if
+
+Someone who did not attend the work can read the report and know the suite's health and what changed. If `diff` was unavailable, the report says so rather than implying nothing changed.

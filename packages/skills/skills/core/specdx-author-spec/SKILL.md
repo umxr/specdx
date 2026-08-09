@@ -27,3 +27,7 @@ Start by reading `references/step-01-frontmatter.md` (relative to this file). Co
 Each step file is self-contained with its own instructions. Do NOT read ahead — load one step at a time.
 
 For detailed reference on spec types and their fields, see `references/spec-type-reference.md`.
+
+## It's working if
+
+The spec lints clean *and* a reader who was not in the conversation could build from it. If you finished the steps but every section is one vague line, the skill ran and the spec still fails its job — `sdx lint` will now flag placeholder sections, so an empty pass means real content.

@@ -75,3 +75,7 @@ Do NOT skip any of the three review passes. Each catches different classes of pr
 | "Three passes is overkill for a small spec" | Small specs have the most gaps. Run all three. |
 | "The completeness pass already found issues, so skip the rest" | Consistency and adversarial reviews find different issues. |
 | "I can combine the passes into one review" | Separate passes with different prompts catch more. |
+
+## It's working if
+
+Each of the three passes produced at least one finding, or you can say precisely why it found nothing. Three clean passes on a first-draft spec usually means the passes were not adversarial.

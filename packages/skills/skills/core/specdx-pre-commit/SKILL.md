@@ -64,3 +64,7 @@ Respect the user's decision either way.
 | "I already ran lint earlier" | Specs may have changed since. Run it again. |
 | "The diff command failed, so skip everything" | Report the lint results at minimum. |
 | "`specdx diff` said no changes, so we're clear" | Without `--working` it never looked at the working tree. Re-run with the flag. |
+
+## It's working if
+
+You ran `specdx diff --working` and can state which specs changed, or that none did. If you said "safe to commit" from a run that never looked at the working tree, the check reported on the wrong thing.

@@ -5,18 +5,34 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** Skill directory names. Each holds a SKILL.md plus optional bundled resources. */
-export const SKILL_NAMES = [
+/**
+ * Promoted skills — the set the Claude Code plugin ships and `skills install`
+ * writes by default.
+ *
+ * Promotion is the directory a skill lives in, not an adjective in its
+ * description. A string is easy to drift past; a folder is not.
+ */
+export const CORE_SKILL_NAMES = [
+  "specdx-router",
   "specdx-start-task",
   "specdx-author-spec",
   "specdx-pre-commit",
   "specdx-sprint-review",
   "specdx-plan-from-spec",
   "specdx-onboard",
-  "specdx-verify",
   "specdx-review-spec",
-  "specdx-check-drift",
 ];
+
+/** Skills built on `sdx check`, whose static analysis is noisy on prose specs. */
+export const EXPERIMENTAL_SKILL_NAMES = ["specdx-verify", "specdx-check-drift"];
+
+/** Every skill that ships, promoted or not. */
+export const SKILL_NAMES = [...CORE_SKILL_NAMES, ...EXPERIMENTAL_SKILL_NAMES];
+
+/** Bucket directory a skill lives in, under the skills root. */
+export function bucketOf(skillName: string): "core" | "experimental" {
+  return EXPERIMENTAL_SKILL_NAMES.includes(skillName) ? "experimental" : "core";
+}
 
 export interface InstallResult {
   installed: string[];
@@ -58,7 +74,15 @@ async function filesUnder(dir: string, base = dir): Promise<string[]> {
  * bundled resources included. Skills previously shipped as flat files under
  * `.claude/commands/`, which made them slash commands rather than skills.
  */
-export async function installSkills(projectDir: string): Promise<InstallResult> {
+export interface InstallOptions {
+  /** Include experimental skills. Off by default: only promoted skills ship. */
+  experimental?: boolean;
+}
+
+export async function installSkills(
+  projectDir: string,
+  options: InstallOptions = {},
+): Promise<InstallResult> {
   const sourceDir = getSkillSourceDir();
   const skillsDir = join(projectDir, ".claude", "skills");
   const installed: string[] = [];
@@ -66,8 +90,10 @@ export async function installSkills(projectDir: string): Promise<InstallResult> 
 
   await mkdir(skillsDir, { recursive: true });
 
-  for (const skillName of SKILL_NAMES) {
-    const sourcePath = join(sourceDir, skillName);
+  const names = options.experimental ? SKILL_NAMES : CORE_SKILL_NAMES;
+
+  for (const skillName of names) {
+    const sourcePath = join(sourceDir, bucketOf(skillName), skillName);
     const targetPath = join(skillsDir, skillName);
 
     let exists = false;
