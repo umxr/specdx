@@ -1,5 +1,28 @@
 # specdx
 
+## 0.4.0-alpha.15
+
+### Minor Changes
+
+- a6cb2f1: feat(skills): conform to the Agent Skills specification
+
+  Skills shipped as flat markdown files installed to `.claude/commands/`, which made them slash commands rather than skills. They now follow [agentskills.io/specification](https://agentskills.io/specification):
+  - Each skill is a directory containing `SKILL.md`, with `name` matching the directory.
+  - Bundled resources move to `references/` — the `specdx-author-spec` step files and the shared spec-type reference.
+  - `allowed-tools` is a space-separated string, not comma-separated, and uses Claude Code prefix syntax (`Bash(npx specdx:*)`).
+  - `specdx skills install` writes to `.claude/skills/<name>/SKILL.md` and copies bundled resources.
+  - The Claude Code plugin manifest declares `skills` instead of `commands`, and drops a hand-maintained `version` that had drifted 13 releases behind.
+
+  **Breaking:** skills previously installed under `.claude/commands/` are not removed. Delete the old `specdx-*.md` files there after upgrading.
+
+### Patch Changes
+
+- 55eb27b: fix(plugin): repair the hooks manifest and keep plugin versions in sync
+
+  `claude plugin validate --strict` failed: `hooks.json` used an array where the schema expects a record keyed by event name, and `plugin.json` never referenced it — so the `SessionStart` hook never loaded for plugin users. The hook path now uses `${CLAUDE_PLUGIN_ROOT}`.
+
+  Plugin manifest versions were hand-maintained and had drifted: the Claude manifest carried none and the Cursor manifest was 13 releases behind. `scripts/sync-plugin-version.mjs` now stamps them during `changeset version`, and `pnpm check-plugin-version` guards it in CI.
+
 ## 0.4.0-alpha.14
 
 ### Minor Changes
