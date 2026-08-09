@@ -153,3 +153,61 @@ describe("parseFeatureEntries — the one parser both commands use", () => {
     expect(parseFeatureEntries(content).map((f) => f.text)).toEqual(parseFeatures(content));
   });
 });
+
+describe("story-coverage — sibling features are told apart", () => {
+  // Two features sharing half their words. A story for the first used to satisfy
+  // both, because 2 of 4 words cleared the 0.34 threshold a referencing story
+  // gets. `lint` then said nothing, `ready` asserted "All PRD features have
+  // corresponding stories", and `generate story` refused to stub the missing one.
+  const features = [
+    "- **F1**: Export the invoice report as CSV.",
+    "- **F2**: Export the payroll report as PDF.",
+  ];
+  const refs = [{ id: "prd", relationship: "depends-on" }];
+
+  it("flags the sibling that has no story", () => {
+    const all = [prd(features), story("story-1", "Export the invoice report as CSV", refs)];
+    const results = storyCoverageRule.run(ctx(all));
+    expect(results).toHaveLength(1);
+    expect(results[0]!.message).toContain("payroll");
+  });
+
+  it("stays quiet once both siblings have a story", () => {
+    const all = [
+      prd(features),
+      story("story-1", "Export the invoice report as CSV", refs),
+      story("story-2", "Export the payroll report as PDF", refs),
+    ];
+    expect(storyCoverageRule.run(ctx(all))).toHaveLength(0);
+  });
+
+  it("does not need a distinctive word when a PRD has one feature", () => {
+    const all = [
+      prd(["- **F1**: Export the invoice report as CSV."]),
+      story("story-1", "Export the invoice report as CSV", refs),
+    ];
+    expect(storyCoverageRule.run(ctx(all))).toHaveLength(0);
+  });
+});
+
+describe("story-coverage — one shared domain word is not coverage", () => {
+  // "finance" is a word the whole suite uses. A story about amending invoices
+  // that opens "as a member of finance" hit one of the two words that set the
+  // finance-console feature apart, and that was enough to wave it through.
+  it("does not accept a story that matches only half of what sets a feature apart", () => {
+    const all = [
+      prd([
+        "- **F1**: Amend an open invoice before it is paid.",
+        "- **F2**: List customers for the finance console.",
+      ]),
+      story("story-1", "Amend an open invoice before it is paid", [
+        { id: "prd", relationship: "depends-on" },
+      ]),
+    ];
+    all[1]!.content = "## Description\n\nAs a member of finance, I want to amend an invoice.\n";
+
+    const results = storyCoverageRule.run(ctx(all));
+    expect(results).toHaveLength(1);
+    expect(results[0]!.message).toContain("finance console");
+  });
+});

@@ -4,6 +4,7 @@ import {
   parseTypeDefinitions,
   parseTestCases,
   hasEndpointsSection,
+  unreadableTypeBlocks,
 } from "./spec-parsers.js";
 
 describe("parseEndpoints", () => {
@@ -290,5 +291,124 @@ We index on startsAt and on the organiser id.
   it("still reads a generic type heading", () => {
     const content = "## Data Model\n\n### Page<Event>\n\n- items: Event[]\n";
     expect(parseTypeDefinitions(content).map((t) => t.name)).toEqual(["Page<Event>"]);
+  });
+});
+
+describe("parseTypeDefinitions — table form", () => {
+  // The note for an unreadable Data Model fires per spec, so one readable type
+  // silenced every unreadable one beside it. A table-shaped type left the
+  // denominator entirely and the percentage did not move.
+  const withTable = `## Data Model
+
+### Payment
+
+| Field | Type | Notes |
+|---|---|---|
+| id | string | UUID |
+| orderId | string | FK to Order |
+| amountCents | number | minor units |
+| refundedAt? | string | null until refunded |
+
+### Indexes
+
+Payments are indexed on \`orderId\`.
+`;
+
+  it("reads fields declared as a markdown table", () => {
+    const types = parseTypeDefinitions(withTable);
+    expect(types).toHaveLength(1);
+    expect(types[0]!.name).toBe("Payment");
+    expect(types[0]!.fields.map((f) => f.name)).toEqual([
+      "id",
+      "orderId",
+      "amountCents",
+      "refundedAt",
+    ]);
+    expect(types[0]!.fields.find((f) => f.name === "refundedAt")?.optional).toBe(true);
+  });
+
+  it("leaves a table that is not about fields alone", () => {
+    const notFields = `## Data Model
+
+### Order
+
+| Environment | Region |
+|---|---|
+| production | eu-west-1 |
+`;
+    expect(parseTypeDefinitions(notFields)).toEqual([]);
+  });
+
+  it("still ignores a prose sub-heading with no declarations", () => {
+    expect(parseTypeDefinitions(withTable).map((t) => t.name)).not.toContain("Indexes");
+  });
+});
+
+describe("unreadableTypeBlocks", () => {
+  it("names a type whose table cannot be read as fields", () => {
+    const content = `## Data Model
+
+### Invoice
+
+- \`id\`: string
+
+### Payment
+
+| Column | Kind |
+|---|---|
+| id | string |
+`;
+    expect(unreadableTypeBlocks(content)).toEqual(["Payment"]);
+  });
+
+  it("says nothing about a prose sub-heading", () => {
+    const content = `## Data Model
+
+### Invoice
+
+- \`id\`: string
+
+### Indexes
+
+Invoices are indexed on \`customerId\`.
+`;
+    expect(unreadableTypeBlocks(content)).toEqual([]);
+  });
+
+  it("says nothing when every table parses", () => {
+    const content = `## Data Model
+
+### Payment
+
+| Field | Type |
+|---|---|
+| id | string |
+`;
+    expect(unreadableTypeBlocks(content)).toEqual([]);
+  });
+});
+
+describe("parseTestCases — case IDs", () => {
+  // The ID belongs to the spec, not to the test a user is asked to write. It
+  // used to reach the suggestion verbatim: `Add a test matching: "**TC5**: …"`.
+  it("lifts a bold case ID out of the description", () => {
+    const cases = parseTestCases(
+      "## Test Cases\n\n- **TC5**: refuses to amend an invoice that is already paid\n",
+    );
+    expect(cases).toHaveLength(1);
+    expect(cases[0]!.id).toBe("TC5");
+    expect(cases[0]!.description).toBe("refuses to amend an invoice that is already paid");
+  });
+
+  it("lifts a plain case ID too", () => {
+    const cases = parseTestCases("## Test Cases\n\n- TC1: returns an empty list\n");
+    expect(cases[0]!.id).toBe("TC1");
+    expect(cases[0]!.description).toBe("returns an empty list");
+  });
+
+  it("leaves an ordinary labelled bullet as it was", () => {
+    const cases = parseTestCases("## Test Cases\n\n- Auth: login, logout\n");
+    expect(cases.map((c) => c.description)).toEqual(["Auth: login", "Auth: logout"]);
+    expect(cases[0]!.id).toBeUndefined();
   });
 });

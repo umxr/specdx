@@ -76,11 +76,16 @@ async function walkAppDir(
  */
 export async function extractNextjsRoutes(
   projectDir: string,
-  appDir = "app",
+  appDir?: string,
 ): Promise<ExtractedRoute[]> {
-  const scanDir = join(projectDir, appDir);
+  // `src/app` is as official a layout as `app`, and defaulting to `app` alone
+  // meant half of all App Router projects scanned an absent directory and
+  // reported no routes — the same shape as reading only the project root for a
+  // Prisma schema. An explicit `app_dir` is still honoured exactly as given.
+  const candidates = appDir !== undefined ? [appDir] : ["app", "src/app"];
+  const scanDir = candidates.map((dir) => join(projectDir, dir)).find((dir) => existsSync(dir));
 
-  if (!existsSync(scanDir)) {
+  if (!scanDir) {
     return [];
   }
 

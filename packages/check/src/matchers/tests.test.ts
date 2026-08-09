@@ -70,3 +70,21 @@ describe("matchTests", () => {
     }
   });
 });
+
+describe("matchTests — what the suggestion asks for", () => {
+  it("suggests the test name without the spec's case ID", () => {
+    const findings = matchTests(
+      [{ id: "TC5", description: "refuses to amend an invoice that is already paid" }],
+      [],
+      "tp-001",
+    );
+
+    expect(findings).toHaveLength(1);
+    // Traceable back to the test plan...
+    expect(findings[0]!.expected).toBe("TC5: refuses to amend an invoice that is already paid");
+    // ...but the test to write carries no spec markup.
+    expect(findings[0]!.suggestion).toBe(
+      'Add a test matching: "refuses to amend an invoice that is already paid"',
+    );
+  });
+});

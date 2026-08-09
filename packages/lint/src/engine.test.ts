@@ -76,6 +76,31 @@ describe("createLintEngine", () => {
     expect(results.hasErrors).toBe(true);
   });
 
+  it("stamps the rule's severity onto the diagnostics it emitted", () => {
+    // A rule that declares `error` but writes `warn` into its own diagnostic --
+    // the shape of every built-in warn rule after `strict` rewrites it.
+    const declaresErrorEmitsWarn: LintRule = {
+      ...alwaysWarnRule,
+      id: "test/declares-error",
+      severity: "error",
+      run(ctx): Diagnostic[] {
+        return [
+          {
+            ruleId: "test/declares-error",
+            severity: "warn",
+            message: "emitted as warn",
+            filePath: ctx.spec.filePath,
+          },
+        ];
+      },
+    };
+    const engine = createLintEngine({ rules: [declaresErrorEmitsWarn] });
+    const results = engine.lint([mockSpec]);
+    expect(results.diagnostics[0]!.severity).toBe("error");
+    expect(results.hasErrors).toBe(true);
+    expect(results.hasWarnings).toBe(false);
+  });
+
   it("passes context with config and all specs to each rule", () => {
     let receivedContext: LintContext | undefined;
     const spyRule: LintRule = {

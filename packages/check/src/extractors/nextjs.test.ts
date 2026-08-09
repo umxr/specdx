@@ -28,3 +28,23 @@ describe("extractNextjsRoutes", () => {
     expect(routes).toEqual([]);
   });
 });
+
+describe("extractNextjsRoutes — app directory location", () => {
+  it("finds routes under src/app, the other official layout", async () => {
+    const routes = await extractNextjsRoutes(
+      join(import.meta.dirname, "../../test/fixtures/nextjs-src-app"),
+    );
+    expect(routes.map((r) => `${r.method} ${r.path}`).sort()).toEqual([
+      "GET /api/orders",
+      "POST /api/orders",
+    ]);
+  });
+
+  it("honours an explicit app_dir exactly, without guessing", async () => {
+    const routes = await extractNextjsRoutes(
+      join(import.meta.dirname, "../../test/fixtures/nextjs-src-app"),
+      "app",
+    );
+    expect(routes).toEqual([]);
+  });
+});

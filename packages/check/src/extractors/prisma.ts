@@ -1,5 +1,5 @@
 import type { ExtractedType } from "../types.js";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const PRISMA_TYPE_MAP: Record<string, string> = {
@@ -14,15 +14,53 @@ const PRISMA_TYPE_MAP: Record<string, string> = {
   Bytes: "Buffer",
 };
 
-export async function extractPrismaModels(projectDir: string): Promise<ExtractedType[]> {
-  const schemaPath = join(projectDir, "schema.prisma");
-  let content: string;
-  try {
-    content = await readFile(schemaPath, "utf-8");
-  } catch {
-    return [];
+/**
+ * Every place Prisma keeps a schema, in the order Prisma itself prefers.
+ *
+ * Only the project root was read, and `prisma init` has never written there --
+ * it writes `prisma/schema.prisma`. So a real Prisma project's models were
+ * invisible, every one of them was reported as unimplemented, and the coverage
+ * score dropped to match, with no note saying a schema had been looked for.
+ *
+ * `prisma/schema/` is the multi-file layout supported since Prisma 5.15.
+ */
+export async function findPrismaSchemas(projectDir: string): Promise<string[]> {
+  const found: string[] = [];
+
+  for (const relative of ["prisma/schema.prisma", "schema.prisma"]) {
+    const path = join(projectDir, relative);
+    try {
+      await readFile(path, "utf-8");
+      found.push(path);
+    } catch {
+      // not there; try the next layout
+    }
   }
 
+  const schemaDir = join(projectDir, "prisma", "schema");
+  try {
+    for (const entry of await readdir(schemaDir)) {
+      if (entry.endsWith(".prisma")) found.push(join(schemaDir, entry));
+    }
+  } catch {
+    // no multi-file schema directory
+  }
+
+  return found;
+}
+
+export async function extractPrismaModels(projectDir: string): Promise<ExtractedType[]> {
+  const schemaPaths = await findPrismaSchemas(projectDir);
+  if (schemaPaths.length === 0) return [];
+
+  const models: ExtractedType[] = [];
+  for (const schemaPath of schemaPaths) {
+    models.push(...parseSchema(await readFile(schemaPath, "utf-8"), schemaPath));
+  }
+  return models;
+}
+
+function parseSchema(content: string, schemaPath: string): ExtractedType[] {
   const models: ExtractedType[] = [];
   const modelRe = /^model\s+(\w+)\s*\{([^}]+)\}/gm;
   let modelMatch;

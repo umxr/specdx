@@ -153,10 +153,70 @@ export function uncoveredFeatures(
     threshold: referencesSpec(story, prdId) ? REFERENCED_THRESHOLD : OVERLAP_THRESHOLD,
   }));
 
-  return features.filter((feature) => {
-    const featureTokens = tokenise(feature);
-    return !scored.some((s) => overlap(featureTokens, s.tokens) >= s.threshold);
+  const tokenised = features.map(tokenise);
+
+  return features.filter((_feature, i) => {
+    const featureTokens = tokenised[i]!;
+    // What makes *this* feature different from its siblings. Share of words
+    // alone is not enough: "Export the payroll report as PDF" and "Export the
+    // invoice report as CSV" agree on half their words, so a story covering one
+    // was read as covering both -- and `ready` then asserted that every feature
+    // had a story while one plainly had none. A story only covers a feature if
+    // it also mentions something that sets that feature apart.
+    const distinctive = distinctiveTokens(featureTokens, tokenised, i);
+    return !scored.some(
+      (s) =>
+        overlap(featureTokens, s.tokens) >= s.threshold &&
+        covers(distinctive, featureTokens, s.tokens),
+    );
   });
+}
+
+/**
+ * Whether a story picks up more than half of what sets a feature apart from its
+ * siblings.
+ *
+ * One distinctive word is not enough on its own. "List customers for the
+ * finance console" is set apart by *finance* and *console*, and a story about
+ * amending invoices that opens "as a member of finance" hits one of the two —
+ * enough to be waved through by a "matches something distinctive" test, and
+ * plainly not a story about the finance console.
+ *
+ * Two cases hand the decision back to the overlap threshold alone, because in
+ * both of them distinctiveness carries no information:
+ *
+ * - Nothing is distinctive. Two features written in near-identical words are
+ *   genuinely indistinguishable to a word-overlap rule.
+ * - Everything is distinctive. No sibling shares a word, so no sibling's
+ *   vocabulary inflated the overlap score in the first place — and demanding
+ *   half of a long feature description would reject the short, accurate story
+ *   titles this rule exists to accept.
+ */
+function covers(
+  distinctive: Set<string>,
+  featureTokens: Set<string>,
+  storyTokens: Set<string>,
+): boolean {
+  if (distinctive.size === 0 || distinctive.size === featureTokens.size) return true;
+  let matched = 0;
+  for (const token of distinctive) if (storyTokens.has(token)) matched++;
+  return matched > distinctive.size / 2;
+}
+
+/**
+ * The tokens of `features[index]` that no sibling feature uses.
+ */
+function distinctiveTokens(
+  featureTokens: Set<string>,
+  allFeatureTokens: Set<string>[],
+  index: number,
+): Set<string> {
+  const distinctive = new Set(featureTokens);
+  for (let i = 0; i < allFeatureTokens.length; i++) {
+    if (i === index) continue;
+    for (const token of allFeatureTokens[i]!) distinctive.delete(token);
+  }
+  return distinctive;
 }
 
 export const storyCoverageRule: LintRule = {
