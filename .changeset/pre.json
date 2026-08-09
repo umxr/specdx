@@ -18,6 +18,7 @@
     "context-engine-focus",
     "diff-working-tree",
     "dogfood-issue-batch",
+    "fold-changelog-into-diff",
     "glob-aware-diff",
     "honest-trims-and-cycles",
     "mcp-deps-and-placeholder-rule",
