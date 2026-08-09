@@ -1,5 +1,52 @@
 # specdx
 
+## 0.4.0-alpha.17
+
+### Minor Changes
+
+- c6920d6: refactor: drop the `explain` command
+
+  **Breaking:** `specdx explain` is removed, along with the programmatic `runExplain` export.
+
+  It summarised each spec by its first non-empty line, which on a freshly scaffolded suite is the template's `<!-- placeholder -->` comment — so the one command meant to orient a new developer described every spec as a placeholder. Everything it reported is already available and correct elsewhere: `status --format json` for the project name, counts, statuses and health, `graph` for how specs relate, and `pack --full` for the content itself. The `specdx-onboard` skill now drives that sequence.
+
+  0.x is the last cheap moment to remove a command; after a stable release it breaks users.
+
+### Patch Changes
+
+- d58623d: refactor: promote CLI commands by folder
+
+  Command modules now live in `core/` or `experimental/` buckets, and the
+  `[experimental]` caveat is derived from the bucket at render time rather than
+  typed into each description. No file under `commands/` spells the marker any
+  more, so the folder and the label cannot disagree.
+
+  Sub-commands carry their own bucket: `generate` is promoted, `generate
+test-plan` is not, and the caveat now reaches it from its own folder instead of
+  a hand-written string.
+
+  Nothing changes for a user — `--help` renders the same labels — but the
+  conformance test now fails when a command's promotion drifts from how it
+  describes itself, including in the README's CLI reference. This is the drift
+  that quietly moved `explain` and `changelog` into the core surface.
+
+- 40d0fd5: fix(pack): stop collapsing stale specs when the budget has room for them
+
+  `pack` compressed every spec untouched for `stable_days` (7 by default) before
+  it ever consulted the budget, so a suite that fitted comfortably still came back
+  as `[Unchanged since … — N tokens omitted]` stubs. On specdx's own specs that
+  meant 1,457 of 12,000 tokens used and 20 sections stubbed, when the whole suite
+  fits in 8,056. Specs that have not changed in a week are the normal case, so the
+  default configuration degraded almost every real suite — silently, since
+  `used=1457 budget=12000 omitted=0` reads like a healthy pack.
+
+  The staleness collapse is now a response to budget pressure: full content is
+  used when it fits, and stale specs collapse from least relevant upward only
+  until the suite fits. Boilerplate stripping and superseded-ADR collapse are
+  unchanged — those are hygiene at any budget.
+
+  Fixes #33.
+
 ## 0.4.0-alpha.16
 
 ### Minor Changes
