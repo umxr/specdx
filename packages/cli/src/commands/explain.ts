@@ -77,7 +77,10 @@ export async function runExplain(_options: { format?: string } = {}): Promise<Ex
 }
 
 export default defineCommand({
-  meta: { name: "explain", description: "Explain the spec suite for onboarding" },
+  meta: {
+    name: "explain",
+    description: "[experimental] Explain the spec suite for onboarding",
+  },
   args: {
     format: { type: "string", description: "Output format: pretty, json", default: "pretty" },
   },

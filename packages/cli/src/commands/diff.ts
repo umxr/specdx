@@ -2,6 +2,7 @@ import { defineCommand } from "citty";
 import { join } from "node:path";
 import { diffBetweenRefs, DEFAULT_DIFF_CONFIG, DiffError } from "@specdx/diff";
 import { loadConfig } from "@specdx/core";
+import { formatChangelog } from "../formatters/changelog.js";
 import type { DiffResult } from "@specdx/diff";
 
 export interface RunDiffOptions {
@@ -47,7 +48,7 @@ export default defineCommand({
     spec: { type: "string", description: "Scope to a single spec ID" },
     format: {
       type: "string",
-      description: "Output format: pretty, json",
+      description: "Output format: pretty, json, changelog",
       default: "pretty",
     },
   },
@@ -64,6 +65,15 @@ export default defineCommand({
 
         if (args.format === "json") {
           console.log(JSON.stringify(result, null, 2));
+          return;
+        }
+
+        if (args.format === "changelog") {
+          const baseRef =
+            args.base ?? (await loadConfig(undefined, process.cwd())).diff?.baseline_ref ?? "main";
+          console.log(
+            formatChangelog(result, baseRef, args.working ? "working tree" : (args.head ?? "HEAD")),
+          );
           return;
         }
 

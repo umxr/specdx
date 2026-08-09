@@ -122,7 +122,10 @@ specdx diff
 specdx diff --base main --head HEAD
 
 # Generate a changelog for sprint review
-specdx changelog --from v1.0 --to HEAD
+specdx diff --base v1.0 --head HEAD --format changelog
+
+# Include specs you haven't committed yet
+specdx diff --working
 ```
 
 `diff` walks the dependency graph to find downstream specs affected by upstream changes. If you updated the PRD but forgot to update the test plan that depends on it, `diff` flags it.
@@ -389,11 +392,10 @@ ci:
 | `specdx pack --task <task>` | Pack specs into token-optimised context |
 | `specdx status` | Show spec suite health overview |
 | `specdx check` | *(experimental)* Analyse spec-to-implementation drift |
-| `specdx diff` | Show spec changes and downstream impact |
+| `specdx diff` | Show spec changes and downstream impact (`--working`, `--format changelog`) |
 | `specdx graph` | Print the dependency graph |
 | `specdx ready` | Check if specs are ready for implementation |
-| `specdx explain` | Print a human-readable spec suite overview |
-| `specdx changelog` | Generate changelog of spec changes |
+| `specdx explain` | *(experimental)* Print a human-readable spec suite overview |
 | `specdx generate story --from <id>` | Generate user story stubs from a PRD |
 | `specdx generate test-plan` | *(experimental)* Generate test plan stub from stories |
 | `specdx update` | *(experimental)* Suggest spec updates based on code drift |
