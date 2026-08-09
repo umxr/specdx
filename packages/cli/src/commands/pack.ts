@@ -21,6 +21,30 @@ function copyToClipboard(text: string): void {
   execSync(cmd, { input: text, stdio: ["pipe", "ignore", "ignore"] });
 }
 
+/**
+ * Why a pack produced no context, if it produced none.
+ *
+ * An empty `<context>` on stdout with exit 0 reads as "here is your context"
+ * to whatever consumes it. `lint` and `check` already use exit 3 for
+ * "nothing was assessed"; packing nothing is the same claim.
+ */
+export function emptyPackReason(
+  stats: { specsIncluded: number; specsExcluded: number },
+  specsResolved: number,
+): string | undefined {
+  if (stats.specsIncluded > 0) return undefined;
+  if (specsResolved === 0) {
+    return "no specs resolved from spec.config.yaml — check the paths in your config";
+  }
+  // The relevance resolver drops sub-threshold specs before allocation, so
+  // stats.specsExcluded counts only allocator-level exclusions. Reporting the
+  // resolved total instead keeps the message from blaming the config.
+  if (stats.specsExcluded === 0) {
+    return `none of the ${specsResolved} resolved spec(s) scored above the relevance threshold for this task — try different --task wording, name specs with --specs, or use --full`;
+  }
+  return `all ${stats.specsExcluded} candidate spec(s) were excluded — widen --specs or raise --budget`;
+}
+
 export interface RunPackOptions {
   configDir: string;
   task?: string;
@@ -31,7 +55,9 @@ export interface RunPackOptions {
   dryRun?: boolean;
 }
 
-export async function runPack(options: RunPackOptions): Promise<PackResult> {
+export async function runPack(
+  options: RunPackOptions,
+): Promise<PackResult & { specsResolved: number }> {
   const config = await loadConfig(undefined, options.configDir);
 
   const allSpecs: ParsedSpec[] = [];
@@ -63,7 +89,7 @@ export async function runPack(options: RunPackOptions): Promise<PackResult> {
     graph,
   );
 
-  return result;
+  return { ...result, specsResolved: allSpecs.length };
 }
 
 export default defineCommand({
@@ -145,11 +171,15 @@ export default defineCommand({
           );
         }
         console.log(`\n  Budget: ${stats.used} / ${stats.budget} tokens`);
-        console.log(
-          `  Included: ${stats.specsIncluded} / ${stats.specsIncluded + stats.specsExcluded} specs`,
-        );
+        console.log(`  Included: ${stats.specsIncluded} / ${result.specsResolved} specs`);
         console.log(`  Sections compressed: ${stats.sectionsCompressed}`);
         console.log(`  Sections omitted: ${stats.sectionsOmitted}\n`);
+        // A dry run that plans nothing is as misleading as an empty payload.
+        const dryReason = emptyPackReason(stats, result.specsResolved);
+        if (dryReason) {
+          console.log(`  ⚠ Nothing would be packed: ${dryReason}\n`);
+          process.exit(3);
+        }
         return;
       }
 
@@ -171,6 +201,13 @@ export default defineCommand({
       process.stderr.write(
         `Packed ${stats.specsIncluded}/${total} specs \u2022 ${stats.used} / ${stats.budget} tokens \u2022 ${stats.sectionsCompressed} sections compressed \u2022 ${stats.sectionsOmitted} sections omitted\n`,
       );
+
+      // Never let an empty payload leave looking like a successful pack.
+      const emptyReason = emptyPackReason(stats, result.specsResolved);
+      if (emptyReason) {
+        process.stderr.write(`\n  \u26a0 No context packed: ${emptyReason}\n\n`);
+        process.exit(3);
+      }
     } catch (err) {
       console.error(`\n  \u2717 ${(err as Error).message}\n`);
       process.exit(1);

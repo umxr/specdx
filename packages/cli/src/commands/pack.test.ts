@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { runPack } from "./pack.js";
+import { runPack, emptyPackReason } from "./pack.js";
 
 const specContent = [
   "---",
@@ -80,5 +80,26 @@ describe("runPack", () => {
 
     expect(result.output).toContain("# td-001");
     expect(result.output).not.toContain("<context");
+  });
+});
+
+describe("emptyPackReason", () => {
+  it("returns undefined when specs were packed", () => {
+    expect(emptyPackReason({ specsIncluded: 3, specsExcluded: 1 }, 4)).toBeUndefined();
+  });
+
+  it("names an unresolved config when nothing resolved at all", () => {
+    const reason = emptyPackReason({ specsIncluded: 0, specsExcluded: 0 }, 0);
+    expect(reason).toMatch(/no specs resolved/);
+  });
+
+  it("names the relevance threshold when specs resolved but none scored", () => {
+    const reason = emptyPackReason({ specsIncluded: 0, specsExcluded: 0 }, 7);
+    expect(reason).toMatch(/none of the 7 resolved spec\(s\)/);
+  });
+
+  it("names exclusion when candidates existed but none were selected", () => {
+    const reason = emptyPackReason({ specsIncluded: 0, specsExcluded: 5 }, 5);
+    expect(reason).toMatch(/all 5 candidate spec\(s\) were excluded/);
   });
 });
