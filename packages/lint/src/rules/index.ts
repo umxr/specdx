@@ -11,6 +11,7 @@ import { edgeCaseCoverageRule } from "./edge-case-coverage.js";
 import { namingConventionsRule } from "./naming-conventions.js";
 import { threatCoverageRule } from "./threat-coverage.js";
 import { ambiguityScoreAiRule } from "./ambiguity-score-ai.js";
+import { noPlaceholderSectionsRule } from "./no-placeholder-sections.js";
 import type { LintRule } from "../types.js";
 
 export const structureRules: LintRule[] = [
@@ -30,6 +31,7 @@ export const contentRules: LintRule[] = [
   namingConventionsRule,
   threatCoverageRule,
   ambiguityScoreAiRule,
+  noPlaceholderSectionsRule,
 ];
 
 export const allBuiltinRules: LintRule[] = [...structureRules, ...contentRules];
@@ -48,4 +50,5 @@ export {
   namingConventionsRule,
   threatCoverageRule,
   ambiguityScoreAiRule,
+  noPlaceholderSectionsRule,
 };

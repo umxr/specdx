@@ -125,6 +125,31 @@ export async function runReady(): Promise<ReadyResult> {
     });
   }
 
+  // Check 2b: specs actually say something. A scaffolded suite passes every
+  // structural check while every section is still a placeholder, so without
+  // this a brand new project is declared ready to implement (issue #24).
+  const placeholderDiagnostics = lintResults.diagnostics.filter(
+    (d) => d.ruleId === "completeness/no-placeholder-sections",
+  );
+  const placeholderFiles = new Set(placeholderDiagnostics.map((d) => d.filePath));
+  if (specs.length === 0) {
+    checks.push({
+      name: "Specs have content",
+      passed: true,
+      skipped: true,
+      details: "skipped (no specs to assess)",
+    });
+  } else {
+    checks.push({
+      name: "Specs have content",
+      passed: placeholderFiles.size === 0,
+      details:
+        placeholderFiles.size === 0
+          ? "No placeholder sections"
+          : `${placeholderDiagnostics.length} placeholder section(s) across ${placeholderFiles.size} spec(s)`,
+    });
+  }
+
   // Check 3: No integrity issues (broken refs, circular deps)
   const integrityIssues: string[] = [];
   if (graphError) {
