@@ -29,6 +29,7 @@
     "planned-artifacts",
     "plugin-manifest-fixes",
     "relations-unification",
+    "skill-buckets-and-router",
     "story-filename-word-boundary",
     "vacuous-pass-audit"
   ]
