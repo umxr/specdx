@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, basename, resolve } from "node:path";
 import { REQUIRED_SECTIONS } from "@specdx/schema";
 
 export type Template = "lightweight" | "bmad" | "api-first" | "quick" | "context";
@@ -125,6 +125,14 @@ export async function scaffoldProject({
   await writeFile(join(targetDir, "spec.config.yaml"), configContent, "utf-8");
 }
 
+/**
+ * The project name to use when `--name` is absent: the target directory's own
+ * name, resolved so that `.` becomes the current directory rather than a dot.
+ */
+export function defaultProjectName(dir: string): string {
+  return basename(resolve(dir)) || "my-project";
+}
+
 export default defineCommand({
   meta: {
     name: "init",
@@ -133,8 +141,7 @@ export default defineCommand({
   args: {
     name: {
       type: "string",
-      description: "Project name",
-      required: true,
+      description: "Project name (default: the target directory's name)",
     },
     template: {
       type: "string",
@@ -148,12 +155,17 @@ export default defineCommand({
     },
   },
   async run({ args }) {
-    const { name, template, dir } = args;
+    const { template, dir } = args;
     const validTemplates: Template[] = ["lightweight", "bmad", "api-first", "quick", "context"];
     if (!validTemplates.includes(template as Template)) {
       console.error(`Unknown template: ${template}. Choose from: ${validTemplates.join(", ")}`);
       process.exit(1);
     }
+
+    // The first command anyone runs should not fail on a missing flag when the
+    // answer is sitting in the path. `--name` still wins where they differ.
+    const name = args.name || defaultProjectName(dir);
+
     console.log(`Scaffolding "${name}" with template "${template}" in ${dir}...`);
     await scaffoldProject({ projectName: name, template: template as Template, targetDir: dir });
     console.log(`Done! Project "${name}" scaffolded successfully.`);

@@ -329,6 +329,48 @@ references:
 
 Relationships: `implemented-by`, `decomposed-into`, `depends-on`, `supersedes`, `related-to`.
 
+### Sections `specdx check` reads
+
+Most sections are prose that only a human reads. Three are parsed, so `check`
+can compare them against code. Write them in one of the shapes below — anything
+else is treated as prose, and `check` reports the section as not assessed rather
+than counting it as covered.
+
+**`## Endpoints`** (api-contract) — either shape, or a mix:
+
+```markdown
+- `GET /invoices` — list invoices
+- POST /invoices — create an invoice
+- `DELETE /invoices/:id` — void an invoice
+
+### GET /invoices/:id
+
+Read a single invoice.
+```
+
+**`## Data Model`** (technical-design) — a `###` heading per type, one field per
+line. The heading must be a single identifier; `### Notes on the model` is read
+as prose, not as a type called `Notes`. Backticks around field names are
+optional:
+
+```markdown
+### Invoice
+
+- id: string
+- `amountCents`: number
+- paidAt?: Date
+```
+
+**`## Test Cases`** (test-plan) — one bullet per case, optionally grouped under
+`###` headings. Each is matched against your test descriptions:
+
+```markdown
+### Invoices
+
+- creates an invoice with a valid payload
+- rejects an invoice with a negative amount
+```
+
 ---
 
 ## Configuration

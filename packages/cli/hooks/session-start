@@ -30,8 +30,25 @@ escape_for_json() {
     printf '%s' "$s"
 }
 
-# Determine specdx invocation: prefer local binary, fall back to npx
-if command -v specdx >/dev/null 2>&1; then
+# Determine the specdx invocation.
+#
+# Order matters. Resolving `specdx` from PATH first meant the plugin ran
+# whatever version happened to be installed globally -- a stale one reported
+# the project's config as invalid, and that answer was injected into the
+# session as fact. A plugin ships with its own CLI; it must run that one.
+#
+#   1. the CLI bundled in this very package (${CLAUDE_PLUGIN_ROOT}/dist/main.js)
+#   2. the project's own devDependency, so a pinned version wins
+#   3. PATH
+#   4. npx, which resolves the registry's `latest` and needs the network
+PLUGIN_MAIN="${CLAUDE_PLUGIN_ROOT:-${SCRIPT_ROOT:-}}"
+[ -z "$PLUGIN_MAIN" ] && PLUGIN_MAIN="$(cd "$(dirname "$0")/.." && pwd)"
+
+if [ -f "${PLUGIN_MAIN}/dist/main.js" ] && command -v node >/dev/null 2>&1; then
+    SPECDX="node ${PLUGIN_MAIN}/dist/main.js"
+elif [ -x "${PROJECT_ROOT}/node_modules/.bin/specdx" ]; then
+    SPECDX="${PROJECT_ROOT}/node_modules/.bin/specdx"
+elif command -v specdx >/dev/null 2>&1; then
     SPECDX="specdx"
 elif command -v npx >/dev/null 2>&1; then
     SPECDX="npx --yes specdx"
@@ -46,8 +63,23 @@ run_specdx() {
     (cd "$1" && $SPECDX "${@:2}" 2>&1) | grep -v '^npm warn' || true
 }
 
+# Keep the injected block bounded. `graph` grows with the suite -- one line per
+# spec, plus one per reference edge, plus the "not reflected in config requires"
+# advice -- so a large suite would silently spend a large part of the context
+# window on a session summary. The cap is stated in lines rather than tokens
+# because that is what this script can count.
+MAX_GRAPH_LINES=40
+
+truncate_lines() {
+    awk -v max="$1" '
+        NR <= max { print }
+        END { if (NR > max) printf "  … %d more line(s) — run `specdx graph` for the rest\n", NR - max }
+    '
+}
+
 validate_out="$(run_specdx "$PROJECT_ROOT" validate)" || validate_out="(validate failed)"
-graph_out="$(run_specdx "$PROJECT_ROOT" graph)" || graph_out="(graph failed)"
+graph_out="$(run_specdx "$PROJECT_ROOT" graph | truncate_lines "$MAX_GRAPH_LINES")" ||
+    graph_out="(graph failed)"
 
 # Build a compact summary (target: under 500 tokens)
 summary="<specdx-context>

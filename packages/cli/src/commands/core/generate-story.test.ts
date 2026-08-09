@@ -222,4 +222,54 @@ describe("generateStories — does not duplicate covered features (F10)", () => 
     expect(result.generated[0]).toContain("audit-log");
     expect(result.skipped).toEqual(["Create a user account with an email address."]);
   });
+
+  it("finds features a PRD writes without **F<N>** IDs", async () => {
+    // The generator's own regex required the ID form, so on this PRD it
+    // reported "no features found" while lint and `ready` were simultaneously
+    // reporting three features in the same file.
+    await writeFile(
+      join(dir, "spec.config.yaml"),
+      [
+        'version: "1.0"',
+        "specs:",
+        "  prd:",
+        "    path: specs/prd.md",
+        "    type: prd",
+        "  stories:",
+        "    path: specs/stories/*.md",
+        "    type: user-story",
+      ].join("\n"),
+    );
+    await writeFile(
+      join(dir, "specs/prd.md"),
+      [
+        "---",
+        'id: "prd"',
+        'type: "prd"',
+        'title: "Billing"',
+        'status: "draft"',
+        'version: "1.0"',
+        'created: "2026-01-01"',
+        'authors: ["dev"]',
+        "---",
+        "",
+        "## Features",
+        "",
+        "- **Invoice creation** — finance creates an invoice for a customer.",
+        "- **Invoice listing** — finance lists invoices and filters by customer.",
+        "",
+        "## Success Criteria",
+        "",
+        "Invoice error rate below 0.5%.",
+        "",
+      ].join("\n"),
+    );
+
+    const result = await generateStories({ configDir: dir, from: "prd" });
+
+    expect(result.generated).toHaveLength(2);
+    const names = result.generated.map((p) => p.split("/").pop());
+    expect(names[0]).toMatch(/^story-f1-/);
+    expect(names[1]).toMatch(/^story-f2-/);
+  });
 });

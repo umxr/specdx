@@ -12,6 +12,7 @@ import { namingConventionsRule } from "./naming-conventions.js";
 import { threatCoverageRule } from "./threat-coverage.js";
 import { ambiguityScoreAiRule } from "./ambiguity-score-ai.js";
 import { noPlaceholderSectionsRule } from "./no-placeholder-sections.js";
+import { idMatchesConfigKeyRule } from "./id-matches-config-key.js";
 import type { LintRule } from "../types.js";
 
 export const structureRules: LintRule[] = [
@@ -20,6 +21,7 @@ export const structureRules: LintRule[] = [
   validReferencesRule,
   noCircularDepsRule,
   singleProjectContextRule,
+  idMatchesConfigKeyRule,
 ];
 
 export const contentRules: LintRule[] = [
@@ -51,4 +53,5 @@ export {
   threatCoverageRule,
   ambiguityScoreAiRule,
   noPlaceholderSectionsRule,
+  idMatchesConfigKeyRule,
 };

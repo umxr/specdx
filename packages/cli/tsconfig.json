@@ -1,15 +1,24 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "references": [
-    { "path": "../schema" },
-    { "path": "../core" },
-    { "path": "../lint" },
-    { "path": "../pack" }
+    {
+      "path": "../schema"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../lint"
+    },
+    {
+      "path": "../pack"
+    }
   ]
 }

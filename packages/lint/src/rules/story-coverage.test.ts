@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { storyCoverageRule, parseFeatures } from "./story-coverage.js";
+import { storyCoverageRule, parseFeatures, parseFeatureEntries } from "./story-coverage.js";
 import type { LintContext } from "../types.js";
 import type { ParsedSpec } from "@specdx/core";
 
@@ -114,5 +114,42 @@ describe("story-coverage — matching", () => {
     const diags = storyCoverageRule.run(ctx(all));
     expect(diags).toHaveLength(1);
     expect(diags[0]!.message).toContain("audit log");
+  });
+});
+
+describe("parseFeatureEntries — the one parser both commands use", () => {
+  // `generate story` carried its own regex requiring `**F<N>**:`, so the same
+  // PRD produced three features in lint and zero in the generator. Anything
+  // that needs to know a PRD's features now calls this.
+  it("reads bullets with no feature ID, and reports no number for them", () => {
+    const content = `## Features
+
+- **Invoice creation** — finance creates an invoice for a customer.
+- **Invoice listing** — finance lists invoices and filters by customer.
+
+## Success Criteria
+`;
+    const entries = parseFeatureEntries(content);
+    expect(entries).toHaveLength(2);
+    expect(entries[0]!.num).toBeUndefined();
+    expect(entries[0]!.text).toContain("Invoice creation");
+  });
+
+  it("keeps the number when the author gave one", () => {
+    const content = `## Features
+
+- **F1**: Invoice creation
+- **F7**: Invoice reminders
+
+## Success Criteria
+`;
+    const entries = parseFeatureEntries(content);
+    expect(entries.map((f) => f.num)).toEqual(["1", "7"]);
+    expect(entries.map((f) => f.text)).toEqual(["Invoice creation", "Invoice reminders"]);
+  });
+
+  it("agrees with parseFeatures on the text", () => {
+    const content = "## Features\n\n- **F1**: Alpha\n- Beta\n\n## Next\n";
+    expect(parseFeatureEntries(content).map((f) => f.text)).toEqual(parseFeatures(content));
   });
 });

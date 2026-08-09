@@ -1,17 +1,22 @@
 import { defineCommand } from "citty";
 import { loadConfig, parseSpec, resolveGlob, createLogger } from "@specdx/core";
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 
 export interface GenerateTestPlanOptions {
   configDir: string;
   outPath?: string;
+  /** Overwrite an existing file. Off by default -- the file may be hand-written. */
+  force?: boolean;
 }
 
 export interface GenerateTestPlanResult {
   /** Undefined when there was nothing to generate, so no file was written. */
   filePath?: string;
   testCases: number;
+  /** Set when a file exists at the target path and `force` was not given. */
+  blockedBy?: string;
 }
 
 interface StoryTestCases {
@@ -61,7 +66,7 @@ function parseAcceptanceCriteria(section: string): string[] {
 export async function generateTestPlan(
   options: GenerateTestPlanOptions,
 ): Promise<GenerateTestPlanResult> {
-  const { configDir, outPath } = options;
+  const { configDir, outPath, force = false } = options;
   const config = await loadConfig(undefined, configDir);
 
   const storiesBySpec: StoryTestCases[] = [];
@@ -177,14 +182,43 @@ export async function generateTestPlan(
   }
 
   const targetPath = outPath ?? join(configDir, "specs", "test-plan.md");
+
+  // A generator must not destroy hand-written work. This overwrote an approved
+  // spec -- registered in the config, with a filled-in coverage matrix -- and
+  // replaced it with a draft stub, silently and with exit 0. The only reason it
+  // was recoverable was that the project happened to use git.
+  if (!force && existsSync(targetPath)) {
+    return { testCases: totalTestCases, blockedBy: targetPath };
+  }
+
   await writeFile(targetPath, fileContent, "utf-8");
 
   return { filePath: targetPath, testCases: totalTestCases };
 }
 
+/**
+ * The config key, if any, already pointing at `filePath`.
+ *
+ * Telling an author to register a file the config already knows about invites a
+ * duplicate entry for one path -- which is how a frontmatter id and its key
+ * come to disagree.
+ */
+export async function registeredKeyFor(
+  configDir: string,
+  filePath: string,
+): Promise<string | undefined> {
+  const config = await loadConfig(undefined, configDir);
+  for (const [key, entry] of Object.entries(config.specs)) {
+    for (const resolved of await resolveGlob(entry.path, configDir)) {
+      if (resolve(resolved) === resolve(filePath)) return key;
+    }
+  }
+  return undefined;
+}
+
 export default defineCommand({
   meta: {
-    name: "generate-test-plan",
+    name: "test-plan",
     description: "Generate a test plan stub from user stories",
   },
   args: {
@@ -197,6 +231,11 @@ export default defineCommand({
       type: "string",
       description: "Output file path (default: specs/test-plan.md)",
     },
+    force: {
+      type: "boolean",
+      description: "Overwrite the file if it already exists",
+      default: false,
+    },
   },
   async run({ args }) {
     const logger = createLogger({ quiet: false, verbose: false });
@@ -207,10 +246,20 @@ export default defineCommand({
     }
 
     try {
+      const configDir = process.cwd();
       const result = await generateTestPlan({
-        configDir: process.cwd(),
+        configDir,
         outPath: args.out,
+        force: args.force,
       });
+
+      if (result.blockedBy) {
+        console.error(
+          `\n  ✗ ${result.blockedBy} already exists — not overwriting it.\n` +
+            "    Pass --force to replace it, or --out <path> to write elsewhere.\n",
+        );
+        process.exit(1);
+      }
 
       if (!result.filePath) {
         logger.info("No user stories found — no test plan generated.");
@@ -218,10 +267,19 @@ export default defineCommand({
       }
 
       logger.info(`Generated test plan with ${result.testCases} test cases → ${result.filePath}`);
-      logger.info(
-        "Add it to spec.config.yaml so lint, status and pack can see it:\n" +
-          "  test-plan:\n    path: specs/test-plan.md\n    type: test-plan",
-      );
+
+      // Only worth saying when it is actually unregistered. Advising a key for
+      // a path the config already maps produces two entries for one file.
+      const existingKey = await registeredKeyFor(configDir, result.filePath);
+      if (existingKey) {
+        logger.info(`Already registered in spec.config.yaml as "${existingKey}".`);
+      } else {
+        const rel = relative(configDir, result.filePath) || result.filePath;
+        logger.info(
+          "Add it to spec.config.yaml so lint, status and pack can see it:\n" +
+            `  test-plan:\n    path: ${rel}\n    type: test-plan`,
+        );
+      }
     } catch (err) {
       console.error(`\n  ✗ ${(err as Error).message}\n`);
       process.exit(1);

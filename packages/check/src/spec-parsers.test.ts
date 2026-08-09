@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { parseEndpoints, parseTypeDefinitions, parseTestCases } from "./spec-parsers.js";
+import {
+  parseEndpoints,
+  parseTypeDefinitions,
+  parseTestCases,
+  hasEndpointsSection,
+} from "./spec-parsers.js";
 
 describe("parseEndpoints", () => {
   it("extracts endpoints from Endpoints section", () => {
@@ -37,6 +42,100 @@ Deletes a user.
   it("returns empty array when no Endpoints section", () => {
     const content = `## Overview\n\nSome content.`;
     expect(parseEndpoints(content)).toEqual([]);
+  });
+
+  // A populated section that parses to nothing is the dangerous case: routes
+  // leave the coverage denominator, every real route reads as unspecified, and
+  // a genuinely missing endpoint is never reported. Only the heading form was
+  // ever covered, so the bulleted form shipped broken.
+  it("extracts endpoints from a bulleted list, backticked", () => {
+    const content = `## Endpoints
+
+- \`GET /invoices\` — list invoices, optionally filtered by customer.
+- \`POST /invoices\` — create an invoice.
+- \`GET /invoices/:id\` — read a single invoice.
+- \`DELETE /invoices/:id\` — remove an invoice.
+`;
+    const result = parseEndpoints(content);
+    expect(result).toHaveLength(4);
+    expect(result[0]).toEqual({
+      method: "GET",
+      path: "/invoices",
+      params: [],
+      description: "list invoices, optionally filtered by customer.",
+    });
+    expect(result[2]).toEqual({
+      method: "GET",
+      path: "/invoices/:id",
+      params: ["id"],
+      description: "read a single invoice.",
+    });
+  });
+
+  it("extracts endpoints from a bulleted list without backticks", () => {
+    const content = `## Endpoints
+
+- GET /invoices — list invoices.
+- POST /invoices: create an invoice.
+- **DELETE** /invoices/:id - remove an invoice.
+`;
+    const result = parseEndpoints(content);
+    expect(result.map((e) => `${e.method} ${e.path}`)).toEqual([
+      "GET /invoices",
+      "POST /invoices",
+      "DELETE /invoices/:id",
+    ]);
+    expect(result[1]?.description).toBe("create an invoice.");
+  });
+
+  it("does not double-count an endpoint given as both a heading and a bullet", () => {
+    const content = `## Endpoints
+
+### GET /invoices
+
+List invoices.
+
+Summary:
+
+- \`GET /invoices\` — list invoices.
+`;
+    expect(parseEndpoints(content)).toHaveLength(1);
+  });
+
+  it("ignores prose bullets that are not endpoints", () => {
+    const content = `## Endpoints
+
+- All routes require a bearer token.
+- Responses are JSON: every one of them.
+- GET requests are cacheable for 60 seconds.
+- \`GET /health\` — liveness probe.
+`;
+    const result = parseEndpoints(content);
+    expect(result.map((e) => `${e.method} ${e.path}`)).toEqual(["GET /health"]);
+  });
+
+  it("stops at the next section rather than reading the whole document", () => {
+    const content = `## Endpoints
+
+- \`GET /invoices\` — list invoices.
+
+## Error Codes
+
+- \`404\` — no invoice with that id. GET /nowhere is not an endpoint.
+`;
+    expect(parseEndpoints(content)).toHaveLength(1);
+  });
+});
+
+describe("hasEndpointsSection", () => {
+  it("is true for a section that exists but yields no endpoints", () => {
+    const content = `## Endpoints\n\nSee the OpenAPI document.\n`;
+    expect(hasEndpointsSection(content)).toBe(true);
+    expect(parseEndpoints(content)).toEqual([]);
+  });
+
+  it("is false when there is no such section", () => {
+    expect(hasEndpointsSection("## Overview\n\nSome content.")).toBe(false);
   });
 });
 
@@ -143,5 +242,53 @@ describe("parseTypeDefinitions — un-backticked fields (F8)", () => {
 `;
     const [user] = parseTypeDefinitions(content);
     expect(user!.fields.map((f) => f.name)).toEqual(["id"]);
+  });
+});
+
+describe("parseTypeDefinitions — prose sub-headings are not types", () => {
+  // The sibling of the prose-bullet case above: the bullets were handled, the
+  // heading above them was not. `### Notes on the model` registered a type
+  // called "Notes", which `check` then reported as an error telling the author
+  // to implement it -- turning a clean spec into a failing CI gate.
+  it("ignores a multi-word explanatory heading", () => {
+    const content = `## Data Model
+
+### Event
+
+- id: string
+- title: string
+
+### Notes on the model
+
+- Every event belongs to exactly one organiser account.
+- Capacity is a hard limit, not a soft target.
+`;
+    const result = parseTypeDefinitions(content);
+    expect(result.map((t) => t.name)).toEqual(["Event"]);
+  });
+
+  it("ignores a single-word heading that declares no fields", () => {
+    const content = `## Data Model
+
+### Event
+
+- id: string
+
+### Indexes
+
+We index on startsAt and on the organiser id.
+`;
+    const result = parseTypeDefinitions(content);
+    expect(result.map((t) => t.name)).toEqual(["Event"]);
+  });
+
+  it("still reads a backticked type heading", () => {
+    const content = "## Data Model\n\n### `Event`\n\n- id: string\n";
+    expect(parseTypeDefinitions(content).map((t) => t.name)).toEqual(["Event"]);
+  });
+
+  it("still reads a generic type heading", () => {
+    const content = "## Data Model\n\n### Page<Event>\n\n- items: Event[]\n";
+    expect(parseTypeDefinitions(content).map((t) => t.name)).toEqual(["Page<Event>"]);
   });
 });

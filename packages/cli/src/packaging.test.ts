@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, cpSync, chmodSync, readdirSync, mkdtempSync, rmSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  cpSync,
+  chmodSync,
+  mkdirSync,
+  readdirSync,
+  mkdtempSync,
+  rmSync,
+} from "node:fs";
 import { execFileSync, execSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -120,6 +129,38 @@ describe("published artifact", () => {
     expect(packed.some((p) => /^README\.md$/i.test(p))).toBe(true);
   });
 
+  it("ships the declaration file its exports map points at", () => {
+    // `exports["."].types` named ./dist/index.d.ts and nothing was published
+    // there, so importing `specdx` from TypeScript failed with TS7016 and
+    // recommended an `@types/specdx` that does not exist.
+    const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf-8")) as {
+      exports?: Record<string, Record<string, string>>;
+    };
+    const types = pkg.exports?.["."]?.types;
+    expect(types).toBeDefined();
+
+    const packedPath = types!.replace(/^\.\//, "");
+    expect(packed).toContain(packedPath);
+  });
+
+  it("lists `types` first in the exports map, where TypeScript will reach it", () => {
+    // Export conditions resolve in declaration order. With `import` first, the
+    // entry point resolved to a .js and the `types` entry was never consulted
+    // -- so the declaration could be present and still not be found.
+    const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf-8")) as {
+      exports?: Record<string, Record<string, string>>;
+    };
+    expect(Object.keys(pkg.exports?.["."] ?? {})[0]).toBe("types");
+  });
+
+  it("publishes a declaration that does not import unpublished packages", () => {
+    // The @specdx/* packages are bundled into this one and never published, so
+    // a declaration importing from them loses every inherited member for the
+    // consumer -- types that resolve but are quietly wrong.
+    const dts = readFileSync(join(pkgRoot, "dist", "index.d.ts"), "utf-8");
+    expect(dts).not.toMatch(/from ['"]@specdx\//);
+  });
+
   it("invokes the SessionStart hook through an interpreter", () => {
     // npm normalises non-`bin` files to 644 when packing, so a manifest that
     // executes the script directly fails with EACCES for every plugin user.
@@ -149,6 +190,85 @@ describe("published artifact", () => {
     expect(() =>
       execSync(command, { cwd: staged, stdio: ["ignore", "pipe", "pipe"] }),
     ).not.toThrow();
+
+    rmSync(staged, { recursive: true, force: true });
+  });
+
+  it("runs the CLI it ships with, not whatever is named specdx on PATH", () => {
+    // Verifying the hook *ran* was never enough: it resolved `specdx` from
+    // PATH, so a stale global install answered, and its "config invalid" was
+    // injected into the session as fact. Here a decoy on PATH would answer
+    // wrongly if it were ever consulted.
+    const staged = mkdtempSync(join(tmpdir(), "sdx-hook-path-"));
+    cpSync(join(pkgRoot, "hooks"), join(staged, "hooks"), { recursive: true });
+
+    // The plugin's own CLI, stubbed so the test does not depend on a build.
+    mkdirSync(join(staged, "dist"), { recursive: true });
+    writeFileSync(
+      join(staged, "dist", "main.js"),
+      "console.log('ANSWERED-BY-PLUGIN-CLI');\n",
+      "utf-8",
+    );
+
+    // A decoy earlier on PATH, standing in for a stale global install.
+    const decoyDir = join(staged, "decoy");
+    mkdirSync(decoyDir, { recursive: true });
+    const decoy = join(decoyDir, "specdx");
+    writeFileSync(decoy, "#!/usr/bin/env bash\necho 'ANSWERED-BY-PATH-DECOY'\n", "utf-8");
+    chmodSync(decoy, 0o755);
+
+    // A project for the hook to find.
+    const project = join(staged, "project");
+    mkdirSync(project, { recursive: true });
+    writeFileSync(join(project, "spec.config.yaml"), 'version: "1.0"\n', "utf-8");
+
+    const out = execFileSync("bash", [join(staged, "hooks", "run-hook.cmd"), "session-start"], {
+      cwd: project,
+      encoding: "utf-8",
+      env: {
+        ...process.env,
+        CLAUDE_PLUGIN_ROOT: staged,
+        PATH: `${decoyDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
+    expect(out).toContain("ANSWERED-BY-PLUGIN-CLI");
+    expect(out).not.toContain("ANSWERED-BY-PATH-DECOY");
+
+    rmSync(staged, { recursive: true, force: true });
+  });
+
+  it("bounds the graph it injects into the session", () => {
+    // `graph` grows a line per spec and per reference edge. Uncapped, a large
+    // suite spends a large part of the context window on a session summary.
+    const staged = mkdtempSync(join(tmpdir(), "sdx-hook-cap-"));
+    cpSync(join(pkgRoot, "hooks"), join(staged, "hooks"), { recursive: true });
+
+    mkdirSync(join(staged, "dist"), { recursive: true });
+    writeFileSync(
+      join(staged, "dist", "main.js"),
+      // 500 lines of graph output, far past any sane cap.
+      "if (process.argv[2] === 'graph') " +
+        "for (let i = 0; i < 500; i++) console.log('  spec-' + i);\n",
+      "utf-8",
+    );
+
+    const project = join(staged, "project");
+    mkdirSync(project, { recursive: true });
+    writeFileSync(join(project, "spec.config.yaml"), 'version: "1.0"\n', "utf-8");
+
+    const out = execFileSync("bash", [join(staged, "hooks", "run-hook.cmd"), "session-start"], {
+      cwd: project,
+      encoding: "utf-8",
+      env: { ...process.env, CLAUDE_PLUGIN_ROOT: staged },
+    });
+
+    const context = (JSON.parse(out) as { hookSpecificOutput: { additionalContext: string } })
+      .hookSpecificOutput.additionalContext;
+
+    expect(context).toContain("spec-0");
+    expect(context).not.toContain("spec-499");
+    expect(context).toMatch(/more line\(s\)/);
 
     rmSync(staged, { recursive: true, force: true });
   });

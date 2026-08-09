@@ -39,7 +39,7 @@ or step 3.
 | Wondering if the code still matches the specs | `specdx-verify` (experimental) |
 | Wondering if the specs still match the code | `specdx-check-drift` (experimental) |
 
-The last two are experimental: they are built on `sdx check`, whose static
+The last two are experimental: they are built on `specdx check`, whose static
 analysis is noisy on prose-heavy specs. Treat their findings as prompts to look,
 not as failures.
 
@@ -51,7 +51,7 @@ not as failures.
 - **`specdx-verify` vs `specdx-check-drift`** — turns on which side you suspect.
   `verify` asks "did I build what the spec said". `check-drift` asks "have the
   specs fallen behind the code".
-- **`specdx-review-spec` vs `sdx lint`** — turns on what kind of problem.
+- **`specdx-review-spec` vs `specdx lint`** — turns on what kind of problem.
   `lint` catches structural and mechanical faults. `review-spec` judges whether
   the content is decision-ready.
 
