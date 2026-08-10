@@ -101,6 +101,9 @@ export async function scaffoldProject({
   template,
   targetDir,
 }: ScaffoldOptions): Promise<void> {
+  if (!targetDir) {
+    throw new TypeError("scaffoldProject requires `targetDir` — where to create the project.");
+  }
   const today = new Date().toISOString().slice(0, 10);
   const specsDir = join(targetDir, "specs");
 

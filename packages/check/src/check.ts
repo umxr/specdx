@@ -113,9 +113,15 @@ export async function runCheck(
     }
   }
 
-  // 2. Type checking: find technical-design specs with Data Model sections
+  // 2. Type checking: find technical-design specs with Data Model sections.
+  // Prisma extraction reads the schema as text, so types stay assessable
+  // without ts-morph when a schema exists — but with neither, matching every
+  // spec type against an empty extraction would report the whole model
+  // unimplemented when it was simply never looked at. Skip, like tests do;
+  // the ts-morph note above already says so.
   const designSpecs = specs.filter((s) => s.frontmatter.type === "technical-design");
-  if (designSpecs.length > 0) {
+  const prismaSchemaFound = (await findPrismaSchemas(projectDir)).length > 0;
+  if (designSpecs.length > 0 && (tsMorphAvailable || prismaSchemaFound)) {
     const codeTypes = [
       ...(tsMorphAvailable ? await extractTypeScriptTypes(projectDir, config.types_dir) : []),
       ...(tsMorphAvailable ? await extractZodSchemas(projectDir, config.types_dir) : []),
@@ -126,10 +132,7 @@ export async function runCheck(
     // A project that depends on Prisma but whose schema we could not find is
     // worth saying out loud. Silence here read as "these models are not
     // implemented", which is the opposite of what happened.
-    if (
-      (await usesPrisma(projectDir)) &&
-      (await findPrismaSchemas(projectDir)).length === 0 // no schema at any known layout
-    ) {
+    if ((await usesPrisma(projectDir)) && !prismaSchemaFound) {
       notes.push(
         "a prisma dependency is declared but no schema was found at prisma/schema.prisma, " +
           "schema.prisma or prisma/schema/*.prisma — Prisma models were not assessed.",

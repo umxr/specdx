@@ -75,11 +75,11 @@ export function generateUpdates({ findings }: GenerateUpdatesInput): GenerateUpd
 
 function printSuggestionsPretty(suggestions: UpdateSuggestion[]): void {
   if (suggestions.length === 0) {
-    console.log("\n  sdx update — no spec updates suggested\n");
+    console.log("\n  specdx update — no spec updates suggested\n");
     return;
   }
 
-  console.log(`\n  sdx update — ${suggestions.length} suggested spec update(s)\n`);
+  console.log(`\n  specdx update — ${suggestions.length} suggested spec update(s)\n`);
 
   // Group by specId
   const bySpec = new Map<string, UpdateSuggestion[]>();
@@ -104,13 +104,13 @@ function printSuggestionsPretty(suggestions: UpdateSuggestion[]): void {
 export default defineCommand({
   meta: {
     name: "update",
-    description: "Suggest spec updates based on sdx check findings (--from-code)",
+    description: "Suggest spec updates based on specdx check findings (--from-code)",
   },
   args: {
     ...sharedArgs,
     "from-code": {
       type: "boolean",
-      description: "Generate suggestions from code drift (sdx check findings)",
+      description: "Generate suggestions from code drift (specdx check findings)",
       default: true,
     },
     spec: { type: "string", description: "Limit to a specific spec ID" },

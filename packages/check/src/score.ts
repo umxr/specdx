@@ -13,7 +13,9 @@ export function computeScore(findings: Finding[], totals: SpecTotals): Implement
 
   for (const f of findings) {
     if (f.type === "missing" || f.type === "mismatch") {
-      missingByCategory[f.category] = (missingByCategory[f.category] ?? 0) + 1;
+      // A finding subtracts its weight in the category's own units (fields
+      // for types); unweighted findings subtract 1.
+      missingByCategory[f.category] = (missingByCategory[f.category] ?? 0) + (f.weight ?? 1);
     }
   }
 

@@ -153,6 +153,26 @@ describe("published artifact", () => {
     expect(Object.keys(pkg.exports?.["."] ?? {})[0]).toBe("types");
   });
 
+  it("never names a bare `sdx` binary in a shipped string", () => {
+    // The only bin is `specdx`. Audit run 4 (N3) found the first-run error
+    // saying "Run 'sdx init'", the ambiguity advisory saying "run `sdx check
+    // --ai`", and `sdx check` / `sdx update` headlines — instructions that
+    // fail with "command not found" for every user who follows them. The
+    // class was fixed in skills and the README earlier but never swept across
+    // the dist, so this asserts over every packed .js and .md file.
+    // `sdx_` (MCP tool names) and `specdx` do not match \bsdx\b.
+    const offenders: string[] = [];
+    for (const path of packed) {
+      if (!/\.(js|cjs|md)$/.test(path) || path.endsWith(".map")) continue;
+      const content = readFileSync(join(pkgRoot, path), "utf-8");
+      for (const [i, line] of content.split("\n").entries()) {
+        if (/\bsdx\b(?!_)/.test(line))
+          offenders.push(`${path}:${i + 1}: ${line.trim().slice(0, 100)}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it("publishes a declaration that does not import unpublished packages", () => {
     // The @specdx/* packages are bundled into this one and never published, so
     // a declaration importing from them loses every inherited member for the

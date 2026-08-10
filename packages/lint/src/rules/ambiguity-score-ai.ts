@@ -12,7 +12,7 @@ export const ambiguityScoreAiRule: LintRule = {
         ruleId: "clarity/ambiguity-score-ai",
         severity: "info" as const,
         message:
-          "AI ambiguity analysis available — run `sdx check --ai` for LLM-powered ambiguity detection",
+          "AI ambiguity analysis available — run `specdx check --ai` for LLM-powered ambiguity detection",
         filePath: context.spec.filePath,
       },
     ];

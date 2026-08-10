@@ -22,6 +22,11 @@ export interface RunLintResults extends LintResults {
 }
 
 export async function runLint(options: RunLintOptions): Promise<RunLintResults> {
+  // A JS caller omitting the option otherwise dies as ERR_INVALID_ARG_TYPE
+  // deep inside path.join, with no mention of what was missing.
+  if (!options.configDir) {
+    throw new TypeError("runLint requires `configDir` — the directory holding spec.config.yaml.");
+  }
   const config = await loadConfig(undefined, options.configDir);
   const preset = options.preset ?? config.lint?.extends ?? "recommended";
   const rules = getPreset(preset);

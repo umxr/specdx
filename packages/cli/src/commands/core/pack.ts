@@ -58,6 +58,9 @@ export interface RunPackOptions {
 export async function runPack(
   options: RunPackOptions,
 ): Promise<PackResult & { specsResolved: number }> {
+  if (!options.configDir) {
+    throw new TypeError("runPack requires `configDir` — the directory holding spec.config.yaml.");
+  }
   const config = await loadConfig(undefined, options.configDir);
 
   const allSpecs: ParsedSpec[] = [];

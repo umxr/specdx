@@ -31,6 +31,13 @@ export interface Finding {
   actual?: string;
   severity: "error" | "warn" | "info";
   suggestion?: string;
+  /**
+   * How many scoring units this finding subtracts (default 1). The types
+   * denominator counts fields, so a wholly-missing type must subtract its
+   * field count — one finding per type, weighted, keeps the report readable
+   * without inflating the score.
+   */
+  weight?: number;
 }
 
 export interface ImplementationScore {

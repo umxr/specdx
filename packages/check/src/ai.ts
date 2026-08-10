@@ -5,7 +5,7 @@ export async function analyzeWithAi(findings: Finding[], context: string): Promi
   if (!apiKey) {
     throw new Error(
       "ANTHROPIC_API_KEY environment variable is required for --ai mode. " +
-        "Set it or use the sdx:verify skill instead (no API key needed).",
+        "Set it or use the specdx-verify skill instead (no API key needed).",
     );
   }
 
