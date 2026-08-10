@@ -1,7 +1,7 @@
-# Contributing to sdx
+# Contributing to specdx
 
 Thank you for your interest in contributing. This guide covers development setup, how to extend
-sdx with custom lint rules, how to add new spec type schemas, and the PR process.
+specdx with custom lint rules, how to add new spec type schemas, and the PR process.
 
 ---
 
@@ -10,13 +10,13 @@ sdx with custom lint rules, how to add new spec type schemas, and the PR process
 ### Prerequisites
 
 - Node.js 18 or later
-- pnpm 8 or later (`npm install -g pnpm`)
+- pnpm 9 or later (`npm install -g pnpm`)
 
 ### Clone and install
 
 ```bash
 git clone https://github.com/umxr/specdx.git
-cd sdx
+cd specdx
 pnpm install
 ```
 
@@ -61,15 +61,15 @@ Or link the CLI globally after building:
 ```bash
 cd packages/cli
 npm link
-sdx lint
+specdx lint
 ```
 
 ### Linting and formatting
 
-sdx uses ESLint and Prettier. Run checks with:
+specdx uses ESLint and Prettier. Run checks with:
 
 ```bash
-pnpm lint
+pnpm lint:code
 pnpm format:check
 ```
 
@@ -83,7 +83,7 @@ pnpm format
 
 ## Writing a Custom Lint Rule
 
-Custom rules let you enforce project-specific conventions without modifying sdx itself.
+Custom rules let you enforce project-specific conventions without modifying specdx itself.
 
 ### The `LintRule` interface
 
@@ -91,7 +91,7 @@ Custom rules let you enforce project-specific conventions without modifying sdx 
 interface LintRule {
   id: string;          // e.g. "myorg/require-jira-ticket"
   description: string;
-  severity: "error" | "warn";
+  severity: "error" | "warn" | "info";
   run(context: LintContext): Diagnostic[];
 }
 
@@ -104,7 +104,7 @@ interface LintContext {
 
 interface Diagnostic {
   ruleId: string;
-  severity: "error" | "warn";
+  severity: "error" | "warn" | "info";
   message: string;
   filePath: string;
   line?: number;
@@ -156,8 +156,8 @@ ESM (`export default rule`) are both supported.
 ### Rule IDs
 
 Use a namespaced ID of the form `namespace/rule-name`. The namespace avoids collisions with
-built-in rules. Built-in namespaces are `structure/`, `completeness/`, `freshness/`, and
-`clarity/`.
+built-in rules. Built-in namespaces are `structure/`, `completeness/`, `consistency/`,
+`clarity/`, `freshness/` and `security/`.
 
 ---
 
@@ -193,7 +193,8 @@ Add `"runbook"` to the `type` enum in `packages/schema/src/schemas/base-spec.jso
 ```json
 "type": {
   "type": "string",
-  "enum": ["prd", "technical-design", "user-story", "test-plan", "adr", "api-contract", "runbook"]
+  "enum": ["prd", "technical-design", "user-story", "test-plan", "adr",
+           "api-contract", "epic", "quick-spec", "project-context", "runbook"]
 }
 ```
 
@@ -212,6 +213,9 @@ export type SpecType =
   | "test-plan"
   | "adr"
   | "api-contract"
+  | "epic"
+  | "quick-spec"
+  | "project-context"
   | "runbook";
 ```
 
@@ -262,7 +266,7 @@ pnpm test
 4. **Run the full suite** and ensure everything passes:
 
    ```bash
-   pnpm build && pnpm test && pnpm lint
+   pnpm build && pnpm typecheck && pnpm lint:code && pnpm format:check && pnpm test
    ```
 
 5. **Add a changeset** describing your change (required for anything that affects published packages):
@@ -285,7 +289,7 @@ pnpm test
 
 ## Code Conventions
 
-- All packages are TypeScript with `"moduleResolution": "bundler"` and ESM output.
+- All packages are TypeScript with `"moduleResolution": "NodeNext"`, `strict` mode, and ESM output.
 - Import paths within a package use the `.js` extension (required for ESM compatibility).
 - Tests live alongside source files as `*.test.ts`.
 - Use `describe` / `it` / `expect` from Vitest. No `test()` top-level calls.

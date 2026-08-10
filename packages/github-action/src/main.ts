@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { loadConfig, parseSpec, buildGraph, resolveGlob } from "@specdx/core";
-import { createLintEngine, getPreset } from "@specdx/lint";
+import { createLintEngine, resolveLintConfig } from "@specdx/lint";
 import { diffBetweenRefs, DiffError } from "@specdx/diff";
 import type { DiffResult } from "@specdx/diff";
 import type { Diagnostic } from "@specdx/lint";
@@ -30,8 +30,12 @@ async function run(): Promise<void> {
       return;
     }
     const presetName = presetInput || config.lint?.extends || "recommended";
-    const rules = getPreset(presetName as "minimal" | "recommended" | "strict");
-    const engine = createLintEngine({ rules, config, graph: buildGraph(config) });
+    const { rules, ignore } = await resolveLintConfig({
+      config,
+      preset: presetName,
+      configDir: workingDir,
+    });
+    const engine = createLintEngine({ rules, config, graph: buildGraph(config), ignore });
 
     // Resolve and parse all specs
     // resolveGlob returns absolute paths, so no need to join with workingDir again

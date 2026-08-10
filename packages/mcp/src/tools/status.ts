@@ -1,5 +1,5 @@
 import { loadConfig, parseSpec, resolveGlob, buildGraph } from "@specdx/core";
-import { createLintEngine, getPreset } from "@specdx/lint";
+import { createLintEngine, resolveLintConfig } from "@specdx/lint";
 import { DEFAULT_DIFF_CONFIG } from "@specdx/diff";
 import type { ParsedSpec } from "@specdx/core";
 
@@ -23,7 +23,11 @@ export async function handleStatus(): Promise<string> {
   }
 
   const presetName = config.lint?.extends ?? "recommended";
-  const rules = getPreset(presetName);
+  const { rules, ignore } = await resolveLintConfig({
+    config,
+    preset: presetName,
+    configDir,
+  });
 
   let graph;
   let graphError: string | undefined;
@@ -33,7 +37,7 @@ export async function handleStatus(): Promise<string> {
     graphError = (err as Error).message;
   }
 
-  const engine = createLintEngine({ rules, config, graph });
+  const engine = createLintEngine({ rules, config, graph, ignore });
   const lintResults = engine.lint(specs.map((s) => s.spec));
 
   const errors = lintResults.diagnostics.filter((d) => d.severity === "error").length;

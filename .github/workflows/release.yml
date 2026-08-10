@@ -29,6 +29,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: Create Release Pull Request or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
           # Runs `changeset version`, then stamps the bumped version into the
@@ -37,3 +38,26 @@ jobs:
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tags a consumer can put after `uses:`.
+      #
+      # changesets tags releases `specdx@0.4.0`, and GitHub parses
+      # `owner/repo/path@ref` by splitting on the last `@` — so that tag can
+      # never be referenced from a workflow. The README documented `@v0.4.0`,
+      # which simply did not exist. `v<major>` moves so consumers can track a
+      # major line, which is the convention for published actions.
+      #
+      # Runs only after a successful publish, so a failure here cannot affect
+      # what reached npm.
+      - name: Tag the action for `uses:` references
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          version=$(node -p "require('./packages/cli/package.json').version")
+          case "$version" in
+            *-*) echo "Prerelease $version — no moving tag."; exit 0 ;;
+          esac
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f "v$version"
+          git tag -f "v${version%%.*}"
+          git push -f origin "v$version" "v${version%%.*}"

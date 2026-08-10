@@ -1,140 +1,96 @@
-# specdx Skills: Setup for Cursor and Gemini CLI
+# Using specdx skills outside Claude Code
 
-specdx ships two skills for Claude Code: `specdx-author-spec` and `specdx-start-task`. These are plain markdown files with YAML frontmatter. The `npx specdx` commands inside them work on any platform — only the file location and discovery mechanism differs.
+specdx ships ten skills. They are plain Markdown files with YAML frontmatter,
+and the `npx specdx` commands inside them run anywhere — only the file location
+and the discovery mechanism differ per platform.
 
-This guide covers manual setup for Cursor and Gemini CLI.
+Claude Code is set up for you: install specdx as a dev dependency and the
+plugin is discovered automatically, or run `specdx skills install` to write the
+files into `.claude/skills/`. This guide covers everything else.
 
----
+## Where the skill files live
 
-## Skill files
-
-After installing specdx, the skill files live in the package:
+Inside the installed package:
 
 ```
-node_modules/specdx/skills/specdx-author-spec.md
-node_modules/specdx/skills/specdx-start-task.md
+node_modules/specdx/dist/skills/<bucket>/<name>/SKILL.md
 ```
 
-Or clone/download them directly from the specdx npm package:
+`<bucket>` is `core` or `experimental`. The eight core skills are the promoted
+set; the two experimental ones are built on `specdx check`.
 
 ```bash
-npx specdx skills --list   # shows available skills
+ls node_modules/specdx/dist/skills/core            # promoted skills
+ls node_modules/specdx/dist/skills/experimental    # check-based skills
+ls $(npm root -g)/specdx/dist/skills/core          # if installed globally
 ```
 
-If you have specdx installed globally or as a dev dependency, you can also copy from the installed location:
+| Bucket | Skills |
+|---|---|
+| `core` | `specdx-router`, `specdx-start-task`, `specdx-author-spec`, `specdx-plan-from-spec`, `specdx-review-spec`, `specdx-pre-commit`, `specdx-onboard`, `specdx-sprint-review` |
+| `experimental` | `specdx-verify`, `specdx-check-drift` |
 
-```bash
-ls $(npm root -g)/specdx/skills/          # global install
-ls node_modules/specdx/skills/            # local install
-```
+Start with `specdx-router` — it maps every skill and the flows between them.
 
----
+Each skill is a directory holding a `SKILL.md`, per the
+[Agent Skills specification](https://agentskills.io/specification). Some carry
+extra files in `references/`; copy the whole directory, not just the `SKILL.md`,
+or those references break.
 
 ## Cursor
 
-Cursor supports custom AI commands via markdown files placed in `.cursor/commands/` in your project or `~/.cursor/commands/` for global access.
+Cursor reads custom commands from `.cursor/commands/` in the project, or
+`~/.cursor/commands/` globally. It expects flat `.md` files, so copy each
+`SKILL.md` under the skill's own name:
 
-### Setup
+```bash
+mkdir -p .cursor/commands
+for dir in node_modules/specdx/dist/skills/core/*/; do
+  cp "$dir/SKILL.md" ".cursor/commands/$(basename "$dir").md"
+done
+```
 
-1. Create the commands directory:
-
-   ```bash
-   mkdir -p .cursor/commands
-   ```
-
-2. Copy the skill files:
-
-   ```bash
-   cp node_modules/specdx/skills/specdx-author-spec.md .cursor/commands/
-   cp node_modules/specdx/skills/specdx-start-task.md .cursor/commands/
-   ```
-
-3. Restart Cursor (or reload the window: `Cmd+Shift+P` → "Developer: Reload Window").
-
-### Using the skills in Cursor
-
-Once the files are in `.cursor/commands/`, they appear as custom commands in the Cursor chat panel. You can invoke them by typing `/` followed by the command name, or reference them in chat:
+Reload the window (`Cmd+Shift+P` → "Developer: Reload Window"). The commands
+then appear in the chat panel:
 
 - `/specdx-start-task implement user authentication`
-- `/specdx-author-spec` — starts guided spec authoring
+- `/specdx-author-spec`
 
-### Notes
-
-- The `allowed-tools` frontmatter field is Claude Code-specific and is ignored by Cursor. Cursor uses its own tool permissions model.
-- The `description` field in the frontmatter helps Cursor surface the right command — keep it intact.
-- `npx specdx` commands in the skill bodies work as-is since Cursor runs bash commands in your project's shell environment.
-
-### Project vs. global
-
-| Location | Scope |
-|---|---|
-| `.cursor/commands/` | Project only (checked into repo) |
-| `~/.cursor/commands/` | All projects on your machine |
-
-For team setups, committing `.cursor/commands/` to the repo ensures everyone has the same skills available.
-
----
+Committing `.cursor/commands/` gives the whole team the same commands.
 
 ## Gemini CLI
 
-Gemini CLI (Google's `gemini` CLI tool) supports custom instructions and commands via markdown files placed in `.gemini/` in your project directory.
+Gemini CLI discovers `.gemini/commands/*.md` at session start:
 
-### Setup
+```bash
+mkdir -p .gemini/commands
+for dir in node_modules/specdx/dist/skills/core/*/; do
+  cp "$dir/SKILL.md" ".gemini/commands/$(basename "$dir").md"
+done
+```
 
-1. Create the Gemini commands directory:
-
-   ```bash
-   mkdir -p .gemini/commands
-   ```
-
-2. Copy the skill files:
-
-   ```bash
-   cp node_modules/specdx/skills/specdx-author-spec.md .gemini/commands/
-   cp node_modules/specdx/skills/specdx-start-task.md .gemini/commands/
-   ```
-
-3. Restart the Gemini CLI session.
-
-### Using the skills in Gemini CLI
-
-Invoke skills by referencing them in your prompt:
+Then reference one in a prompt:
 
 ```
 @specdx-start-task implement the payment flow
 ```
 
-Or load them explicitly:
+If your version does not support a `commands/` subdirectory, put the files
+directly in `.gemini/`.
 
-```
-Use the specdx-start-task skill to load context for adding email authentication.
-```
+## What carries over, and what does not
 
-### Notes
+- **The skill body is platform-agnostic.** It describes what to do and which
+  `npx specdx` commands to run. That is identical everywhere.
+- **`allowed-tools` is Claude Code-specific.** Other platforms ignore it and
+  apply their own permissions model.
+- **Keep `description` intact.** It is how a platform decides when a command is
+  relevant.
+- **Re-copy after upgrading specdx.** These are copies, not links, so skill
+  changes do not reach them on their own.
 
-- Gemini CLI discovers `.gemini/commands/*.md` files at session start.
-- The `allowed-tools` frontmatter field is Claude Code-specific and has no effect in Gemini CLI; tool access is governed by Gemini CLI's own settings.
-- The `npx specdx` commands in the skill bodies execute in your project's shell environment and work without modification.
-- If Gemini CLI does not yet support a `commands/` subdirectory in your installed version, place the files directly in `.gemini/`:
-
-  ```bash
-  cp node_modules/specdx/skills/specdx-author-spec.md .gemini/
-  cp node_modules/specdx/skills/specdx-start-task.md .gemini/
-  ```
-
----
-
-## Platform-agnostic notes
-
-- **Skill content is platform-agnostic.** The markdown body of each skill file describes what to do and which `npx specdx` commands to run. This content is identical regardless of platform.
-- **`npx specdx` works everywhere.** As long as specdx is installed (globally or as a dev dependency), `npx specdx lint`, `npx specdx pack`, `npx specdx validate`, and `npx specdx graph` all work in any shell environment.
-- **Only file placement differs.** Each platform has its own directory convention for discovering custom commands. The table below summarizes them:
-
-| Platform | Directory | Scope |
+| Platform | Location | Layout |
 |---|---|---|
-| Claude Code | `.claude/skills/<name>/SKILL.md` | Project |
-| Cursor | `.cursor/commands/` | Project |
-| Gemini CLI | `.gemini/commands/` | Project |
-| Codex | `~/.agents/skills/` | Global |
-
-- **Keeping skills up to date.** Re-run the copy commands above after upgrading specdx to pick up any changes to skill content.
+| Claude Code | `.claude/skills/<name>/SKILL.md` | Directory per skill |
+| Cursor | `.cursor/commands/<name>.md` | Flat file |
+| Gemini CLI | `.gemini/commands/<name>.md` | Flat file |
