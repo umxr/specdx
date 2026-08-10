@@ -7,6 +7,12 @@ inputs:
   preset:
     description: "Lint preset to run: minimal, recommended, or strict. Defaults to the preset in spec.config.yaml."
     required: false
+  github-token:
+    description: "Token used to post the spec health comment on pull requests. Omit to skip commenting. The workflow needs `permissions: pull-requests: write`."
+    required: false
+  badge-path:
+    description: "Write an SVG spec health badge to this path, relative to working-directory. Omit to skip the badge."
+    required: false
 runs:
   # Bundled and committed: GitHub runs this file straight from a checkout, with
   # no install step, so it must carry its own dependencies.

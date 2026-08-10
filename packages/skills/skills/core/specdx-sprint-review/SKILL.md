@@ -49,7 +49,7 @@ The `status --format json` output looks like:
 ```json
 {
   "project": "my-project",
-  "specCount": 3,
+  "specFiles": 3,
   "byStatus": {"approved": 2, "draft": 1},
   "lintHealth": {"errors": 0, "warnings": 2, "passing": 3},
   "staleSpecs": [{"specId": "tech", "daysSinceUpdate": 15}],

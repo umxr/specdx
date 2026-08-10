@@ -59,9 +59,13 @@ describe("README GitHub Action usage", () => {
     );
     const declared = new Set([...actionYml.matchAll(/^ {2}([A-Za-z][\w-]*):/gm)].map((m) => m[1]!));
 
+    // Indentation-agnostic: the claim is that every input the README passes is
+    // one the action declares, not that the snippet sits at a fixed depth. A
+    // hardcoded four spaces silently matched nothing the moment the example
+    // grew a `steps:` level, and a test that matches nothing asserts nothing.
     const ciSection = readme.slice(readme.indexOf("### CI Integration"));
-    const withBlock = /with:\n((?: {4}\S[^\n]*\n)+)/.exec(ciSection)?.[1] ?? "";
-    const passed = [...withBlock.matchAll(/^ {4}([A-Za-z][\w-]*):/gm)].map((m) => m[1]!);
+    const withBlock = /with:\n((?:[ \t]+\S[^\n]*\n)+)/.exec(ciSection)?.[1] ?? "";
+    const passed = [...withBlock.matchAll(/^[ \t]+([A-Za-z][\w-]*):/gm)].map((m) => m[1]!);
 
     expect(passed.length).toBeGreaterThan(0);
     for (const input of passed) expect(declared).toContain(input);

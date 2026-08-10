@@ -19,6 +19,32 @@ describe("runStatus", () => {
     await rm(tempDir, { recursive: true });
   });
 
+  it("reads a suite the caller points it at, not the process cwd (F8)", async () => {
+    // A library consumer cannot chdir; runLint and runPack take a configDir,
+    // so this must too. The assertion is that it works from *elsewhere*.
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nproject:\n  name: "elsewhere"\nspecs:\n  prd:\n    path: "specs/*.md"\n    type: "prd"\n`,
+    );
+    process.chdir(CWD);
+
+    const result = await runStatus({ configDir: tempDir });
+    expect(result.project).toBe("elsewhere");
+  });
+
+  it("names the count for what it counts, with no ambiguous specCount (F4)", async () => {
+    // `specCount` meant resolved files here and config entries in runValidate.
+    // MCP was cleaned up already; the CLI kept the ambiguity.
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nproject:\n  name: "named"\nspecs:\n  prd:\n    path: "specs/*.md"\n    type: "prd"\n`,
+    );
+
+    const result = await runStatus();
+    expect(result.specFiles).toBe(0);
+    expect((result as unknown as Record<string, unknown>).specCount).toBeUndefined();
+  });
+
   it("reports unassessed, not healthy, for a suite with no specs (vacuous-pass audit)", async () => {
     await writeFile(
       join(tempDir, "spec.config.yaml"),
@@ -26,7 +52,7 @@ describe("runStatus", () => {
     );
 
     const result = await runStatus();
-    expect(result.specCount).toBe(0);
+    expect(result.specFiles).toBe(0);
     expect(result.verdict).toBe("unassessed");
   });
 
@@ -73,7 +99,7 @@ describe("runStatus", () => {
     );
 
     const result = await runStatus();
-    expect(result.specCount).toBe(1);
+    expect(result.specFiles).toBe(1);
     expect(result.verdict).not.toBe("unassessed");
   });
 });

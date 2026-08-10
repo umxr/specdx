@@ -62,7 +62,7 @@ describe("runValidate", () => {
 
     const result = await runValidate(tempDir);
     expect(result.valid).toBe(true);
-    expect(result.specCount).toBe(2);
+    expect(result.specEntries).toBe(2);
   });
 
   it("fails on a cyclic requires chain (issue #13)", async () => {
@@ -125,7 +125,7 @@ describe("runValidate", () => {
 
     const result = await runValidate(tempDir);
     expect(result.valid).toBe(true);
-    expect(result.specFileCount).toBe(1);
+    expect(result.specFiles).toBe(1);
     expect(result.warnings.some((w) => w.includes("stories"))).toBe(true);
   });
 
@@ -138,7 +138,7 @@ describe("runValidate", () => {
     );
 
     const result = await runValidate(tempDir);
-    expect(result.specFileCount).toBe(0);
+    expect(result.specFiles).toBe(0);
     expect(result.warnings.some((w) => /no spec files/i.test(w))).toBe(true);
   });
 

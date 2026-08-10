@@ -4,9 +4,22 @@ import { createLintEngine, getPreset } from "@specdx/lint";
 import { DEFAULT_DIFF_CONFIG } from "@specdx/diff";
 import type { StatusResult } from "@specdx/diff";
 import type { ParsedSpec } from "@specdx/core";
+import { sharedArgs, resolveFormat } from "../../shared-args.js";
+import { createOutput } from "../../output.js";
 
-export async function runStatus(_options: { format?: string } = {}): Promise<StatusResult> {
-  const configDir = process.cwd();
+const FORMATS = ["pretty", "json", "github"] as const;
+
+export interface RunStatusOptions {
+  /**
+   * Directory holding spec.config.yaml. Defaults to the process cwd, which is
+   * right for the CLI and useless to a library consumer — `runLint` and
+   * `runPack` take one, so this does too (audit run 5, F8).
+   */
+  configDir?: string;
+}
+
+export async function runStatus(options: RunStatusOptions = {}): Promise<StatusResult> {
+  const configDir = options.configDir ?? process.cwd();
   const config = await loadConfig(undefined, configDir);
 
   // Resolve and parse all specs
@@ -97,7 +110,7 @@ export async function runStatus(_options: { format?: string } = {}): Promise<Sta
 
   return {
     project: config.project?.name ?? "unknown",
-    specCount: specs.length,
+    specFiles: specs.length,
     byStatus,
     lintHealth: { errors, warnings, passing: specs.length - errors },
     staleSpecs,
@@ -108,23 +121,24 @@ export async function runStatus(_options: { format?: string } = {}): Promise<Sta
 
 export default defineCommand({
   meta: { name: "status", description: "Show spec suite health overview" },
-  args: {
-    format: {
-      type: "string",
-      description: "Output format: pretty, json, github",
-      default: "pretty",
-    },
-  },
+  args: { ...sharedArgs(FORMATS) },
   async run({ args }) {
-    try {
-      const result = await runStatus({ format: args.format });
+    const format = resolveFormat(args.format, FORMATS);
+    if (!format.ok) {
+      console.error(`\n  ✗ ${format.message}\n`);
+      process.exit(1);
+    }
+    const output = createOutput({ quiet: args.quiet });
 
-      if (args.format === "json") {
+    try {
+      const result = await runStatus();
+
+      if (format.format === "json") {
         console.log(JSON.stringify(result, null, 2));
         return;
       }
 
-      if (args.format === "github") {
+      if (format.format === "github") {
         for (const s of result.staleSpecs) {
           console.log(
             `::warning::Spec "${s.specId}" is stale (${s.daysSinceUpdate} days since update)`,
@@ -143,30 +157,34 @@ export default defineCommand({
           : result.verdict === "warnings" || result.verdict === "unassessed"
             ? "⚠"
             : "✗";
-      console.log(`\n  ${icon} ${result.project} — ${result.verdict}`);
+      const healthy = result.verdict === "healthy";
+      const headline = `\n  ${icon} ${result.project} — ${result.verdict}`;
+      if (healthy) output.info(headline);
+      else output.out(headline);
+
       if (result.verdict === "unassessed") {
-        console.log(
+        output.out(
           "    No specs resolved — nothing was assessed. Check the spec paths in spec.config.yaml.",
         );
       }
-      console.log(
-        `    ${result.specCount} specs: ${Object.entries(result.byStatus)
+      output.info(
+        `    ${result.specFiles} specs: ${Object.entries(result.byStatus)
           .map(([k, v]) => `${v} ${k}`)
           .join(", ")}`,
       );
-      console.log(
+      output.info(
         `    Lint: ${result.lintHealth.errors} errors, ${result.lintHealth.warnings} warnings`,
       );
 
       if (result.staleSpecs.length > 0) {
-        console.log(
+        output.out(
           `    Stale: ${result.staleSpecs.map((s) => `${s.specId} (${s.daysSinceUpdate}d)`).join(", ")}`,
         );
       }
       if (result.integrityIssues.length > 0) {
-        console.log(`    Issues: ${result.integrityIssues.join("; ")}`);
+        output.out(`    Issues: ${result.integrityIssues.join("; ")}`);
       }
-      console.log();
+      output.info();
     } catch (err) {
       console.error(`\n  ✗ ${(err as Error).message}\n`);
       process.exit(1);

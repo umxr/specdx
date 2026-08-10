@@ -21,6 +21,12 @@ docs/superpowers/
 !packages/github-action/test/fixture-project/specs/
 !packages/github-action/test/fixture-project/specs/**
 
+# The empty fixture is the point: its paths resolve to no files, so the smoke
+# workflow can prove the action fails a vacuous suite rather than passing it
+# (audit run 5, F1). Being ignored is how it stayed untested — a checkout that
+# honours .gitignore simply dropped it.
+!packages/github-action/test/empty-project/spec.config.yaml
+
 # Copied from the repo root at build time so the published package carries them.
 packages/cli/README.md
 packages/cli/LICENSE

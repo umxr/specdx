@@ -4,6 +4,10 @@ import { diffBetweenRefs, DEFAULT_DIFF_CONFIG, DiffError } from "@specdx/diff";
 import { loadConfig } from "@specdx/core";
 import { formatChangelog } from "../../formatters/changelog.js";
 import type { DiffResult } from "@specdx/diff";
+import { sharedArgs, resolveFormat } from "../../shared-args.js";
+import { createOutput } from "../../output.js";
+
+const FORMATS = ["pretty", "json", "changelog"] as const;
 
 export interface RunDiffOptions {
   base?: string;
@@ -12,10 +16,15 @@ export interface RunDiffOptions {
   format?: string;
   /** Compare the base ref against the working tree instead of a head ref. */
   working?: boolean;
+  /**
+   * Directory holding spec.config.yaml. Defaults to the process cwd; a library
+   * consumer needs to point it elsewhere (audit run 5, F8).
+   */
+  configDir?: string;
 }
 
 export async function runDiff(options: RunDiffOptions): Promise<DiffResult> {
-  const configDir = process.cwd();
+  const configDir = options.configDir ?? process.cwd();
   const config = await loadConfig(undefined, configDir);
 
   const baseRef = options.base ?? config.diff?.baseline_ref ?? DEFAULT_DIFF_CONFIG.baseline_ref;
@@ -46,13 +55,16 @@ export default defineCommand({
       default: false,
     },
     spec: { type: "string", description: "Scope to a single spec ID" },
-    format: {
-      type: "string",
-      description: "Output format: pretty, json, changelog",
-      default: "pretty",
-    },
+    ...sharedArgs(FORMATS),
   },
   async run({ args }) {
+    const format = resolveFormat(args.format, FORMATS);
+    if (!format.ok) {
+      console.error(`\n  ✗ ${format.message}\n`);
+      process.exit(1);
+    }
+    const output = createOutput({ quiet: args.quiet });
+
     try {
       try {
         const result = await runDiff({
@@ -63,12 +75,12 @@ export default defineCommand({
           working: args.working,
         });
 
-        if (args.format === "json") {
+        if (format.format === "json") {
           console.log(JSON.stringify(result, null, 2));
           return;
         }
 
-        if (args.format === "changelog") {
+        if (format.format === "changelog") {
           const baseRef =
             args.base ?? (await loadConfig(undefined, process.cwd())).diff?.baseline_ref ?? "main";
           console.log(
@@ -93,7 +105,7 @@ export default defineCommand({
 
         // Pretty format
         if (result.diffs.length === 0 && result.added.length === 0 && result.removed.length === 0) {
-          console.log("  \u2713 No spec changes detected.");
+          output.info("  \u2713 No spec changes detected.");
           printUncommittedWarning();
           return;
         }

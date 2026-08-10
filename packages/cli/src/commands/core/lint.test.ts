@@ -81,7 +81,7 @@ describe("runLint", () => {
     );
 
     const result = await runLint({ configDir: tempDir });
-    expect(result.specCount).toBe(0);
+    expect(result.specFiles).toBe(0);
     expect(result.assessed).toBe(false);
   });
 
@@ -96,7 +96,7 @@ describe("runLint", () => {
     );
 
     const result = await runLint({ configDir: tempDir });
-    expect(result.specCount).toBe(1);
+    expect(result.specFiles).toBe(1);
     expect(result.assessed).toBe(true);
   });
 

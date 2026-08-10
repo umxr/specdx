@@ -62,7 +62,12 @@ export interface DiffOptions {
 
 export interface StatusResult {
   project: string;
-  specCount: number;
+  /**
+   * Spec *files* resolved, not config entries — one glob entry can resolve to
+   * many files. The old name `specCount` did not say which, and meant the
+   * other thing in `runValidate` (audit run 5, F4).
+   */
+  specFiles: number;
   byStatus: Record<string, number>;
   lintHealth: { errors: number; warnings: number; passing: number };
   staleSpecs: { specId: string; daysSinceUpdate: number; owner?: string }[];

@@ -129,4 +129,46 @@ describe("the action runs from a checkout", () => {
 
     rmSync(dir, { recursive: true, force: true });
   });
+
+  it("fails the build when the config resolves to no specs", () => {
+    // Vacuous-pass audit, second pass. The 2026-07-30 sweep fixed five
+    // surfaces including this action's *comment renderer*, and left the job's
+    // pass/fail path deciding solely on the diagnostics array -- so a suite
+    // that resolved to no files produced no diagnostics and went green while
+    // enforcing nothing. This runs the committed bundle, because the bundle is
+    // what GitHub executes: a fix in src that is not rebuilt does not ship.
+    const dir = mkdtempSync(join(tmpdir(), "sdx-action-empty-"));
+    writeFileSync(
+      join(dir, "spec.config.yaml"),
+      'version: "1.0"\nproject:\n  name: "act"\nspecs:\n  prd:\n    path: specs/prd.md\n    type: prd\n',
+    );
+    // No specs/ directory at all: the declared path resolves to nothing, which
+    // is what a renamed directory or a sparse checkout looks like.
+
+    let stdout: string;
+    let failed = false;
+    try {
+      stdout = execFileSync("node", [entry], {
+        cwd: dir,
+        encoding: "utf-8",
+        env: {
+          ...process.env,
+          "INPUT_WORKING-DIRECTORY": dir,
+          INPUT_PRESET: "recommended",
+          GITHUB_WORKSPACE: dir,
+        } as NodeJS.ProcessEnv,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch (err) {
+      failed = true;
+      stdout = String((err as { stdout?: Buffer }).stdout ?? "");
+    }
+
+    expect(stdout).toContain("0 specs checked");
+    expect(stdout).toMatch(/no specs were checked/i);
+    expect(stdout).toMatch(/spec\.config\.yaml/);
+    expect(failed).toBe(true);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
 });
