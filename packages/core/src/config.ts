@@ -18,7 +18,7 @@ const CONFIG_FILENAME = "spec.config.yaml";
 export async function loadConfig(filePath?: string, searchFrom?: string): Promise<SdxConfig> {
   const resolvedPath = filePath ?? (await findConfig(searchFrom ?? process.cwd()));
   if (!resolvedPath) {
-    throw new ConfigError(`No ${CONFIG_FILENAME} found. Run 'sdx init' to create one.`);
+    throw new ConfigError(`No ${CONFIG_FILENAME} found. Run 'specdx init' to create one.`);
   }
 
   let raw: string;

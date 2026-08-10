@@ -22,6 +22,25 @@ describe("computeScore", () => {
     expect(score.byCategory["tests"]).toEqual({ matched: 8, total: 8 });
   });
 
+  // Audit run 4, N2: totals.types counts fields, but a wholly-missing type is
+  // one finding. Unweighted, a project implementing nothing of a 5-field model
+  // scored 80%. The finding's weight carries the field count so units agree.
+  it("a weighted finding subtracts its weight, not 1", () => {
+    const findings: Finding[] = [
+      {
+        type: "missing",
+        category: "type",
+        specId: "x",
+        expected: "Type: Widget",
+        severity: "error",
+        weight: 5,
+      },
+    ];
+    const score = computeScore(findings, { routes: 0, types: 5, tests: 0, artifacts: 0 });
+    expect(score.byCategory["types"]).toEqual({ matched: 0, total: 5 });
+    expect(score.overall).toBe(0);
+  });
+
   it("ignores extra and info findings in score", () => {
     const findings: Finding[] = [
       { type: "extra", category: "route", specId: "x", expected: "", severity: "info" },

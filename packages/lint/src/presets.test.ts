@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { getPreset } from "./presets.js";
 import { createLintEngine } from "./engine.js";
 import type { ParsedSpec } from "@specdx/core";
@@ -38,6 +38,16 @@ function severitiesFor(preset: string): string[] {
 }
 
 describe("presets", () => {
+  // Pin the environment: ambiguity-score-ai keys its behaviour off
+  // ANTHROPIC_API_KEY, so a developer's real key must not change what these
+  // tests observe. Individual tests opt back in with their own stub.
+  beforeEach(() => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("minimal preset includes only structure rules", () => {
     const rules = getPreset("minimal");
     expect(rules.every((r) => r.id.startsWith("structure/"))).toBe(true);
@@ -50,10 +60,14 @@ describe("presets", () => {
     expect(rules.some((r) => r.id.startsWith("clarity/"))).toBe(true);
   });
 
-  it("strict preset includes all rules with error severity", () => {
+  it("strict preset promotes warn rules and leaves info rules alone", () => {
     const rules = getPreset("strict");
     expect(rules.length).toBeGreaterThanOrEqual(7);
-    expect(rules.every((r) => r.severity === "error")).toBe(true);
+    // No rule stays at warn — that is the preset's whole job.
+    expect(rules.some((r) => r.severity === "warn")).toBe(false);
+    // Info-class advisories survive as info: promoting them would make an
+    // unfixable diagnostic fail the build (see the regression test below).
+    expect(rules.some((r) => r.severity === "info")).toBe(true);
   });
 
   // Asserting that `getPreset("strict")` marks its rules `error` proved nothing:
@@ -77,5 +91,42 @@ describe("presets", () => {
 
     expect(warnRun.hasErrors).toBe(false);
     expect(strictRun.hasErrors).toBe(true);
+  });
+
+  // Audit run 4, N1: `ambiguity-score-ai` emits an advisory whenever
+  // ANTHROPIC_API_KEY is set. Promoting it to error made `strict` fail every
+  // suite — including a perfect one — in any environment carrying the key,
+  // with a diagnostic no spec edit can satisfy. Strict promotes warnings;
+  // advisories stay advisories.
+  describe("with ANTHROPIC_API_KEY in the environment", () => {
+    const cleanSpec: ParsedSpec = {
+      ...specWithWarning,
+      parsedSections: REQUIRED.map((heading) => ({
+        heading,
+        content: `Real content for ${heading}.`,
+        tokens: 6,
+      })),
+    } as unknown as ParsedSpec;
+
+    it("a clean suite still passes strict", () => {
+      vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
+
+      const strictRun = createLintEngine({ rules: getPreset("strict") }).lint([cleanSpec]);
+
+      const advisory = strictRun.diagnostics.find((d) => d.ruleId === "clarity/ambiguity-score-ai");
+      expect(advisory?.severity).toBe("info");
+      expect(strictRun.hasErrors).toBe(false);
+    });
+
+    it("strict still fails on real warnings, advisory unchanged", () => {
+      vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
+
+      const strictRun = createLintEngine({ rules: getPreset("strict") }).lint([specWithWarning]);
+
+      expect(strictRun.hasErrors).toBe(true);
+      const severities = new Map(strictRun.diagnostics.map((d) => [d.ruleId, d.severity]));
+      expect(severities.get("clarity/ambiguity-score-ai")).toBe("info");
+      expect(severities.get("completeness/no-placeholder-sections")).toBe("error");
+    });
   });
 });

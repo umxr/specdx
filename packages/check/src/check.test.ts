@@ -101,8 +101,11 @@ describe("runCheck", () => {
     const missing = result.findings.filter((f) => f.type === "missing" && f.category === "type");
     expect(missing).toHaveLength(1);
     expect(missing[0]!.expected).toContain("Widget");
-    // typeTotal = 3 fields, but only 1 "missing type" finding → matched = max(0, 3-1) = 2
-    expect(result.score.byCategory["types"]!.total).toBe(3);
+    // Audit run 4, N2: the denominator counts fields, and the one finding for
+    // the wholly-missing type is weighted by its field count — a project that
+    // implements none of the model scores 0, not (N-1)/N.
+    expect(result.score.byCategory["types"]).toEqual({ matched: 0, total: 3 });
+    expect(result.score.overall).toBe(0);
   });
 
   it("reports missing tests for test-plan spec against empty project", async () => {

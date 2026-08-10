@@ -40,6 +40,10 @@ export function matchTypes(
         expected: `Type: ${specType.name}`,
         severity: "error",
         suggestion: `Implement type "${specType.name}" in code`,
+        // The score's types denominator counts fields; an absent type must
+        // subtract all of its fields, not 1, or a project that implements
+        // nothing of an N-field model scores (N-1)/N.
+        weight: specType.fields.length,
       });
       continue;
     }

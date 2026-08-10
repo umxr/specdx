@@ -54,7 +54,7 @@ export default defineCommand({
       if (args.format === "json") {
         console.log(JSON.stringify({ ...result, ai: aiResult }, null, 2));
       } else {
-        console.log(`\n  sdx check --ai — ${result.score.overall}% coverage\n`);
+        console.log(`\n  specdx check --ai — ${result.score.overall}% coverage\n`);
         console.log(`  AI Assessment: ${aiResult.summary}\n`);
 
         for (const assessment of aiResult.assessments) {
@@ -84,7 +84,7 @@ export default defineCommand({
       const headline = result.score.assessed
         ? `${result.score.overall}% implementation coverage`
         : "coverage not assessed — no checkable surfaces found";
-      console.log(`\n  sdx check — ${headline}\n`);
+      console.log(`\n  specdx check — ${headline}\n`);
 
       for (const note of result.notes) {
         console.log(`  ⚠ ${note}`);

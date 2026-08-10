@@ -34,7 +34,7 @@ describe("ambiguityScoreAiRule", () => {
     const result = ambiguityScoreAiRule.run({ spec, allSpecs: [spec] });
     expect(result).toHaveLength(1);
     expect(result[0]!.severity).toBe("info");
-    expect(result[0]!.message).toContain("sdx check --ai");
+    expect(result[0]!.message).toContain("specdx check --ai");
     delete process.env["ANTHROPIC_API_KEY"];
   });
 });

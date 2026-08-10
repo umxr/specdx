@@ -23,7 +23,7 @@ export const CORE_SKILL_NAMES = [
   "specdx-review-spec",
 ];
 
-/** Skills built on `sdx check`, whose static analysis is noisy on prose specs. */
+/** Skills built on `specdx check`, whose static analysis is noisy on prose specs. */
 export const EXPERIMENTAL_SKILL_NAMES = ["specdx-verify", "specdx-check-drift"];
 
 /** Every skill that ships, promoted or not. */

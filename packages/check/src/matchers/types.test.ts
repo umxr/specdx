@@ -43,6 +43,10 @@ describe("matchTypes", () => {
     const findings = matchTypes(specTypes, codeTypes, "tech-design");
     const missing = findings.filter((f) => f.type === "missing" && f.expected.includes("Post"));
     expect(missing).toHaveLength(1);
+    // Audit run 4, N2: the score's types denominator counts fields, so the
+    // one finding for a wholly-missing type carries its field count as
+    // weight — otherwise a 4-field type absent from code subtracts 1/4.
+    expect(missing[0]?.weight).toBe(4);
   });
 
   it("finds missing fields", () => {
