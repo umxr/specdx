@@ -39,6 +39,17 @@ export async function handleStatus(): Promise<string> {
   const errors = lintResults.diagnostics.filter((d) => d.severity === "error").length;
   const warnings = lintResults.diagnostics.filter((d) => d.severity === "warn").length;
 
+  // Specs carrying no error-severity diagnostic.
+  //
+  // This was `specs.length - errors` here too, and the CLI-side fix did not
+  // reach it: this handler is a near-copy of `runStatus`, so a repair to one
+  // leaves the other reporting a negative number of passing specs. Kept in step
+  // by the parity test in the CLI package (audit run 6, G2).
+  const specsWithErrors = new Set(
+    lintResults.diagnostics.filter((d) => d.severity === "error").map((d) => d.filePath),
+  );
+  const passing = specs.filter(({ spec }) => !specsWithErrors.has(spec.filePath)).length;
+
   const thresholdDays =
     config.diff?.staleness_threshold_days ?? DEFAULT_DIFF_CONFIG.staleness_threshold_days;
   const now = Date.now();
@@ -72,7 +83,7 @@ export async function handleStatus(): Promise<string> {
     // ambiguity `sdx_validate` was already cleaned up to avoid.
     specFiles: specs.length,
     byStatus,
-    lintHealth: { errors, warnings, passing: specs.length - errors },
+    lintHealth: { errors, warnings, passing },
     staleSpecs,
     integrityIssues: graphError ? [graphError] : [],
     verdict,

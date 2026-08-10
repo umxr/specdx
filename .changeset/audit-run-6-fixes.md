@@ -25,11 +25,20 @@ and breaking after `0.4.0`.
 - **G2: `lintHealth.passing` subtracted a diagnostic count from a spec count.**
   `passing: specs.length - errors` reported `-6` for one spec carrying seven
   error-severity diagnostics. It now counts the specs that emitted no
-  error-severity diagnostic. The field is part of the published `StatusResult`,
-  so this reaches the library and `sdx_status` over MCP as well as
-  `status --format json`. The mismatch survived six audits because every
+  error-severity diagnostic. The mismatch survived six audits because every
   fixture exercising `status` is error-free, where `specs.length - 0` happens
   to be the right answer.
+
+  **Fixed in two places, because there are two.** `sdx_status` duplicates the
+  CLI's `runStatus` rather than calling it — the dependency runs cli → mcp, so
+  it cannot be the other way round — and the first attempt at this fix repaired
+  only the CLI. Re-verifying the published alpha found MCP still returning
+  `-6`; a unit test on either side alone passed throughout. The duplication
+  stands, but no longer silently: a new parity test in the CLI package holds
+  the two implementations to the same `specFiles`, `verdict` and `lintHealth`
+  on a fixture with more errors than specs, and asserts the value absolutely as
+  well as relatively, since two implementations agreeing on a wrong number is
+  not parity.
 
 Both carry regression tests that fail against the code they replace: a
 process-level pair in `cli-behaviour.test.ts` asserting `status --format github`
