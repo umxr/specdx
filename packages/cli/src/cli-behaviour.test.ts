@@ -119,6 +119,39 @@ describe("CLI flag contracts", () => {
     expect(result.stdout).toMatch(/^::(notice|warning|error)/m);
   });
 
+  it("never renders status --format github as zero bytes", () => {
+    // The formatter emitted stale specs and integrity issues and nothing else,
+    // so a suite whose only problem was lint errors produced *no output at all*
+    // and exited 0 while its own JSON said `verdict: "errors"` (audit run 6,
+    // G1). `check` was given a headline notice for exactly this reason; status
+    // renders the same format and was left silent.
+    const result = run("status", "--format", "github");
+    expect(result.stdout.trim().length).toBeGreaterThan(0);
+    expect(result.stdout).toMatch(/^::(notice|warning|error)/m);
+  });
+
+  it("annotates status --format github at the level its own verdict reports", () => {
+    // The two renderers of one command must not disagree: pretty prints ✗ for
+    // `errors`, so github must not print a notice for the same run.
+    const parsed = JSON.parse(run("status", "--format", "json").stdout) as {
+      verdict: string;
+      lintHealth: { errors: number; warnings: number };
+    };
+    const annotations = run("status", "--format", "github").stdout;
+
+    const expected =
+      parsed.verdict === "errors"
+        ? "::error"
+        : parsed.verdict === "healthy"
+          ? "::notice"
+          : "::warning";
+    expect(annotations).toContain(`${expected}::specdx status`);
+    // The headline carries the numbers, so a reader of the log never has to
+    // run a second command to learn whether anything was checked.
+    expect(annotations).toContain(`${parsed.lintHealth.errors} error`);
+    expect(annotations).toContain("1 spec");
+  });
+
   it("makes --quiet suppress the success line it advertises suppressing", () => {
     const loud = run("validate");
     const quiet = run("validate", "--quiet");

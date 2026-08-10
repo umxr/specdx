@@ -67,6 +67,17 @@ export async function runStatus(options: RunStatusOptions = {}): Promise<StatusR
   const errors = lintResults.diagnostics.filter((d) => d.severity === "error").length;
   const warnings = lintResults.diagnostics.filter((d) => d.severity === "warn").length;
 
+  // Specs carrying no error-severity diagnostic.
+  //
+  // This was `specs.length - errors`, which subtracts a diagnostic count from a
+  // spec count -- one spec with seven errors reported `passing: -6`. The units
+  // only agree when `errors` is 0, which is every suite the fixtures use
+  // (audit run 6, G2).
+  const specsWithErrors = new Set(
+    lintResults.diagnostics.filter((d) => d.severity === "error").map((d) => d.filePath),
+  );
+  const passing = specs.filter(({ spec }) => !specsWithErrors.has(spec.filePath)).length;
+
   // Staleness
   const thresholdDays =
     config.diff?.staleness_threshold_days ?? DEFAULT_DIFF_CONFIG.staleness_threshold_days;
@@ -112,7 +123,7 @@ export async function runStatus(options: RunStatusOptions = {}): Promise<StatusR
     project: config.project?.name ?? "unknown",
     specFiles: specs.length,
     byStatus,
-    lintHealth: { errors, warnings, passing: specs.length - errors },
+    lintHealth: { errors, warnings, passing },
     staleSpecs,
     integrityIssues,
     verdict,
@@ -139,6 +150,35 @@ export default defineCommand({
       }
 
       if (format.format === "github") {
+        // A headline always, at the level the verdict reports.
+        //
+        // This block used to render stale specs and integrity issues and
+        // nothing else, so a suite whose only problem was lint errors emitted
+        // zero bytes and exited 0 -- a workflow step showing nothing, on a run
+        // whose own JSON said `verdict: "errors"` (audit run 6, G1). `check`
+        // was given a headline for exactly this reason; status renders the same
+        // format and was left able to say nothing at all.
+        //
+        // The level tracks the pretty renderer's icon so the two renderers of
+        // one command cannot disagree. Lint diagnostics are deliberately not
+        // re-annotated here -- `lint --format github` owns those, and a
+        // workflow running both should not get each one twice.
+        const level =
+          result.verdict === "errors"
+            ? "error"
+            : result.verdict === "healthy"
+              ? "notice"
+              : "warning";
+        console.log(
+          `::${level}::specdx status — ${result.project} — ${result.verdict}: ` +
+            `${result.specFiles} spec file(s), ${result.lintHealth.errors} error(s), ` +
+            `${result.lintHealth.warnings} warning(s)`,
+        );
+        if (result.verdict === "unassessed") {
+          console.log(
+            "::warning::No specs resolved — nothing was assessed. Check the spec paths in spec.config.yaml.",
+          );
+        }
         for (const s of result.staleSpecs) {
           console.log(
             `::warning::Spec "${s.specId}" is stale (${s.daysSinceUpdate} days since update)`,
