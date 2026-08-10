@@ -102,4 +102,89 @@ describe("runStatus", () => {
     expect(result.specFiles).toBe(1);
     expect(result.verdict).not.toBe("unassessed");
   });
+
+  it("counts passing specs, and cannot go negative when a spec has several errors (G2)", async () => {
+    // `passing` was `specs.length - errors` -- a spec count minus a diagnostic
+    // count. One spec carrying several error-severity diagnostics reported a
+    // negative number of passing specs. Every sandbox that exercised `status`
+    // was error-free, where `specs.length - 0` happens to be the right answer,
+    // so the unit mismatch survived six audits. The case that catches it is
+    // one where errors outnumber specs.
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nproject:\n  name: "broken"\nspecs:\n  prd:\n    path: "specs/prd.md"\n    type: "prd"\n`,
+    );
+    await writeFile(
+      join(tempDir, "specs/prd.md"),
+      [
+        "---",
+        'id: "prd"',
+        'type: "prd"',
+        'title: "Broken"',
+        "status: not-a-real-status",
+        'version: "1.0"',
+        'created: "not-a-date"',
+        "authors: []",
+        "---",
+        "",
+        "## Problem Statement",
+        "",
+        "Deliberately invalid frontmatter and missing sections.",
+      ].join("\n"),
+    );
+
+    const result = await runStatus();
+    expect(result.specFiles).toBe(1);
+    expect(result.lintHealth.errors).toBeGreaterThan(result.specFiles);
+    expect(result.lintHealth.passing).toBe(0);
+  });
+
+  it("counts a spec with only warnings as passing", async () => {
+    // `passing` counts specs with no error-severity diagnostic, so a warning
+    // must not remove a spec from the count -- otherwise the fix above would
+    // simply trade one wrong number for another.
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nproject:\n  name: "warned"\nspecs:\n  prd:\n    path: "specs/prd.md"\n    type: "prd"\n`,
+    );
+    await writeFile(
+      join(tempDir, "specs/prd.md"),
+      [
+        "---",
+        'id: "prd"',
+        'type: "prd"',
+        'title: "Warned"',
+        'status: "draft"',
+        'version: "1.0"',
+        `created: "${new Date().toISOString().slice(0, 10)}"`,
+        'authors: ["dev"]',
+        "---",
+        "",
+        "## Problem Statement",
+        "",
+        "<!-- placeholder -->",
+        "",
+        "## Goals",
+        "",
+        "- Be useful",
+        "",
+        "## Non-Goals",
+        "",
+        "- Everything else",
+        "",
+        "## Features",
+        "",
+        "- **F1**: Core feature",
+        "",
+        "## Success Criteria",
+        "",
+        "- It works",
+      ].join("\n"),
+    );
+
+    const result = await runStatus();
+    expect(result.lintHealth.errors).toBe(0);
+    expect(result.lintHealth.warnings).toBeGreaterThan(0);
+    expect(result.lintHealth.passing).toBe(1);
+  });
 });
