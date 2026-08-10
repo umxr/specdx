@@ -136,6 +136,13 @@ export function defaultProjectName(dir: string): string {
   return basename(resolve(dir)) || "my-project";
 }
 
+/**
+ * The templates `init` accepts. The `--template` help text is derived from this
+ * list rather than restated, so the two cannot disagree — the help advertised
+ * three while the validator accepted five.
+ */
+const VALID_TEMPLATES: Template[] = ["lightweight", "bmad", "api-first", "quick", "context"];
+
 export default defineCommand({
   meta: {
     name: "init",
@@ -148,7 +155,7 @@ export default defineCommand({
     },
     template: {
       type: "string",
-      description: "Template to use (lightweight, bmad, api-first)",
+      description: `Template to use (${VALID_TEMPLATES.join(", ")})`,
       default: "lightweight",
     },
     dir: {
@@ -159,9 +166,8 @@ export default defineCommand({
   },
   async run({ args }) {
     const { template, dir } = args;
-    const validTemplates: Template[] = ["lightweight", "bmad", "api-first", "quick", "context"];
-    if (!validTemplates.includes(template as Template)) {
-      console.error(`Unknown template: ${template}. Choose from: ${validTemplates.join(", ")}`);
+    if (!VALID_TEMPLATES.includes(template as Template)) {
+      console.error(`Unknown template: ${template}. Choose from: ${VALID_TEMPLATES.join(", ")}`);
       process.exit(1);
     }
 

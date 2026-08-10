@@ -1,393 +1,74 @@
 # specdx
 
-> The context engine for spec-driven development — keeps AI coding sessions grounded in validated, token-budgeted spec context.
+> Keep AI coding sessions grounded in specs your team actually maintains.
 
 [![npm version](https://img.shields.io/npm/v/specdx)](https://www.npmjs.com/package/specdx)
 [![license](https://img.shields.io/npm/l/specdx)](LICENSE)
 [![CI](https://github.com/umxr/specdx/actions/workflows/ci.yml/badge.svg)](https://github.com/umxr/specdx/actions/workflows/ci.yml)
 
----
-
-## What is specdx?
-
-specdx does a few things really well: it gives your project specs (PRDs, technical designs, user stories, test plans, ADRs, API contracts) a formal schema, **validates and lints** them, **packs** them into token-optimised context for LLM sessions, and **tracks freshness** so drift between specs gets caught before it compounds.
-
-No LLM calls in the core pipeline. No API keys required. Deterministic validation you can run in CI.
-
-```bash
-npm install -g specdx
-```
-
----
-
-## The Real-World Workflow
-
-specdx fits into how developers actually work with AI coding tools. Here's what day-to-day usage looks like.
-
-### Setting Up a New Project
-
-```bash
-cd your-project
-specdx init --name "my-app" --template lightweight
-```
-
-This creates `spec.config.yaml` and starter specs in `specs/`. Five templates available:
-
-| Template | What you get | Best for |
-|----------|-------------|----------|
-| `lightweight` | PRD + Technical Design | Small projects, solo devs |
-| `bmad` | PRD + Technical Design + Test Plan + stories/ + adr/ | Full methodology |
-| `api-first` | Technical Design + API Contract + Test Plan | Backend/API projects |
-| `quick` | Single Quick Spec | Rapid prototyping |
-| `context` | Project Context only | Adding to existing projects |
-
-### Adding specdx to an Existing Project
-
-If you already have a codebase and want to introduce specs:
-
-```bash
-cd existing-project
-specdx init --name "my-app" --template context
-```
-
-Start with `context` to create a project-context spec describing your stack, conventions, and constraints. Then add specs incrementally as you plan new work:
-
-```bash
-# Add a PRD when you're planning a feature
-# Add a technical design when you're making architecture decisions
-# Add user stories when you're breaking work into tasks
-```
-
-Edit `spec.config.yaml` to register each new spec with its type and dependencies.
-
-### Daily Development Loop
-
-This is the core loop. Every coding session follows the same pattern:
-
-**1. Load context before you code**
-
-```bash
-specdx pack --task "implement user authentication" --copy
-```
-
-This scores every spec in your suite for relevance to your task, allocates a token budget, compresses boilerplate, and copies the result to your clipboard. Paste it into your LLM session or let the Claude Code skill handle it automatically.
-
-**2. Write code informed by specs**
-
-Your LLM session now has the right context — the PRD features you're implementing, the technical constraints, the acceptance criteria, the API contract. No manual copy-pasting, no guessing which specs matter.
-
-**3. Lint before committing**
-
-```bash
-specdx lint
-```
-
-Validates frontmatter, checks required sections, verifies cross-references, detects circular dependencies, flags vague language, and catches hardcoded secrets in specs. Three presets: `minimal`, `recommended`, `strict`.
-
-**4. Keep specs fresh**
-
-```bash
-specdx diff        # what changed, and which downstream specs it affects
-specdx ready       # is the suite fit to implement from?
-```
-
-If you updated the PRD but not the test plan that depends on it, `diff` flags it before the staleness compounds.
-
-### Planning New Work
-
-When you're starting a new feature or project phase:
-
-```bash
-# Check what state the spec suite is in
-specdx status
-
-# See the dependency graph
-specdx graph
-
-# Check if specs are ready for implementation
-specdx ready
-```
-
-`ready` validates that all required specs exist, lint is clean, no references are broken, no specs are stale, and PRD features have corresponding user stories. It's the gate between "planning" and "building."
-
-### Reviewing Changes
-
-When specs change (or should have changed):
-
-```bash
-# What specs changed since main?
-specdx diff
-
-# What's the downstream impact?
-specdx diff --base main --head HEAD
-
-# Generate a changelog for sprint review
-specdx diff --base v1.0 --head HEAD --format changelog
-
-# Include specs you haven't committed yet
-specdx diff --working
-```
-
-`diff` walks the dependency graph to find downstream specs affected by upstream changes. If you updated the PRD but forgot to update the test plan that depends on it, `diff` flags it.
-
-### Onboarding New Team Members
-
-```bash
-specdx status
-specdx graph
-specdx pack --full
-```
-
-`status` reports what specs exist and how healthy they are, `graph` shows how they relate, and `pack --full` loads the content itself. A new developer can understand the project's intent without opening a spec file. The `specdx-onboard` skill drives this sequence as a guided tour.
-
-### CI Integration
-
-Add spec health checks to your CI pipeline with the GitHub Action:
-
-```yaml
-# .github/workflows/specs.yml
-permissions:
-  pull-requests: write
-steps:
-  - uses: umxr/specdx/packages/github-action@v0.4.0
-    with:
-      working-directory: .
-      preset: recommended
-      github-token: ${{ secrets.GITHUB_TOKEN }}
-```
-
-The action runs lint + diff on every PR and can block merges on spec health failures. It fails the job when the spec paths resolve to no files — zero specs checked is not a pass.
-
-Pass `github-token` and grant the workflow `permissions: pull-requests: write` to have it post a spec health comment, which it updates in place on each push rather than stacking a new one. Without the token it skips commenting and logs why; a missing permission is a warning, never a failed job. Set `badge-path` to write an SVG health badge.
-
-Configure severity thresholds in `spec.config.yaml`:
-
-```yaml
-ci:
-  block_on: ["error"]
-  post_comment: true
-```
-
----
-
-## Experimental Features
-
-These ship with specdx but are **not part of the stable surface** — they lean on static code analysis, which is inherently fuzzy, and their output and interfaces may change or produce noise. They are flagged `[experimental]` in CLI help.
-
-| Command | What it does |
-|---------|-------------|
-| `specdx check` | Spec-to-implementation drift analysis: extracts routes (Express, Hono, Next.js), types (TS, Zod, Prisma), and tests from your code and compares them against specs |
-| Declared artifacts | Framework-agnostic checkable surfaces for `check`: a spec's optional `artifacts:` frontmatter lists files that must exist and names they must export, so any project — static sites, CLIs, libraries — gets drift checking. See below. |
-| `specdx check --ai` | Sends check findings to Claude for assessment (requires `ANTHROPIC_API_KEY`) |
-| `specdx update --from-code` | Suggests spec updates from check findings |
-| `specdx generate test-plan` | Generates test-plan stubs from story acceptance criteria |
-| `specdx migrate` | Schema-version migration for spec suites |
-
-Feedback on these is especially welcome — accuracy improvements (confidence scoring, better matching) are what graduates them to stable.
-
-### Declared artifacts
-
-When no framework extractor applies (Astro, static sites, CLIs, libraries), declare what "implemented" means directly in a spec's frontmatter:
-
-```yaml
-artifacts:
-  - path: "middleware.ts"
-  - path: "scripts/export-crawler-log.mjs"
-  - path: "src/lib/bots.ts"
-    exports: ["BOT_SIGNATURES"]
-```
-
-`specdx check` verifies each `path` exists and each name in `exports` is exported from it (export checks use ts-morph and are skipped with a note — never silently passed — when it isn't installed). Declared artifacts count toward the implementation score as their own category and make a spec checkable on any stack.
-
-**Enforcement follows the spec's `status`**, so you can declare artifacts in a spec written before the code exists:
-
-| Spec status | Declared file or export missing | Exit code |
-|---|---|---|
-| `draft`, `review`, `superseded` | reported as **pending** — planned, not yet built. Excluded from the score. | 0 |
-| `approved` | reported as a **missing** error — the spec says this should exist | 1 |
-
-The rule applies identically to a planned `path` and a planned entry in `exports`, so a spec can declare that an existing file will gain a new export. Files and exports that *do* exist are always verified, whatever the status. Flipping a spec to `approved` is what makes its contract enforceable, so `check` can tell "this is a plan for unbuilt work" apart from "this was approved but three of its five artifacts are missing".
-
----
-
-## Claude Code Integration
-
-specdx ships as a Claude Code plugin with 9 skills that automate the workflow above.
-
-### Automatic Setup
-
-Install specdx as a dev dependency and the plugin is discovered automatically:
+specdx gives your PRDs, technical designs, user stories and API contracts a
+schema, lints them for the gaps an LLM will trip over, and packs the relevant
+ones into a token budget before you start coding. No LLM calls in the pipeline,
+no API key, deterministic enough to gate a pull request on.
 
 ```bash
 npm install -D specdx
 ```
 
-Or install skills manually:
+## Quick start
 
 ```bash
-specdx skills install
+npx specdx init --template lightweight   # scaffold specs/ and spec.config.yaml
+npx specdx lint                          # find the gaps
 ```
 
-Skills install to `.claude/skills/<name>/SKILL.md` and follow the
-[Agent Skills specification](https://agentskills.io/specification).
-
-### Skills
-
-| Skill | What it does |
-|-------|-------------|
-| `specdx-start-task` | Loads spec context before coding — runs `pack --task` and injects the result |
-| `specdx-author-spec` | Guides spec creation with iterative linting gates between sections |
-| `specdx-plan-from-spec` | Generates implementation plans grounded in the spec suite |
-| `specdx-verify` | *(experimental)* Verifies implementation against specs using `check` |
-| `specdx-check-drift` | *(experimental)* Cross-references code changes vs spec definitions |
-| `specdx-pre-commit` | Runs lint + diff before commits to catch drift early |
-| `specdx-review-spec` | Multi-layer quality review (completeness, consistency, adversarial) |
-| `specdx-onboard` | Guided overview for new developers |
-| `specdx-sprint-review` | Generates shareable spec health summary for standups |
-
-### MCP Server
-
-specdx also exposes all tools over MCP (Model Context Protocol) for programmatic access:
+`init` writes specs with placeholder sections, and `lint` tells you which ones
+still need filling in. Once they have real content, pack it for a task:
 
 ```bash
-specdx mcp
+npx specdx pack --task "add rate limiting" --copy
 ```
 
-7 tools available: `sdx_validate`, `sdx_lint`, `sdx_pack`, `sdx_status`, `sdx_check`, `sdx_diff`, `sdx_graph`.
+This scores every spec for relevance to the task, fits the best of them into a
+token budget, strips boilerplate, and puts the result on your clipboard. Paste
+it into your LLM session — or let the Claude Code plugin run it for you.
 
----
+It exits 3 and packs nothing if no spec is relevant yet, rather than handing you
+an empty context that looks like an answer.
 
-## Spec File Format
+## Why
 
-Every spec is a Markdown file with YAML frontmatter:
+An LLM writing code against your project is only as good as the context it was
+given. In practice that context is pasted by hand, half-remembered, and stale.
 
-```markdown
----
-id: "prd-001"
-type: "prd"
-title: "User Authentication System"
-status: "approved"
-version: "1.0"
-created: "2026-03-01"
-authors: ["alice"]
----
+specdx makes it a build artifact:
 
-## Problem Statement
+- **Specs are validated, not vibes.** Required sections per type, cross-references
+  that must resolve, dependency cycles caught. Thirteen rules, three presets.
+- **Context is budgeted, not dumped.** `pack` picks what is relevant to the task
+  at hand and fits it to a token limit, instead of pasting the whole folder.
+- **Drift is visible.** Change the PRD and `diff` tells you which downstream
+  specs the change reached, before the gap compounds.
 
-Our application has no authentication...
+## The loop
 
-## Goals
-
-1. Support email/password login
-2. ...
-
-## Non-Goals
-
-- Social login (Phase 2)
-- ...
-
-## Features
-
-- **F1 Login Flow**: Email and password with rate limiting...
-- **F2 Session Management**: JWT tokens with refresh...
-
-## Success Criteria
-
-- 99.9% auth uptime
-- < 200ms login response time
+```bash
+specdx pack --task "what you're about to build" --copy   # before you code
+specdx lint                                              # before you commit
+specdx diff                                              # what changed, and what it affects
+specdx ready                                             # is this fit to build from?
 ```
 
-### Spec Types
-
-| Type | Required Sections | Extra Fields |
-|------|------------------|--------------|
-| `prd` | Problem Statement, Goals, Non-Goals, Features, Success Criteria | — |
-| `technical-design` | Overview, Architecture, Data Model, API Design, Dependencies, Risks, Open Questions | — |
-| `user-story` | Description, Acceptance Criteria, Dependencies, Notes | `story_id`, `priority`, `estimate` |
-| `test-plan` | Scope, Test Cases, Coverage Matrix, Edge Cases | — |
-| `adr` | Context, Decision, Status, Consequences | — |
-| `api-contract` | Endpoints, Request/Response Schemas, Auth, Error Codes | — |
-| `epic` | Overview, Stories, Acceptance Criteria, Dependencies | `epic_id`, `priority` |
-| `quick-spec` | Intent, Boundaries, Tasks | — |
-| `project-context` | Technology Stack, Critical Implementation Rules, Coding Patterns | — |
-
-### Required Frontmatter
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique identifier within the spec suite |
-| `type` | enum | One of the 9 spec types above |
-| `title` | string | Human-readable title |
-| `status` | enum | `draft`, `review`, `approved`, `superseded` |
-| `version` | string | Version string (e.g. `"1.0"`) |
-| `created` | string | ISO 8601 date — must be quoted in YAML |
-| `authors` | string[] | At least one author |
-
-### Cross-References
-
-Specs can reference each other in frontmatter:
-
-```yaml
-references:
-  - id: "tech-001"
-    relationship: "depends-on"
-  - id: "story-auth-001"
-    relationship: "decomposed-into"
-```
-
-Relationships: `implemented-by`, `decomposed-into`, `depends-on`, `supersedes`, `related-to`.
-
-### Sections `specdx check` reads
-
-Most sections are prose that only a human reads. Three are parsed, so `check`
-can compare them against code. Write them in one of the shapes below — anything
-else is treated as prose, and `check` reports the section as not assessed rather
-than counting it as covered.
-
-**`## Endpoints`** (api-contract) — either shape, or a mix:
-
-```markdown
-- `GET /invoices` — list invoices
-- POST /invoices — create an invoice
-- `DELETE /invoices/:id` — void an invoice
-
-### GET /invoices/:id
-
-Read a single invoice.
-```
-
-**`## Data Model`** (technical-design) — a `###` heading per type, one field per
-line. The heading must be a single identifier; `### Notes on the model` is read
-as prose, not as a type called `Notes`. Backticks around field names are
-optional:
-
-```markdown
-### Invoice
-
-- id: string
-- `amountCents`: number
-- paidAt?: Date
-```
-
-**`## Test Cases`** (test-plan) — one bullet per case, optionally grouped under
-`###` headings. Each is matched against your test descriptions:
-
-```markdown
-### Invoices
-
-- creates an invoice with a valid payload
-- rejects an invoice with a negative amount
-```
-
----
+`ready` is the gate between planning and building: required specs present, lint
+clean, references resolving, nothing stale, and every PRD feature carrying a
+user story.
 
 ## Configuration
 
-`spec.config.yaml` at the project root:
+`spec.config.yaml` at the project root. Only `version` and `specs` are required.
 
 ```yaml
 version: "1.0"
-
 project:
   name: "my-project"
 
@@ -396,71 +77,145 @@ specs:
     path: specs/prd.md
     type: prd
     required: true
-
   technical:
     path: specs/technical-design.md
     type: technical-design
     requires: ["prd"]
-
   stories:
     path: "specs/stories/*.md"
     type: user-story
     requires: ["prd"]
 
-  test-plan:
-    path: specs/test-plan.md
-    type: test-plan
-    requires: ["technical"]
-
 lint:
-  extends: "recommended"
-  rules:
-    consistency/naming-conventions: off
-
-pack:
-  max_tokens: 12000
-  format: xml
-  compression:
-    strip_boilerplate: true
-    stable_days: 30
-
-diff:
-  baseline_ref: main
-  staleness_threshold_days: 14
-
-check:
-  framework: auto  # auto | express | hono | nextjs
-
-ci:
-  block_on: ["error"]
-  post_comment: true
+  extends: "recommended"        # minimal | recommended | strict
 ```
 
+`requires` is what builds the dependency graph, and the graph is what makes
+`diff` able to tell you that changing the PRD stales the test plan.
+
+**→ [Full configuration reference](docs/configuration.md)** — lint rule
+overrides, custom rules, pack budgets, staleness thresholds, `check` paths.
+
+## Spec format
+
+Markdown with YAML frontmatter. Nine types, each with required sections.
+
+```markdown
+---
+id: "prd-001"
+type: "prd"
+title: "User authentication"
+status: "approved"
+version: "1.0"
+created: "2026-03-01"
+authors: ["alice"]
 ---
 
-## CLI Reference
+## Problem Statement
+
+The application has no authentication, so every endpoint is public.
+```
+
+`created` must be quoted, or YAML turns it into a date object.
+
+**→ [Spec format reference](docs/spec-format.md)** — all nine types and their
+required sections, cross-references, declared artifacts, and the three sections
+`check` parses.
+
+## Editor and agent integration
+
+### Claude Code
+
+specdx ships as a plugin with **ten skills**. Install it as a dev dependency and
+the plugin is discovered automatically:
+
+```bash
+npm install -D specdx
+```
+
+Or write the skill files into `.claude/skills/` yourself:
+
+```bash
+npx specdx skills install          # the eight promoted skills
+npx specdx skills install --experimental   # also the two check-based ones
+```
+
+| Skill | What it does |
+|-------|-------------|
+| `specdx-router` | Maps every skill and when to reach for it. Start here. |
+| `specdx-start-task` | Loads spec context before coding |
+| `specdx-author-spec` | Guides spec writing, linting between sections |
+| `specdx-plan-from-spec` | Turns specs into an implementation plan |
+| `specdx-review-spec` | Multi-layer quality review of a new spec |
+| `specdx-pre-commit` | Catches drift before it enters git history |
+| `specdx-onboard` | Guided tour of an unfamiliar spec suite |
+| `specdx-sprint-review` | Shareable spec health summary |
+| `specdx-verify` | *(experimental)* Checks implementation against specs |
+| `specdx-check-drift` | *(experimental)* Cross-references code changes vs specs |
+
+### MCP
+
+Every tool is exposed over the Model Context Protocol:
+
+```bash
+specdx mcp
+```
+
+Seven tools: `sdx_validate`, `sdx_lint`, `sdx_pack`, `sdx_status`, `sdx_check`,
+`sdx_diff`, `sdx_graph`.
+
+**→ [Cursor and Gemini CLI setup](docs/other-platforms.md)**
+
+## CI
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+
+steps:
+  - uses: actions/checkout@v4
+    with: { fetch-depth: 0 }
+  - uses: umxr/specdx/packages/github-action@v0
+    with:
+      preset: recommended
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+The action lints and diffs every pull request, posts a health comment it updates
+in place, and fails the job when spec paths resolve to no files — zero specs
+checked is not a pass.
+
+Any CI can run the CLI directly instead: `specdx lint --format github` emits
+inline annotations and exits non-zero on failure.
+
+**→ [CI reference](docs/ci.md)**
+
+## CLI
 
 | Command | Description |
 |---------|-------------|
-| `specdx init --name <name>` | Scaffold a new spec suite |
-| `specdx lint` | Lint all specs against configured rules |
+| `specdx init` | Scaffold a spec suite (`--template lightweight\|bmad\|api-first\|quick\|context`) |
+| `specdx lint` | Lint all specs (`--preset`, `--fix`) |
 | `specdx validate` | Validate `spec.config.yaml` |
-| `specdx pack --task <task>` | Pack specs into token-optimised context |
-| `specdx status` | Show spec suite health overview |
-| `specdx check` | *(experimental)* Analyse spec-to-implementation drift |
-| `specdx diff` | Show spec changes and downstream impact (`--working`, `--format changelog`) |
+| `specdx pack --task <task>` | Pack specs into token-budgeted context (`--copy`, `--full`) |
+| `specdx status` | Spec suite health overview |
+| `specdx diff` | Spec changes and downstream impact (`--working`, `--base`, `--head`) |
 | `specdx graph` | Print the dependency graph |
-| `specdx ready` | Check if specs are ready for implementation |
-| `specdx generate story --from <id>` | Generate user story stubs from a PRD |
-| `specdx generate test-plan` | *(experimental)* Generate test plan stub from stories |
-| `specdx update` | *(experimental)* Suggest spec updates based on code drift |
-| `specdx migrate` | *(experimental)* Check and validate spec schema version |
-| `specdx skills install` | Install Claude Code skills (`--experimental` also installs the unpromoted ones) |
+| `specdx ready` | Is the suite fit to implement from? |
+| `specdx generate story --from <id>` | Generate story stubs from a PRD |
+| `specdx skills install` | Install Claude Code skills |
 | `specdx mcp` | Start the MCP server |
+| `specdx check` | *(experimental)* Spec-to-implementation drift |
+| `specdx update` | *(experimental)* Suggest spec updates from drift |
+| `specdx generate test-plan` | *(experimental)* Test plan stub from stories |
+| `specdx migrate` | *(experimental)* Migrate spec suite schema |
 
-Global flags: `--quiet` (suppress success and summary output; problems still print) and `--verbose`.
+`--quiet` and `--verbose` are available on the reporting commands — run
+`specdx <command> --help` for what each one takes.
 
-`--format` is per command, because not every command renders every format. Run `specdx <command> --help` for the list it supports — asking for one it does not render is an error, not a silent fallback to pretty output.
+`--format` is per command, because not every command renders every format.
+Asking for one a command does not render is an error, not a silent fallback.
 
 | Formats | Commands |
 |---|---|
@@ -470,25 +225,34 @@ Global flags: `--quiet` (suppress success and summary output; problems still pri
 | `pretty`, `json`, `changelog` | `diff` |
 | `xml`, `markdown`, `json` | `pack` |
 
----
+## Experimental
 
-## Why specdx?
+These ship with specdx but sit outside the stable surface — they lean on static
+code analysis, which is inherently fuzzy, so their output and interfaces may
+change. They are flagged `[experimental]` in `--help`.
 
-**vs. Markdown linters** (markdownlint, remark-lint) — They check formatting. specdx checks semantics: required sections by spec type, cross-reference validity, dependency chain cycles, downstream staleness.
+`specdx check` extracts routes (Express, Hono, Next.js), types (TypeScript, Zod,
+Prisma) and tests from your code and compares them against your specs. Where no
+framework extractor applies — static sites, CLIs, libraries — a spec can declare
+[artifacts](docs/spec-format.md#declared-artifacts) instead: files that must
+exist and names they must export.
 
-**vs. YAML validators** (JSON Schema + AJV) — They check structure. specdx combines schema validation with document-level semantic rules that understand spec relationships.
+Accuracy feedback is what graduates these to stable.
 
-**What makes it different:**
+## How it compares
 
-1. **Dependency chains.** `requires` declarations build a DAG. Rules catch staleness and broken references across the entire suite.
-2. **Context packing.** `specdx pack` assembles token-optimised payloads with relevance filtering, budget allocation, and boilerplate stripping.
-3. **Drift detection.** `specdx diff` walks the dependency graph to find specs affected by upstream changes, and `specdx ready` gates implementation on suite health. (Experimental: `specdx check` compares specs against your actual implementation.)
+**Markdown linters** (markdownlint, remark-lint) check formatting. specdx checks
+semantics: required sections by spec type, cross-reference validity, dependency
+cycles, downstream staleness.
 
----
+**JSON Schema validators** check structure. specdx adds document-level rules
+that understand how specs relate to each other — and a packer that turns the
+suite into context an LLM can actually use.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, how to write custom lint rules, and the PR process.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, writing custom
+lint rules, and the PR process.
 
 ## License
 
