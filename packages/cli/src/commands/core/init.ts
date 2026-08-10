@@ -5,7 +5,7 @@ import { REQUIRED_SECTIONS } from "@specdx/schema";
 
 export type Template = "lightweight" | "bmad" | "api-first" | "quick" | "context";
 
-interface ScaffoldOptions {
+export interface ScaffoldOptions {
   projectName: string;
   template: Template;
   targetDir: string;

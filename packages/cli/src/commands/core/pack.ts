@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@specdx/core";
 import { pack, type PackResult } from "@specdx/pack";
 import type { ParsedSpec } from "@specdx/core";
-import { sharedArgs } from "../../shared-args.js";
+import { quietArg, verboseArg } from "../../shared-args.js";
 import { writeFile } from "node:fs/promises";
 import { execSync } from "node:child_process";
 
@@ -98,8 +98,8 @@ export async function runPack(
 export default defineCommand({
   meta: { name: "pack", description: "Pack specs into AI-ready context" },
   args: {
-    quiet: sharedArgs.quiet,
-    verbose: sharedArgs.verbose,
+    quiet: quietArg,
+    verbose: verboseArg,
     task: { type: "string", description: "Task or context to optimise relevance for" },
     specs: { type: "string", description: "Comma-separated spec IDs or glob patterns to include" },
     budget: { type: "string", description: "Maximum token budget for the output" },

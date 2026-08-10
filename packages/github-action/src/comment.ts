@@ -1,5 +1,94 @@
+import * as core from "@actions/core";
+import * as github from "@actions/github";
 import type { Diagnostic } from "@specdx/lint";
 import type { DiffResult } from "@specdx/diff";
+
+/**
+ * Marks the comment as ours so a later push updates it instead of stacking a
+ * new one. An HTML comment is invisible in the rendered body.
+ */
+export const COMMENT_MARKER = "<!-- specdx-spec-health -->";
+
+export type CommentOutcome = "posted" | "updated" | "skipped";
+
+export interface PostCommentOptions {
+  /** Token with `pull-requests: write`. Empty means commenting is off. */
+  token: string;
+  /** `ci.post_comment` from the config. */
+  enabled: boolean;
+  /** Rendered body, without the marker. */
+  body: string;
+}
+
+/**
+ * Post the spec health comment, or explain why it was skipped.
+ *
+ * Every failure mode is a no-op with a log line and never a job failure: the
+ * comment is a convenience, and a spec suite that passed must not go red
+ * because the workflow lacked `pull-requests: write`.
+ */
+export async function postComment({
+  token,
+  enabled,
+  body,
+}: PostCommentOptions): Promise<CommentOutcome> {
+  if (!enabled) {
+    core.info("Spec health comment skipped: post_comment is false in spec.config.yaml.");
+    return "skipped";
+  }
+  if (!token) {
+    core.info(
+      "Spec health comment skipped: no github-token input. Pass `github-token: ${{ secrets.GITHUB_TOKEN }}` to enable it.",
+    );
+    return "skipped";
+  }
+
+  const pr = github.context.payload.pull_request;
+  if (!pr || typeof pr.number !== "number") {
+    core.info("Spec health comment skipped: not a pull_request event.");
+    return "skipped";
+  }
+  const issueNumber = pr.number;
+  const marked = `${COMMENT_MARKER}\n${body}`;
+
+  try {
+    const octokit = github.getOctokit(token);
+    const { owner, repo } = github.context.repo;
+
+    const existing = await octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      per_page: 100,
+    });
+    const previous = existing.data.find((c) => c.body?.includes(COMMENT_MARKER));
+
+    if (previous) {
+      await octokit.rest.issues.updateComment({
+        owner,
+        repo,
+        comment_id: previous.id,
+        body: marked,
+      });
+      core.info(`Spec health comment updated (#${previous.id}).`);
+      return "updated";
+    }
+
+    await octokit.rest.issues.createComment({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      body: marked,
+    });
+    core.info("Spec health comment posted.");
+    return "posted";
+  } catch (err) {
+    core.warning(
+      `Spec health comment skipped: ${(err as Error).message}. The workflow needs \`permissions: pull-requests: write\`.`,
+    );
+    return "skipped";
+  }
+}
 
 export function formatComment(
   diagnostics: Diagnostic[],

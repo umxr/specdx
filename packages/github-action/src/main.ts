@@ -5,7 +5,10 @@ import { createLintEngine, getPreset } from "@specdx/lint";
 import { diffBetweenRefs, DiffError } from "@specdx/diff";
 import type { DiffResult } from "@specdx/diff";
 import type { Diagnostic } from "@specdx/lint";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { mkdir, writeFile } from "node:fs/promises";
+import { formatComment, postComment } from "./comment.js";
+import { generateBadge, type BadgeStatus } from "./badge.js";
 
 async function run(): Promise<void> {
   try {
@@ -80,6 +83,47 @@ async function run(): Promise<void> {
       core.info(
         `Diff: ${diffResult.diffs.length} specs changed, ${diffResult.added.length} added, ${diffResult.removed.length} removed`,
       );
+    }
+
+    // Report before deciding. Both surfaces are opt-in and neither can fail
+    // the job: absent input means the feature is off, and an error inside
+    // either is a warning. They run ahead of the verdict below so a vacuous
+    // suite still gets a comment saying so -- that is the case a reader most
+    // needs explained.
+    const status: BadgeStatus =
+      specs.length === 0 || errors > 0 ? "failing" : warnings > 0 ? "warnings" : "passing";
+
+    const badgePath = core.getInput("badge-path");
+    if (badgePath) {
+      try {
+        const target = join(workingDir, badgePath);
+        await mkdir(dirname(target), { recursive: true });
+        await writeFile(target, generateBadge(status), "utf-8");
+        core.info(`Spec health badge written to ${badgePath} (${status}).`);
+      } catch (err) {
+        core.warning(`Spec health badge skipped: ${(err as Error).message}`);
+      }
+    }
+
+    await postComment({
+      token: core.getInput("github-token"),
+      enabled: config.ci?.post_comment ?? true,
+      body: formatComment(lintResults.diagnostics, specs.length, diffResult),
+    });
+
+    // Zero specs checked is not a pass (vacuous-pass audit).
+    //
+    // The job's verdict below reads the diagnostics array alone, and a suite
+    // whose paths resolve to no files produces no diagnostics -- so a renamed
+    // spec directory, a typo'd path or a sparse checkout reported success
+    // while enforcing nothing. `comment.ts` already guarded the rendered
+    // comment; this is the path that decides whether CI goes red, and it is
+    // the one that matters. Every CLI command refuses the same case.
+    if (specs.length === 0) {
+      core.setFailed(
+        "Spec health check failed: no specs were checked — spec paths in spec.config.yaml resolved to no files. Check the spec paths, or the working-directory input.",
+      );
+      return;
     }
 
     // Check if we should fail

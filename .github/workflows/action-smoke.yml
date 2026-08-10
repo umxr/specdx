@@ -19,3 +19,28 @@ jobs:
         with:
           working-directory: packages/github-action/test/fixture-project
           preset: recommended
+
+  # A green job over zero specs is the worst failure a spec-health gate can
+  # have, and it shipped: the verdict read the diagnostics array and never
+  # asked whether anything had been read (audit run 5, F1). `uses:` cannot
+  # assert a failure, so this runs the same committed bundle directly.
+  vacuous:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail a suite whose spec paths resolve to no files
+        run: |
+          set +e
+          output=$(node packages/github-action/bundle/main.cjs 2>&1)
+          status=$?
+          set -e
+          echo "$output"
+          if [ "$status" -eq 0 ]; then
+            echo "::error::the action passed a suite it never read"
+            exit 1
+          fi
+          echo "$output" | grep -q "0 specs checked"
+          echo "$output" | grep -q "no specs were checked"
+        env:
+          INPUT_PRESET: recommended
+          INPUT_WORKING-DIRECTORY: packages/github-action/test/empty-project

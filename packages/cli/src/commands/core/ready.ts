@@ -3,7 +3,9 @@ import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@s
 import { createLintEngine, getPreset, parseFeatures } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 import { DEFAULT_DIFF_CONFIG } from "@specdx/diff";
-import { sharedArgs } from "../../shared-args.js";
+import { sharedArgs, resolveFormat } from "../../shared-args.js";
+
+const FORMATS = ["pretty", "json"] as const;
 
 export interface ReadyCheck {
   name: string;
@@ -265,16 +267,22 @@ export async function runReady(): Promise<ReadyResult> {
 export default defineCommand({
   meta: { name: "ready", description: "Check if spec suite is ready for implementation" },
   args: {
-    ...sharedArgs,
+    ...sharedArgs(FORMATS),
   },
   async run({ args }) {
+    const format = resolveFormat(args.format, FORMATS);
+    if (!format.ok) {
+      console.error(`\n  ✗ ${format.message}\n`);
+      process.exit(1);
+    }
+
     try {
       const logger = createLogger({ quiet: args.quiet, verbose: args.verbose });
       logger.debug("Running readiness checks...");
 
       const result = await runReady();
 
-      if (args.format === "json") {
+      if (format.format === "json") {
         console.log(JSON.stringify(result, null, 2));
         if (!result.ready) process.exit(1);
         return;

@@ -1,13 +1,16 @@
 import { defineCommand } from "citty";
 import { loadConfig, buildGraph, resolveGlob, ConfigError, GraphError } from "@specdx/core";
-import { sharedArgs } from "../../shared-args.js";
+import { sharedArgs, resolveFormat } from "../../shared-args.js";
+import { createOutput } from "../../output.js";
+
+const FORMATS = ["pretty", "json"] as const;
 
 export interface ValidateResult {
   valid: boolean;
   /** Number of spec entries declared in the config. */
-  specCount?: number;
+  specEntries?: number;
   /** Number of spec files those entries actually resolve to. */
-  specFileCount?: number;
+  specFiles?: number;
   /** Non-fatal honesty notes: entries resolving to nothing, empty suite. */
   warnings: string[];
   error?: string;
@@ -26,11 +29,11 @@ export async function runValidate(configDir: string): Promise<ValidateResult> {
     const config = await loadConfig(undefined, configDir);
     buildGraph(config);
 
-    let specFileCount = 0;
+    let specFiles = 0;
     const missingRequired: string[] = [];
     for (const [key, entry] of Object.entries(config.specs)) {
       const files = await resolveGlob(entry.path, configDir);
-      specFileCount += files.length;
+      specFiles += files.length;
       if (files.length > 0) continue;
 
       if ((entry as { required?: boolean }).required) {
@@ -43,14 +46,14 @@ export async function runValidate(configDir: string): Promise<ValidateResult> {
     if (missingRequired.length > 0) {
       return {
         valid: false,
-        specCount: Object.keys(config.specs).length,
-        specFileCount,
+        specEntries: Object.keys(config.specs).length,
+        specFiles,
         warnings,
         error: `required spec entry resolves to no files: ${missingRequired.join(", ")}`,
       };
     }
 
-    if (specFileCount === 0) {
+    if (specFiles === 0) {
       warnings.push(
         "no spec files found — every downstream check (lint, status, ready) would pass vacuously",
       );
@@ -58,8 +61,8 @@ export async function runValidate(configDir: string): Promise<ValidateResult> {
 
     return {
       valid: true,
-      specCount: Object.keys(config.specs).length,
-      specFileCount,
+      specEntries: Object.keys(config.specs).length,
+      specFiles,
       warnings,
     };
   } catch (err) {
@@ -75,15 +78,28 @@ export async function runValidate(configDir: string): Promise<ValidateResult> {
 
 export default defineCommand({
   meta: { name: "validate", description: "Validate spec.config.yaml" },
-  args: { ...sharedArgs },
-  async run() {
+  args: { ...sharedArgs(FORMATS) },
+  async run({ args }) {
+    const format = resolveFormat(args.format, FORMATS);
+    if (!format.ok) {
+      console.error(`\n  ✗ ${format.message}\n`);
+      process.exit(1);
+    }
+    const output = createOutput({ quiet: args.quiet });
+
     const result = await runValidate(process.cwd());
 
+    if (format.format === "json") {
+      console.log(JSON.stringify(result, null, 2));
+      if (!result.valid) process.exit(1);
+      return;
+    }
+
     if (result.valid) {
-      console.log(
-        `  ✓ Config valid. ${result.specCount} spec entries, ${result.specFileCount} spec files.`,
+      output.info(
+        `  ✓ Config valid. ${result.specEntries} spec entries, ${result.specFiles} spec files.`,
       );
-      for (const w of result.warnings) console.log(`  ⚠ ${w}`);
+      for (const w of result.warnings) output.out(`  ⚠ ${w}`);
       return;
     }
 

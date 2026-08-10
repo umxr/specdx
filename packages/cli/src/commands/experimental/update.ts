@@ -3,7 +3,9 @@ import { loadConfig, parseSpec, resolveGlob, createLogger } from "@specdx/core";
 import { runCheck } from "@specdx/check";
 import type { Finding } from "@specdx/check";
 import type { ParsedSpec } from "@specdx/core";
-import { sharedArgs } from "../../shared-args.js";
+import { sharedArgs, resolveFormat } from "../../shared-args.js";
+
+const FORMATS = ["pretty", "json"] as const;
 
 export interface UpdateSuggestion {
   specId: string;
@@ -107,7 +109,7 @@ export default defineCommand({
     description: "Suggest spec updates based on specdx check findings (--from-code)",
   },
   args: {
-    ...sharedArgs,
+    ...sharedArgs(FORMATS),
     "from-code": {
       type: "boolean",
       description: "Generate suggestions from code drift (specdx check findings)",
@@ -117,6 +119,12 @@ export default defineCommand({
     framework: { type: "string", description: "Framework override: express, hono, nextjs" },
   },
   async run({ args }) {
+    const format = resolveFormat(args.format, FORMATS);
+    if (!format.ok) {
+      console.error(`\n  ✗ ${format.message}\n`);
+      process.exit(1);
+    }
+
     const logger = createLogger({ quiet: args.quiet, verbose: args.verbose });
     const configDir = process.cwd();
     const config = await loadConfig(undefined, configDir);
@@ -145,7 +153,7 @@ export default defineCommand({
     const checkResult = await runCheck(specs, configDir, checkConfig);
     const { suggestions } = generateUpdates({ findings: checkResult.findings });
 
-    if (args.format === "json") {
+    if (format.format === "json") {
       console.log(JSON.stringify({ suggestions }, null, 2));
     } else {
       printSuggestionsPretty(suggestions);

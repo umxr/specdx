@@ -146,13 +146,21 @@ Add spec health checks to your CI pipeline with the GitHub Action:
 
 ```yaml
 # .github/workflows/specs.yml
-- uses: umxr/specdx/packages/github-action@v0.4.0
-  with:
-    working-directory: .
-    preset: recommended
+permissions:
+  pull-requests: write
+steps:
+  - uses: umxr/specdx/packages/github-action@v0.4.0
+    with:
+      working-directory: .
+      preset: recommended
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-The action runs lint + diff on every PR, posts a formatted comment with results, and can block merges on spec health failures. Configure severity thresholds in `spec.config.yaml`:
+The action runs lint + diff on every PR and can block merges on spec health failures. It fails the job when the spec paths resolve to no files — zero specs checked is not a pass.
+
+Pass `github-token` and grant the workflow `permissions: pull-requests: write` to have it post a spec health comment, which it updates in place on each push rather than stacking a new one. Without the token it skips commenting and logs why; a missing permission is a warning, never a failed job. Set `badge-path` to write an SVG health badge.
+
+Configure severity thresholds in `spec.config.yaml`:
 
 ```yaml
 ci:
@@ -450,7 +458,17 @@ ci:
 | `specdx skills install` | Install Claude Code skills (`--experimental` also installs the unpromoted ones) |
 | `specdx mcp` | Start the MCP server |
 
-Global flags: `--format pretty|json|github`, `--quiet`, `--verbose`.
+Global flags: `--quiet` (suppress success and summary output; problems still print) and `--verbose`.
+
+`--format` is per command, because not every command renders every format. Run `specdx <command> --help` for the list it supports — asking for one it does not render is an error, not a silent fallback to pretty output.
+
+| Formats | Commands |
+|---|---|
+| `pretty`, `json`, `github` | `lint`, `status`, `check` |
+| `pretty`, `json` | `validate`, `ready`, `update` |
+| `pretty`, `json`, `dot` | `graph` |
+| `pretty`, `json`, `changelog` | `diff` |
+| `xml`, `markdown`, `json` | `pack` |
 
 ---
 

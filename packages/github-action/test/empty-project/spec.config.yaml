@@ -1,0 +1,7 @@
+version: "1.0"
+project:
+  name: "empty-fixture"
+specs:
+  prd:
+    path: "specs/prd.md"
+    type: "prd"

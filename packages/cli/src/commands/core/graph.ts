@@ -9,12 +9,22 @@ import {
   findUnreflectedReferences,
 } from "@specdx/core";
 import type { ParsedSpec } from "@specdx/core";
-import { sharedArgs } from "../../shared-args.js";
+import { sharedArgs, resolveFormat } from "../../shared-args.js";
+import { createOutput } from "../../output.js";
+
+const FORMATS = ["pretty", "json", "dot"] as const;
 
 export default defineCommand({
   meta: { name: "graph", description: "Print the spec dependency graph" },
-  args: { ...sharedArgs },
+  args: { ...sharedArgs(FORMATS) },
   async run({ args }) {
+    const format = resolveFormat(args.format, FORMATS);
+    if (!format.ok) {
+      console.error(`\n  ✗ ${format.message}\n`);
+      process.exit(1);
+    }
+    const output = createOutput({ quiet: args.quiet });
+
     let config;
     const configDir = process.cwd();
     try {
@@ -45,7 +55,32 @@ export default defineCommand({
       const referenceEdges = collectReferenceEdges(specs);
       const unreflected = findUnreflectedReferences(referenceEdges, idToEntry, graph);
 
-      if (args.format === "dot") {
+      if (format.format === "json") {
+        console.log(
+          JSON.stringify(
+            {
+              nodes: sorted,
+              edges: graph.edges,
+              referenceEdges,
+              unreflectedReferences: unreflected.map(
+                ({ edge, requiringEntry, requiredEntry, createsCycle }) => ({
+                  from: edge.fromId,
+                  to: edge.toId,
+                  relationship: edge.relationship,
+                  requiringEntry,
+                  requiredEntry,
+                  createsCycle,
+                }),
+              ),
+            },
+            null,
+            2,
+          ),
+        );
+        return;
+      }
+
+      if (format.format === "dot") {
         console.log("digraph specs {");
         for (const edge of graph.edges) console.log(`  "${edge.from}" -> "${edge.to}";`);
         for (const ref of referenceEdges) {
@@ -57,17 +92,17 @@ export default defineCommand({
         return;
       }
 
-      console.log("\n  Spec Dependency Graph:\n");
+      output.info("\n  Spec Dependency Graph:\n");
       for (const node of sorted) {
         const downstream = graph.getDownstream(node);
         const arrow = downstream.length > 0 ? ` → ${downstream.join(", ")}` : "";
-        console.log(`  ${node}${arrow}`);
+        output.out(`  ${node}${arrow}`);
       }
 
       if (referenceEdges.length > 0) {
-        console.log("\n  Reference edges (frontmatter):\n");
+        output.info("\n  Reference edges (frontmatter):\n");
         for (const ref of referenceEdges) {
-          console.log(`  ${ref.fromId} —${ref.relationship}→ ${ref.toId}`);
+          output.out(`  ${ref.fromId} —${ref.relationship}→ ${ref.toId}`);
         }
       }
 

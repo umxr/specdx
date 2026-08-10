@@ -181,6 +181,44 @@ describe("published artifact", () => {
     expect(dts).not.toMatch(/from ['"]@specdx\//);
   });
 
+  it("exports the types its exported functions traffic in", () => {
+    // Every public interface was declared in the bundled .d.ts and none was
+    // exported, so `import type { PackResult } from "specdx"` failed with
+    // TS2459 and a consumer could not annotate what it had just received
+    // (audit run 5, F3). The previous test proves the types *resolve*; this
+    // proves they are *reachable*.
+    const dts = readFileSync(join(pkgRoot, "dist", "index.d.ts"), "utf-8");
+    const exported = /export\s*\{([^}]+)\}/g;
+    const names = new Set<string>();
+    for (const [, body = ""] of dts.matchAll(exported)) {
+      for (const part of body.split(",")) {
+        const name = part
+          .trim()
+          .replace(/^type\s+/, "")
+          .split(/\s+as\s+/)
+          .pop()
+          ?.trim();
+        if (name) names.add(name);
+      }
+    }
+    for (const required of [
+      "RunLintOptions",
+      "RunLintResults",
+      "RunPackOptions",
+      "RunDiffOptions",
+      "RunStatusOptions",
+      "ValidateResult",
+      "ScaffoldOptions",
+      "Diagnostic",
+      "PackResult",
+      "DiffResult",
+      "StatusResult",
+      "SdxConfig",
+    ]) {
+      expect({ required, exported: names.has(required) }).toEqual({ required, exported: true });
+    }
+  });
+
   it("invokes the SessionStart hook through an interpreter", () => {
     // npm normalises non-`bin` files to 644 when packing, so a manifest that
     // executes the script directly fails with EACCES for every plugin user.

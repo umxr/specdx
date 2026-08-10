@@ -2,23 +2,53 @@ import { describe, it, expect } from "vitest";
 import { edgeCaseCoverageRule } from "./edge-case-coverage.js";
 import type { ParsedSpec } from "@specdx/core";
 
-const makeSpec = (type: string, content: string): ParsedSpec => ({
-  filePath: "specs/test.md",
-  frontmatter: {
-    id: "test",
-    type,
-    title: "Test",
-    status: "draft",
-    version: "1.0",
-    created: "2026-01-01",
-    authors: ["dev"],
-  },
-  content,
-  sections: [],
-  parsedSections: [],
-  valid: true,
-  validationErrors: null,
-});
+/**
+ * Split on H2 the way `extractParsedSections` does, so a fixture cannot claim a
+ * heading in its content and an empty `parsedSections` at the same time — the
+ * inconsistency that let the test-plan half of this rule look covered.
+ */
+const splitSections = (content: string): ParsedSpec["parsedSections"] => {
+  const sections: ParsedSpec["parsedSections"] = [];
+  let heading = "";
+  let body: string[] = [];
+  const flush = () => {
+    const text = body.join("\n").trim();
+    if (heading !== "" || text !== "") sections.push({ heading, content: text, tokens: 0 });
+  };
+  for (const line of content.split("\n")) {
+    const match = /^##\s+(.*)$/.exec(line);
+    if (match) {
+      flush();
+      heading = match[1]!.trim();
+      body = [];
+    } else {
+      body.push(line);
+    }
+  }
+  flush();
+  return sections;
+};
+
+const makeSpec = (type: string, content: string): ParsedSpec => {
+  const parsedSections = splitSections(content);
+  return {
+    filePath: "specs/test.md",
+    frontmatter: {
+      id: "test",
+      type,
+      title: "Test",
+      status: "draft",
+      version: "1.0",
+      created: "2026-01-01",
+      authors: ["dev"],
+    },
+    content,
+    sections: parsedSections.map((s) => s.heading).filter(Boolean),
+    parsedSections,
+    valid: true,
+    validationErrors: null,
+  };
+};
 
 describe("edgeCaseCoverageRule", () => {
   it("warns when user-story has no error/edge case keywords", () => {
@@ -68,6 +98,63 @@ describe("edgeCaseCoverageRule", () => {
     const spec = makeSpec("prd", "## Features\n\n- **F1**: Login");
     const result = edgeCaseCoverageRule.run({ spec, allSpecs: [spec] });
     expect(result).toHaveLength(0);
+  });
+});
+
+describe("edge-case-coverage — test plans are genuinely assessed", () => {
+  // `test-plan` requires an `## Edge Cases` heading (schema REQUIRED_SECTIONS),
+  // and the rule matched the substring "edge case" against the whole document —
+  // so the required heading satisfied the rule and no real test plan could ever
+  // be flagged. Half the rule's stated scope was inert.
+  const run = (body: string) => {
+    const spec = makeSpec("test-plan", body);
+    return edgeCaseCoverageRule.run({ spec, allSpecs: [spec] });
+  };
+
+  const scope = "## Scope\n\nBilling API.\n\n## Test Cases\n\n- TC1: a user lists invoices.\n\n";
+
+  it("does not accept the required Edge Cases heading as coverage on its own", () => {
+    expect(run(`${scope}## Edge Cases\n`)).toHaveLength(1);
+  });
+
+  it("flags an Edge Cases section holding only a placeholder", () => {
+    for (const placeholder of ["<!-- placeholder -->", "TODO", "TBD", "N/A", "-"]) {
+      expect(run(`${scope}## Edge Cases\n\n${placeholder}\n`), placeholder).toHaveLength(1);
+    }
+  });
+
+  it("flags an Edge Cases section that says there are none", () => {
+    for (const body of ["None", "None identified.", "No edge cases", "Nothing yet"]) {
+      expect(run(`${scope}## Edge Cases\n\n${body}\n`), body).toHaveLength(1);
+    }
+  });
+
+  it("names the section in the diagnostic so the fix is obvious", () => {
+    const [diagnostic] = run(`${scope}## Edge Cases\n`);
+    expect(diagnostic!.section).toBe("Edge Cases");
+    expect(diagnostic!.severity).toBe("warn");
+    expect(diagnostic!.message).toContain("Edge Cases");
+  });
+
+  it("accepts an Edge Cases section that lists real cases", () => {
+    const body = `${scope}## Edge Cases\n\n- An invoice with zero line items renders an empty total.\n- A voided invoice cannot be voided twice.\n`;
+    expect(run(body)).toHaveLength(0);
+  });
+
+  it("accepts listed cases that use no error vocabulary at all", () => {
+    // A real edge case need not contain a keyword: the section being written is
+    // the signal. Requiring keywords inside it would re-introduce the guessing.
+    const body = `${scope}## Edge Cases\n\n- An invoice dated 29 February in a leap year.\n- A customer with 10,000 line items.\n`;
+    expect(run(body)).toHaveLength(0);
+  });
+
+  it("falls back to scanning the document when the section is absent", () => {
+    // `structure/required-sections` owns the missing heading; this rule still
+    // judges the content, which is how the pre-existing test plans behaved.
+    expect(run("## Test Cases\n\n- User can log in\n- User can sign up")).toHaveLength(1);
+    expect(run("## Test Cases\n\n- User can log in\n- Invalid password returns 401")).toHaveLength(
+      0,
+    );
   });
 });
 
