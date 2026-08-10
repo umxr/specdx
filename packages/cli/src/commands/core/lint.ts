@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@specdx/core";
-import { createLintEngine, getPreset, type LintResults } from "@specdx/lint";
+import { createLintEngine, resolveLintConfig, type LintResults } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 import { sharedArgs, resolveFormat } from "../../shared-args.js";
 import { createOutput } from "../../output.js";
@@ -32,7 +32,11 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
   }
   const config = await loadConfig(undefined, options.configDir);
   const preset = options.preset ?? config.lint?.extends ?? "recommended";
-  const rules = getPreset(preset);
+  const { rules, ignore } = await resolveLintConfig({
+    config,
+    preset,
+    configDir: options.configDir,
+  });
 
   // Always parse the full suite so cross-reference rules have complete
   // context; a single-file lint filters the *diagnostics*, not the suite.
@@ -52,7 +56,7 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
     graphError = (err as Error).message;
   }
 
-  const engine = createLintEngine({ rules, config, graph });
+  const engine = createLintEngine({ rules, config, graph, ignore });
   const results = engine.lint(specs);
 
   if (options.specPath) {
@@ -72,7 +76,14 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
     results.hasErrors = true;
   }
 
-  return { ...results, specFiles: specs.length, assessed: specs.length > 0 };
+  // Count what was actually linted, not what resolved. `lint.ignore` excluding
+  // every spec produces no diagnostics, and reporting that as a pass is the
+  // vacuous-pass shape one config key over: "0 problems" because nothing was
+  // looked at reads identically to "0 problems" because nothing was wrong.
+  const ignored = new Set(ignore);
+  const linted = specs.filter((spec) => !ignored.has(spec.filePath));
+
+  return { ...results, specFiles: linted.length, assessed: linted.length > 0 };
 }
 
 export default defineCommand({
@@ -113,7 +124,7 @@ export default defineCommand({
       // "No diagnostics" over an empty suite is not a pass (vacuous-pass audit)
       if (!results.assessed) {
         console.error(
-          "\n  ⚠ No specs found — nothing was linted. Check the spec paths in spec.config.yaml.\n",
+          "\n  ⚠ No specs were linted. Check the spec paths in spec.config.yaml, and whether `lint.ignore` excludes them all.\n",
         );
         process.exit(3);
       }

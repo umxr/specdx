@@ -1,12 +1,16 @@
 import { loadConfig, parseSpec, resolveGlob, buildGraph } from "@specdx/core";
-import { createLintEngine, getPreset } from "@specdx/lint";
+import { createLintEngine, resolveLintConfig } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 
 export async function handleLint(params: { preset?: string; specPath?: string }): Promise<string> {
   const configDir = process.cwd();
   const config = await loadConfig(undefined, configDir);
   const preset = params.preset ?? config.lint?.extends ?? "recommended";
-  const rules = getPreset(preset);
+  const { rules, ignore } = await resolveLintConfig({
+    config,
+    preset: preset,
+    configDir,
+  });
 
   const specs: ParsedSpec[] = [];
   for (const [, entry] of Object.entries(config.specs)) {
@@ -24,7 +28,7 @@ export async function handleLint(params: { preset?: string; specPath?: string })
     // non-fatal
   }
 
-  const engine = createLintEngine({ rules, config, graph });
+  const engine = createLintEngine({ rules, config, graph, ignore });
   const results = engine.lint(specs);
 
   return JSON.stringify({
