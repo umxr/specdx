@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@specdx/core";
-import { createLintEngine, getPreset, parseFeatures } from "@specdx/lint";
+import { createLintEngine, resolveLintConfig, parseFeatures } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 import { DEFAULT_DIFF_CONFIG } from "@specdx/diff";
 import { sharedArgs, resolveFormat } from "../../shared-args.js";
@@ -87,7 +87,11 @@ export async function runReady(): Promise<ReadyResult> {
 
   // Check 2: Lint health (no errors)
   const presetName = config.lint?.extends ?? "recommended";
-  const rules = getPreset(presetName);
+  const { rules, ignore } = await resolveLintConfig({
+    config,
+    preset: presetName,
+    configDir,
+  });
 
   let graph;
   let graphError: string | undefined;
@@ -97,7 +101,7 @@ export async function runReady(): Promise<ReadyResult> {
     graphError = (err as Error).message;
   }
 
-  const engine = createLintEngine({ rules, config, graph });
+  const engine = createLintEngine({ rules, config, graph, ignore });
   const lintResults = engine.lint(specs.map((s) => s.spec));
 
   if (graphError) {
