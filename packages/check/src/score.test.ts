@@ -16,7 +16,9 @@ describe("computeScore", () => {
       { type: "missing", category: "type", specId: "x", expected: "field x", severity: "warn" },
     ];
     const score = computeScore(findings, { routes: 5, types: 10, tests: 8, artifacts: 0 });
-    expect(score.overall).toBe(Math.round(((5 - 2 + 10 - 1 + 8) / (5 + 10 + 8)) * 100));
+    // Tests are reported but excluded from the overall: Jaccard similarity over
+    // prose is too weak a signal to move a number anyone acts on.
+    expect(score.overall).toBe(Math.round(((5 - 2 + 10 - 1) / (5 + 10)) * 100));
     expect(score.byCategory["routes"]).toEqual({ matched: 3, total: 5 });
     expect(score.byCategory["types"]).toEqual({ matched: 9, total: 10 });
     expect(score.byCategory["tests"]).toEqual({ matched: 8, total: 8 });

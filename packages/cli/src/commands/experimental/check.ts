@@ -275,7 +275,10 @@ export default defineCommand({
       for (const [category, stats] of Object.entries(result.score.byCategory)) {
         if (stats.total === 0) continue;
         const categoryFindings = gating.filter((f) => f.category === category.replace(/s$/, ""));
-        const header = `  ${category} (${stats.matched}/${stats.total}):`;
+        // Tests are matched by prose similarity, which is too weak to score on;
+        // saying so keeps the arithmetic above explicable.
+        const advisory = category === "tests" ? " — advisory, not scored" : "";
+        const header = `  ${category} (${stats.matched}/${stats.total})${advisory}:`;
         if (categoryFindings.length === 0) {
           output.info(header);
           // "all matched" under a 2/3 header contradicts itself. When a baseline
