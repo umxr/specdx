@@ -287,6 +287,32 @@ pnpm test
 
 ---
 
+## Releasing
+
+**Merging to `main` does not release anything.** No version bump, no npm publish, no release PR.
+Changesets accumulate in `.changeset/` until someone decides to cut a release.
+
+Releasing is a maintainer action, run from **Actions → Release → Run workflow**:
+
+| Input | Effect |
+|---|---|
+| `dry_run: true` (default) | Prints the next version, the changed files and the CHANGELOG diff to the run summary. Publishes nothing. |
+| `dry_run: false` | Versions, commits to `main`, publishes to npm, and moves the `v<version>` / `v<major>` tags. |
+
+Run it once with `dry_run` on to see what would ship, then again with it off. The dry run is what
+replaces the reviewable "Version Packages" PR the old automatic flow produced.
+
+Two things the workflow refuses to do:
+
+- **Release with no changesets.** It fails with "Nothing to release" rather than versioning
+  nothing and reporting success.
+- **Release without the full gate.** Build, typecheck, lint, format and tests all run against
+  `main` as it is at that moment — which is not something any individual PR run verified.
+
+Publishing uses npm Trusted Publishing (OIDC). There is no `NPM_TOKEN`.
+
+---
+
 ## Code Conventions
 
 - All packages are TypeScript with `"moduleResolution": "NodeNext"`, `strict` mode, and ESM output.

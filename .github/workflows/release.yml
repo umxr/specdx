@@ -1,10 +1,23 @@
 name: Release
 
+# Manual only. Merging to `main` never versions, never publishes, and never
+# opens a release PR — a merge is just a merge. Releasing is a decision someone
+# makes on purpose, by running this workflow.
+#
+# Replaces the previous `on: push: [main]` + changesets/action setup, where one
+# trigger did two different things depending on whether changesets were present:
+# it opened a "Version Packages" PR, and then published when that PR was merged.
+# That made every merge to main touch the release machinery, and made the
+# release PR's contents depend on which merge happened to build it last.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Preview only: print the next version and changelog, publish nothing"
+        type: boolean
+        default: true
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency: release-${{ github.ref }}
 
 jobs:
   release:
@@ -12,11 +25,15 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
       # Required for npm Trusted Publishing (OIDC) — no NPM_TOKEN needed.
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # changesets reads history to build the changelog, and the tag step
+          # below needs existing tags to force-move `v<major>`.
+          fetch-depth: 0
+
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -27,15 +44,81 @@ jobs:
       # from .npmrc and changesets' publish invocation.
       - run: npm install -g npm@11
       - run: pnpm install --frozen-lockfile
+
+      # A release with nothing to release is the vacuous pass of release
+      # processes: it would version nothing, publish nothing, and report
+      # success. Fail loudly instead, and say what to do about it.
+      - name: Refuse to release with no changesets
+        run: |
+          if [ -z "$(ls -A .changeset/*.md 2>/dev/null | grep -v README)" ]; then
+            echo "::error::No changesets found. Nothing to release."
+            echo "Add one with \`pnpm changeset\` and merge it before releasing."
+            exit 1
+          fi
+          echo "Changesets pending:"
+          ls .changeset/*.md | grep -v README
+
+      # The same gate that guards a commit guards a release. CI ran on the PRs
+      # that built `main`, but a release is published from `main` as it is now,
+      # which is not something any single PR run verified.
       - run: pnpm build
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          # Runs `changeset version`, then stamps the bumped version into the
-          # plugin manifests so they cannot drift behind package.json.
-          version: pnpm run version
-          publish: pnpm release
+      - run: pnpm typecheck
+      - run: pnpm lint:code
+      - run: pnpm format:check
+      - run: pnpm test
+
+      # `pnpm version` = `changeset version` + stamping the bumped version into
+      # the plugin manifests, so they cannot drift behind package.json.
+      - name: Apply versions
+        run: pnpm run version
+
+      - name: Read the resulting version
+        id: version
+        run: |
+          version=$(node -p "require('./packages/cli/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Next version: $version"
+
+      # Everything the real run would do, printed and then thrown away. This is
+      # what replaces the reviewable "Version Packages" PR diff.
+      - name: Preview (dry run)
+        if: inputs.dry_run
+        run: |
+          echo "## Dry run — would publish \`specdx@${{ steps.version.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Tags that would move" >> "$GITHUB_STEP_SUMMARY"
+          version="${{ steps.version.outputs.version }}"
+          echo "- \`specdx@$version\` (changesets)" >> "$GITHUB_STEP_SUMMARY"
+          case "$version" in
+            *-*) echo "- prerelease: no \`v*\` tags would move" >> "$GITHUB_STEP_SUMMARY" ;;
+            *)   echo "- \`v$version\` and \`v${version%%.*}\`" >> "$GITHUB_STEP_SUMMARY" ;;
+          esac
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Changed files" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          git --no-pager diff --stat >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### CHANGELOG" >> "$GITHUB_STEP_SUMMARY"
+          echo '```diff' >> "$GITHUB_STEP_SUMMARY"
+          git --no-pager diff -- packages/cli/CHANGELOG.md | head -200 >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "Nothing was committed, pushed, or published."
+
+      - name: Commit the version bump
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: release v${{ steps.version.outputs.version }} [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
+
+      # `pnpm release` = build + `changeset publish`, which publishes and
+      # creates the `specdx@<version>` tag.
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        run: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -50,9 +133,9 @@ jobs:
       # Runs only after a successful publish, so a failure here cannot affect
       # what reached npm.
       - name: Tag the action for `uses:` references
-        if: steps.changesets.outputs.published == 'true'
+        if: ${{ !inputs.dry_run }}
         run: |
-          version=$(node -p "require('./packages/cli/package.json').version")
+          version="${{ steps.version.outputs.version }}"
           case "$version" in
             *-*) echo "Prerelease $version — no moving tag."; exit 0 ;;
           esac
@@ -61,3 +144,11 @@ jobs:
           git tag -f "v$version"
           git tag -f "v${version%%.*}"
           git push -f origin "v$version" "v${version%%.*}"
+
+      - name: Summary
+        if: ${{ !inputs.dry_run }}
+        run: |
+          echo "## Published \`specdx@${{ steps.version.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- npm: https://www.npmjs.com/package/specdx/v/${{ steps.version.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- tags: \`specdx@${{ steps.version.outputs.version }}\`, \`v${{ steps.version.outputs.version }}\`, \`v$(echo '${{ steps.version.outputs.version }}' | cut -d. -f1)\`" >> "$GITHUB_STEP_SUMMARY"
