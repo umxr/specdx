@@ -1,12 +1,23 @@
 import { defineCommand } from "citty";
+import { readFile, writeFile } from "node:fs/promises";
+import { isAbsolute, resolve } from "node:path";
 import { loadConfig, parseSpec, resolveGlob, createLogger } from "@specdx/core";
-import { runCheck } from "@specdx/check";
+import {
+  runCheck,
+  applyBaseline,
+  createBaseline,
+  parseBaseline,
+  serializeBaseline,
+} from "@specdx/check";
 import type { ParsedSpec } from "@specdx/core";
-import type { CheckConfig } from "@specdx/check";
+import type { CheckConfig, BaselineApplication } from "@specdx/check";
 import { sharedArgs, resolveFormat } from "../../shared-args.js";
 import { createOutput } from "../../output.js";
 
 const FORMATS = ["pretty", "json", "github"] as const;
+
+/** Where a baseline lives when the flag names no path. */
+const DEFAULT_BASELINE = ".specdx-baseline.json";
 
 export default defineCommand({
   meta: {
@@ -21,6 +32,14 @@ export default defineCommand({
     ai: {
       type: "boolean",
       description: "Use AI to assess findings (requires ANTHROPIC_API_KEY)",
+    },
+    baseline: {
+      type: "string",
+      description: `Accept the findings recorded in this file; gate only on new ones (default ${DEFAULT_BASELINE})`,
+    },
+    "update-baseline": {
+      type: "boolean",
+      description: "Record the current findings as accepted and write the baseline file",
     },
   },
   async run({ args }) {
@@ -56,6 +75,56 @@ export default defineCommand({
     logger.debug(`Checking ${specs.length} specs...`);
     const result = await runCheck(specs, configDir, checkConfig);
 
+    // Baseline. Only ever narrows what *gates* the build — the score above is
+    // computed over every finding, baselined or not, so adopting a baseline on
+    // an existing project cannot report it as suddenly complete.
+    const baselineFlag = args.baseline;
+    const updateBaseline = Boolean(args["update-baseline"]);
+    // `--baseline` with no value arrives as boolean true, not "", so a string
+    // check alone crashed in path.isAbsolute.
+    const baselinePath =
+      typeof baselineFlag === "string" && baselineFlag !== "" ? baselineFlag : DEFAULT_BASELINE;
+    const baselineFile = isAbsolute(baselinePath) ? baselinePath : resolve(configDir, baselinePath);
+
+    if (updateBaseline) {
+      const baseline = createBaseline(result.findings);
+      await writeFile(baselineFile, serializeBaseline(baseline), "utf-8");
+      output.info(
+        `\n  ✓ recorded ${baseline.entries.length} accepted finding${
+          baseline.entries.length === 1 ? "" : "s"
+        } to ${baselinePath}\n`,
+      );
+      output.info(
+        "  The coverage score still counts them. Only new findings will fail the build.\n",
+      );
+      return;
+    }
+
+    let application: BaselineApplication | null = null;
+    if (baselineFlag !== undefined) {
+      let source: string;
+      try {
+        source = await readFile(baselineFile, "utf-8");
+      } catch {
+        // Silently continuing with no baseline would gate every pre-existing
+        // finding and read as a wall of new drift.
+        console.error(
+          `\n  ✗ baseline file not found: ${baselinePath}\n` +
+            "    Create it with: specdx check --update-baseline\n",
+        );
+        process.exit(1);
+      }
+      try {
+        application = applyBaseline(result.findings, parseBaseline(source));
+      } catch (err) {
+        console.error(`\n  ✗ ${(err as Error).message} (${baselinePath})\n`);
+        process.exit(1);
+      }
+    }
+
+    // What gates, and what the report lists. The score stays on every finding.
+    const gating = application ? application.remaining : result.findings;
+
     // AI analysis (opt-in)
     if (args.ai) {
       const { analyzeWithAi } = await import("@specdx/check");
@@ -64,7 +133,7 @@ export default defineCommand({
       // other user-error path in the CLI prints "✗ …" (audit run 5, F7).
       let aiResult;
       try {
-        aiResult = await analyzeWithAi(result.findings, args.spec ?? "full suite check");
+        aiResult = await analyzeWithAi(gating, args.spec ?? "full suite check");
       } catch (err) {
         console.error(`\n  ✗ ${(err as Error).message}\n`);
         process.exit(1);
@@ -77,7 +146,10 @@ export default defineCommand({
         console.log(`  AI Assessment: ${aiResult.summary}\n`);
 
         for (const assessment of aiResult.assessments) {
-          const finding = result.findings[assessment.findingIndex];
+          // `findingIndex` indexes what was handed to the assessor, which is
+          // the gating set — indexing the full list would mislabel findings
+          // whenever a baseline suppressed anything.
+          const finding = gating[assessment.findingIndex];
           if (!finding) continue;
           const icon = assessment.isRealIssue ? "✗" : "✓";
           const label = assessment.isRealIssue ? "REAL" : "FALSE POSITIVE";
@@ -96,8 +168,16 @@ export default defineCommand({
       return;
     }
 
+    const baselineReport = application
+      ? {
+          path: baselinePath,
+          accepted: application.suppressed.length,
+          obsolete: application.obsolete,
+        }
+      : null;
+
     if (format.format === "json") {
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify({ ...result, gating, baseline: baselineReport }, null, 2));
     } else if (format.format === "github") {
       // Annotations for CI. A finding about missing code has no file to point
       // at, so the spec ID carries the location instead. The headline always
@@ -113,7 +193,17 @@ export default defineCommand({
       for (const note of result.notes) {
         console.log(`::notice::${note}`);
       }
-      for (const f of result.findings) {
+      if (baselineReport) {
+        console.log(
+          `::notice::${baselineReport.accepted} finding(s) accepted by ${baselineReport.path} — still counted in coverage, not gating`,
+        );
+        if (baselineReport.obsolete.length > 0) {
+          console.log(
+            `::notice::${baselineReport.obsolete.length} baseline entr(ies) no longer occur — re-record with --update-baseline`,
+          );
+        }
+      }
+      for (const f of gating) {
         const level =
           f.severity === "error" ? "error" : f.severity === "warn" ? "warning" : "notice";
         const location = f.codeLocation
@@ -152,15 +242,37 @@ export default defineCommand({
         output.out(`    artifacts: ${artifacts}${pending}\n`);
       }
 
+      if (baselineReport) {
+        output.info(
+          `  ${baselineReport.accepted} finding${
+            baselineReport.accepted === 1 ? "" : "s"
+          } accepted by ${baselineReport.path} — counted in coverage above, not gating`,
+        );
+        const stale = baselineReport.obsolete.length;
+        if (stale > 0) {
+          output.info(
+            `  ${stale} baseline ${stale === 1 ? "entry no longer occurs" : "entries no longer occur"} — re-record with --update-baseline`,
+          );
+        }
+        output.info("");
+      }
+
       for (const [category, stats] of Object.entries(result.score.byCategory)) {
         if (stats.total === 0) continue;
-        const categoryFindings = result.findings.filter(
-          (f) => f.category === category.replace(/s$/, ""),
-        );
+        const categoryFindings = gating.filter((f) => f.category === category.replace(/s$/, ""));
         const header = `  ${category} (${stats.matched}/${stats.total}):`;
         if (categoryFindings.length === 0) {
           output.info(header);
-          output.info("    ✓ all matched");
+          // "all matched" under a 2/3 header contradicts itself. When a baseline
+          // is what emptied the list, the honest line names it.
+          const acceptedHere = application
+            ? application.suppressed.filter((f) => f.category === category.replace(/s$/, "")).length
+            : 0;
+          output.info(
+            acceptedHere > 0
+              ? `    ✓ no new findings (${acceptedHere} accepted by baseline)`
+              : "    ✓ all matched",
+          );
           continue;
         }
         output.out(header);
@@ -172,13 +284,13 @@ export default defineCommand({
         }
       }
 
-      const errors = result.findings.filter((f) => f.severity === "error").length;
-      const warnings = result.findings.filter((f) => f.severity === "warn").length;
-      const info = result.findings.filter((f) => f.severity === "info").length;
+      const errors = gating.filter((f) => f.severity === "error").length;
+      const warnings = gating.filter((f) => f.severity === "warn").length;
+      const info = gating.filter((f) => f.severity === "info").length;
       output.info(`\n  ${errors} errors, ${warnings} warnings, ${info} info\n`);
     }
 
-    if (result.findings.some((f) => f.severity === "error")) {
+    if (gating.some((f) => f.severity === "error")) {
       process.exit(1);
     }
     // Distinct exit code so CI cannot mistake "nothing was checkable" for a pass
