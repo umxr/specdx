@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   readFileSync,
+  existsSync,
   writeFileSync,
   cpSync,
   chmodSync,
@@ -80,8 +81,19 @@ describe("Claude Code plugin manifest", () => {
     // load them as slash commands instead.
     // The promoted bucket only -- the plugin must never ship experimental
     // skills, and pointing at the skills root would ship all of them.
-    expect(manifest.skills).toBe("./dist/skills/core");
+    expect(manifest.skills).toBe("./skills/core");
     expect(manifest.commands).toBeUndefined();
+  });
+
+  it("names a skills path that exists without a build", () => {
+    // `dist/` is gitignored, so a manifest pointing into it installs a plugin
+    // with no skills when the marketplace clones this repo -- validated as
+    // "Path not found. The runtime loader will report this as a load failure."
+    // The committed copy at packages/cli/skills is what makes the marketplace
+    // channel work; @specdx/skills conformance keeps it identical to source.
+    const declared = (manifest.skills as string).replace(/^\.\//, "");
+    expect(declared.startsWith("dist/")).toBe(false);
+    expect(existsSync(join(pkgRoot, declared))).toBe(true);
   });
 
   it("carries a version in step with package.json", () => {

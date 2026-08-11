@@ -160,8 +160,14 @@ required sections, cross-references, declared artifacts, and the three sections
 
 ### Claude Code
 
-specdx ships as a plugin with **ten skills**. Install it as a dev dependency and
-the plugin is discovered automatically:
+specdx ships as a plugin with **ten skills**. Install it from the marketplace:
+
+```bash
+/plugin marketplace add umxr/specdx
+/plugin install specdx@specdx
+```
+
+Or install it as a dev dependency, and the plugin is discovered automatically:
 
 ```bash
 npm install -D specdx

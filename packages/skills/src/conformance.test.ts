@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { SKILL_NAMES, CORE_SKILL_NAMES, bucketOf } from "./install.js";
@@ -98,5 +98,47 @@ describe("Agent Skills specification conformance", () => {
       );
       expect(unexpected).toEqual([]);
     });
+  });
+});
+
+describe("the plugin's committed skills copy", () => {
+  // The Claude Code plugin manifest may only name a skills path inside the
+  // plugin root and rejects any path containing "..". The plugin root has to
+  // stay packages/cli, because hooks.json resolves ${CLAUDE_PLUGIN_ROOT}/hooks.
+  // So packages/cli/skills is a committed copy of this authored tree — and a
+  // second copy that nothing checks is how the two silently disagree.
+  const pluginSkillsRoot = join(skillsRoot, "..", "..", "cli", "skills");
+
+  /** Every file under `root`, as paths relative to it, sorted. */
+  function tree(root: string): string[] {
+    const walk = (dir: string, prefix: string): string[] =>
+      readdirSync(join(root, dir), { withFileTypes: true }).flatMap((e) => {
+        const rel = prefix ? `${prefix}/${e.name}` : e.name;
+        return e.isDirectory() ? walk(join(dir, e.name), rel) : [rel];
+      });
+    return walk("", "").sort();
+  }
+
+  it("holds exactly the files the authored tree holds", () => {
+    expect(tree(pluginSkillsRoot)).toEqual(tree(skillsRoot));
+  });
+
+  it("holds identical content for every file", () => {
+    const differing = tree(skillsRoot).filter(
+      (rel) =>
+        readFileSync(join(skillsRoot, rel), "utf-8") !==
+        readFileSync(join(pluginSkillsRoot, rel), "utf-8"),
+    );
+    // Regenerate with: node scripts/sync-plugin-skills.mjs
+    expect(differing).toEqual([]);
+  });
+
+  it("supplies the bucket the plugin manifest names", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(skillsRoot, "..", "..", "cli", ".claude-plugin", "plugin.json"), "utf-8"),
+    ) as { skills: string };
+    const declared = manifest.skills.replace(/^\.\//, "");
+
+    expect(existsSync(join(skillsRoot, "..", "..", "cli", declared))).toBe(true);
   });
 });
