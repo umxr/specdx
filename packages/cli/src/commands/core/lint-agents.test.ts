@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, mkdir, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { runLint, cleanRunMessage } from "./lint.js";
+import { runLint, cleanRunMessage, noSpecSuiteNotice } from "./lint.js";
 
 /**
  * Agent instruction files reaching `sdx lint`.
@@ -170,6 +170,46 @@ describe("runLint with no spec suite (the zero-config on-ramp)", () => {
     await expect(runLint({ configDir: dir })).rejects.toThrow(/Invalid config/);
   });
 
+  it("refuses a named spec path instead of passing on the agent files", async () => {
+    // The user asked for one spec file. Linting CLAUDE.md instead and exiting
+    // 0 reports a pass for a file nobody opened — #53's defect, new door.
+    await writeFile(join(dir, "CLAUDE.md"), "# Fine\n\nNothing wrong here.");
+
+    const error = await runLint({ configDir: dir, specPath: "specs/typo.md" }).catch(
+      (e: Error) => e,
+    );
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain("specs/typo.md");
+    expect((error as Error).message).toMatch(/was not linted as a spec/);
+  });
+
+  it("refuses the named path even when there is no agent file either", async () => {
+    await expect(runLint({ configDir: dir, specPath: "specs/typo.md" })).rejects.toThrow(
+      /was not linted as a spec/,
+    );
+  });
+
+  it("does NOT degrade when spec.config.yaml exists but cannot be read", async () => {
+    // Present-but-unreadable is not absence. Degrading here would leave the
+    // whole suite unchecked, exit 0, and say "no spec.config.yaml here" about
+    // a file the user can see in the directory.
+    if (process.getuid?.() === 0) return; // root ignores mode bits
+    await writeFile(join(dir, "CLAUDE.md"), "# Fine\n\nNothing wrong here.");
+    const configPath = join(dir, "spec.config.yaml");
+    await writeFile(configPath, 'version: "1.0"\nspecs: {}\n');
+    await chmod(configPath, 0o000);
+
+    await expect(runLint({ configDir: dir })).rejects.toThrow(/Cannot read config file/);
+    await chmod(configPath, 0o644);
+  });
+
+  it("does NOT degrade when spec.config.yaml is a directory", async () => {
+    await writeFile(join(dir, "CLAUDE.md"), "# Fine\n\nNothing wrong here.");
+    await mkdir(join(dir, "spec.config.yaml"));
+
+    await expect(runLint({ configDir: dir })).rejects.toThrow(/not a regular file/);
+  });
+
   it("reports assessed false, because there is no spec suite to assess", async () => {
     await writeFile(join(dir, "CLAUDE.md"), "# Fine\n\nNothing wrong here.");
     const result = await runLint({ configDir: dir });
@@ -219,5 +259,28 @@ describe("cleanRunMessage", () => {
     expect(cleanRunMessage({ specFiles: 0, agentFiles: 2, specSuite: false })).toContain(
       "specdx init",
     );
+  });
+});
+
+describe("noSpecSuiteNotice", () => {
+  // `cleanRunMessage` says this in prose, but only in pretty format and only
+  // on a clean run. `--format json` in a tree whose spec.config.yaml was never
+  // checked out would otherwise print `[]` and exit 0 — indistinguishable from
+  // a clean suite, with the suite never opened.
+  it("carries the fact into machine formats as a diagnostic", () => {
+    const notice = noSpecSuiteNotice("/some/project");
+    expect(notice.ruleId).toBe("agents/no-spec-suite");
+    expect(notice.message).toMatch(/no specs were checked/);
+    expect(notice.filePath).toBe("/some/project");
+  });
+
+  it("is info severity, so agent-only mode cannot fail a build", () => {
+    // Linting agent files alone is a supported outcome, not a fault. Warn or
+    // error here would turn every zero-config run red.
+    expect(noSpecSuiteNotice("/some/project").severity).toBe("info");
+  });
+
+  it("says specdx init, the same escape hatch the prose message gives", () => {
+    expect(noSpecSuiteNotice("/some/project").message).toContain("specdx init");
   });
 });

@@ -28,7 +28,17 @@ export async function handleLint(params: { preset?: string; specPath?: string })
   // No spec suite: lint the agent instruction files alone, through the same
   // shared helper the CLI uses. Only genuine absence degrades — a malformed
   // config still throws, or a YAML typo would read as a narrower pass.
-  if (!(await findConfig(configDir))) {
+  const configPath = await findConfig(configDir);
+  if (!configPath) {
+    // Same refusal as the CLI. An agent that asked for one spec file must not
+    // be handed `hasErrors: false` for agent files it never asked about — it
+    // reads that as "the file you named is clean".
+    if (params.specPath) {
+      throw new Error(
+        `No spec.config.yaml at or above this directory, so "${params.specPath}" was not linted as a spec. ` +
+          `Call sdx_lint with no specPath to lint AGENTS.md and CLAUDE.md, or run \`specdx init\` to add a spec suite.`,
+      );
+    }
     const agentResults = await lintAgentFilesWithoutConfig(configDir);
     if (agentResults) {
       return JSON.stringify({
@@ -43,7 +53,10 @@ export async function handleLint(params: { preset?: string; specPath?: string })
     }
   }
 
-  const config = await loadConfig(undefined, configDir);
+  // The path `findConfig` already resolved, so `loadConfig` does not walk the
+  // tree again. Undefined only on the no-config-no-agent-file path, where
+  // `loadConfig` throws the "Run 'specdx init'" error the CLI throws too.
+  const config = await loadConfig(configPath, configDir);
   const preset = params.preset ?? config.lint?.extends ?? "recommended";
   const { rules, ignore } = await resolveLintConfig({
     config,

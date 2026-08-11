@@ -14,6 +14,7 @@ import {
   lintAgentFiles,
   lintAgentFilesWithoutConfig,
   type LintResults,
+  type Diagnostic,
 } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 import { sharedArgs, resolveFormat } from "../../shared-args.js";
@@ -70,7 +71,18 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
   // the second would turn a YAML typo into a narrower check reported as a
   // pass — the vacuous-pass shape, one level up. Only genuine absence
   // degrades; anything else still throws.
-  if (!(await findConfig(options.configDir))) {
+  const configPath = await findConfig(options.configDir);
+  if (!configPath) {
+    // A caller who named a spec file asked for something this directory cannot
+    // give. Linting the agent files instead and exiting 0 would report a pass
+    // for a file nobody looked at — #53's defect through a new door, and the
+    // guard below cannot catch it because it is scoped to a real suite.
+    if (options.specPath) {
+      throw new ConfigError(
+        `No spec.config.yaml at or above this directory, so "${options.specPath}" was not linted as a spec. ` +
+          `Run \`specdx lint\` with no path to lint AGENTS.md and CLAUDE.md, or \`specdx init\` to add a spec suite.`,
+      );
+    }
     const agentResults = await lintAgentFilesWithoutConfig(options.configDir);
     if (!agentResults) {
       // Nothing to lint at all. The original guidance is still the right one.
@@ -87,7 +99,9 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
     };
   }
 
-  const config = await loadConfig(undefined, options.configDir);
+  // Pass the path `findConfig` already resolved rather than making `loadConfig`
+  // walk the tree a second time.
+  const config = await loadConfig(configPath, options.configDir);
   const preset = options.preset ?? config.lint?.extends ?? "recommended";
   const { rules, ignore } = await resolveLintConfig({
     config,
@@ -196,6 +210,29 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
 }
 
 /**
+ * The marker that says "no specs were checked here, and that is expected".
+ *
+ * `cleanRunMessage` says this in prose, but only on a clean pretty run. A CI
+ * job reading `--format json` in a tree whose `spec.config.yaml` was never
+ * checked out would otherwise get `[]` and exit 0 — byte-identical to a clean
+ * suite, with the whole suite unexamined. Same shape as
+ * `agents/paths-match-nothing` above: the fact has to reach machine formats,
+ * and a diagnostic is the channel they have.
+ *
+ * Info severity, so it cannot fail a build. Agent-only mode is a supported
+ * outcome, not a fault.
+ */
+export function noSpecSuiteNotice(configDir: string): Diagnostic {
+  return {
+    ruleId: "agents/no-spec-suite",
+    severity: "info",
+    message:
+      "No spec.config.yaml at or above this directory, so no specs were checked — only agent instruction files. Run `specdx init` to add a spec suite.",
+    filePath: configDir,
+  };
+}
+
+/**
  * What a clean run says it checked.
  *
  * Exported for tests: this string is the only thing a passing run shows a
@@ -269,7 +306,16 @@ export default defineCommand({
         process.exit(3);
       }
 
-      const rendered = formatter(results.diagnostics);
+      // Agent-only mode has to be visible in every format. The prose notice in
+      // `cleanRunMessage` covers exactly one of three, and only when the run is
+      // clean; prepending the marker covers the other two and the pretty runs
+      // that do have diagnostics. The clean check below stays on the unprefixed
+      // array, so the `✓` message is still what a clean agent-only run shows.
+      const rendered = formatter(
+        results.specSuite
+          ? results.diagnostics
+          : [noSpecSuiteNotice(process.cwd()), ...results.diagnostics],
+      );
       // A clean pretty run is chrome; diagnostics and machine formats are not.
       if (format.format === "pretty" && results.diagnostics.length === 0) {
         // Say what was assessed, not just that nothing was wrong. With agent

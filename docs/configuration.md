@@ -184,13 +184,24 @@ Every key is optional, but in a project **with** a `spec.config.yaml` the
 linted, so upgrading specdx never adds diagnostics to a suite that did not ask
 for them.
 
-In a project with **no** `spec.config.yaml`, `specdx lint` falls back to
-linting `AGENTS.md` and `CLAUDE.md` on their own, using the defaults below. It
-tells you it did, so a clean agent-only run cannot be mistaken for a clean spec
-suite. If there is neither a config nor an agent file, it errors as before.
-A config that exists but is malformed is always an error — it never degrades to
-the agent-only path, because a YAML typo silently narrowing what gets checked
-would be reported as a pass.
+With **no** `spec.config.yaml` at or above the working directory, `specdx lint`
+falls back to linting `AGENTS.md` and `CLAUDE.md` on their own, using the
+defaults below. It tells you it did in every format — as prose in `pretty`, and
+as an `agents/no-spec-suite` info diagnostic in `json` and `github` — so a clean
+agent-only run cannot be mistaken for a clean spec suite by a person or by CI.
+
+Three things never take that path, because each would report a narrower check
+as a pass:
+
+| Situation | Result |
+|---|---|
+| Neither a config nor an agent file | Errors, as before |
+| A config that is malformed or schema-invalid | Errors |
+| A config that exists but cannot be read, or is not a regular file | Errors |
+
+`specdx lint <path>` also errors here rather than falling back. You named a
+spec file; linting your `CLAUDE.md` instead and exiting 0 would report a pass
+for a file nothing opened.
 
 `paths` matching no file is an **error**, not a quiet pass — a config that
 promises this check and inspects nothing is worse than no config at all.

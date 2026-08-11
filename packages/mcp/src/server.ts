@@ -32,10 +32,13 @@ export function createMcpServer(version = "0.0.0-unknown"): McpServer {
 
   server.tool(
     "sdx_lint",
-    "Run lint rules against the spec suite",
+    "Run lint rules against the spec suite, or against AGENTS.md and CLAUDE.md alone when there is no spec.config.yaml. Check `specSuite` in the result to tell the two apart.",
     {
       preset: z.string().optional().describe("Lint preset: minimal, recommended, strict"),
-      specPath: z.string().optional().describe("Lint a specific spec file"),
+      specPath: z
+        .string()
+        .optional()
+        .describe("Lint a specific spec file. Requires a spec suite; errors when there is none."),
     },
     async (params) => ({
       content: [{ type: "text" as const, text: await handleLint(params) }],

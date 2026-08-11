@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, mkdir, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { handleLint } from "@specdx/mcp";
@@ -248,6 +248,32 @@ describe("sdx_lint agrees with runLint", () => {
     it("agrees that nothing at all is an error on both", async () => {
       await expect(runLint({ configDir: tempDir })).rejects.toThrow();
       await expect(handleLint({})).rejects.toThrow();
+    });
+
+    it("agrees that a named spec path with no suite is refused, not passed", async () => {
+      // Both surfaces must refuse. An agent handed `hasErrors: false` for
+      // agent files it never asked about reads that as "the file you named is
+      // clean" — the #53 shape, arriving through the zero-config door.
+      await writeFile(join(tempDir, "CLAUDE.md"), "# Fine\n\nAll good.");
+
+      await expect(runLint({ configDir: tempDir, specPath: "specs/typo.md" })).rejects.toThrow(
+        /was not linted as a spec/,
+      );
+      await expect(handleLint({ specPath: "specs/typo.md" })).rejects.toThrow(
+        /was not linted as a spec/,
+      );
+    });
+
+    it("agrees that an unreadable config is an error on both, not a degrade", async () => {
+      if (process.getuid?.() === 0) return; // root ignores mode bits
+      await writeFile(join(tempDir, "CLAUDE.md"), "# Fine\n\nAll good.");
+      const configPath = join(tempDir, "spec.config.yaml");
+      await writeFile(configPath, config);
+      await chmod(configPath, 0o000);
+
+      await expect(runLint({ configDir: tempDir })).rejects.toThrow(/Cannot read config file/);
+      await expect(handleLint({})).rejects.toThrow(/Cannot read config file/);
+      await chmod(configPath, 0o644);
     });
   });
 
