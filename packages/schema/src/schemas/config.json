@@ -99,6 +99,15 @@
         }
       },
       "additionalProperties": false
+    },
+    "agents": {
+      "type": "object",
+      "properties": {
+        "paths": { "type": "array", "items": { "type": "string" } },
+        "max_tokens": { "type": "integer", "minimum": 1 },
+        "rules": { "type": "object" }
+      },
+      "additionalProperties": false
     }
   },
   "required": ["version", "specs"],

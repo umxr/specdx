@@ -177,4 +177,24 @@ export interface SdxConfig {
     tests_dir?: string;
     ignore?: string[];
   };
+  /**
+   * Linting for agent instruction files — AGENTS.md, CLAUDE.md and friends.
+   *
+   * These are not specs and never become `ParsedSpec`: they carry no
+   * frontmatter, they are absent from `specs`, and they never enter the
+   * dependency graph. See `specs/adr/2026-08-11-linting-formats-we-do-not-own.md`.
+   *
+   * Presence of this key is what turns the feature on. Auto-discovering
+   * AGENTS.md would add diagnostics to every existing suite on upgrade, and
+   * `strict` would promote them to errors and break pipelines that never asked
+   * for this.
+   */
+  agents?: {
+    /** Globs, relative to the config directory. Defaults to AGENTS.md and CLAUDE.md. */
+    paths?: string[];
+    /** Ceiling for a single agent file, counted with the same tokenizer `pack` uses. */
+    max_tokens?: number;
+    /** Per-rule severity overrides, keyed by full rule id (`agents/size-budget`). */
+    rules?: Record<string, unknown>;
+  };
 }

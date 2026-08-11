@@ -93,6 +93,26 @@ lint:
 `requires` is what builds the dependency graph, and the graph is what makes
 `diff` able to tell you that changing the PRD stales the test plan.
 
+### Linting AGENTS.md and CLAUDE.md
+
+specdx also lints the instruction files you already have, whether or not you
+have specs:
+
+```yaml
+agents:
+  paths: ["AGENTS.md", "CLAUDE.md"]
+  max_tokens: 8000
+```
+
+It checks that the file is organised under headings, that every path it names
+still exists, and that it fits a token budget. The middle one is the one that
+earns its keep — a `CLAUDE.md` pointing at a file that moved sends every agent
+session to the wrong place, confidently.
+
+These files are not specs. They stay out of the dependency graph, out of
+`pack`, and out of `diff`. Adding the `agents` key is what switches this on, and
+the spec presets never promote its findings.
+
 **→ [Full configuration reference](docs/configuration.md)** — lint rule
 overrides, custom rules, pack budgets, staleness thresholds, `check` paths.
 

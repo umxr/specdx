@@ -1,6 +1,7 @@
 import { loadConfig, parseSpec, resolveGlob, buildGraph } from "@specdx/core";
-import { createLintEngine, resolveLintConfig } from "@specdx/lint";
+import { createLintEngine, resolveLintConfig, lintAgentFiles } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
+import type { Diagnostic } from "@specdx/lint";
 
 /**
  * `sdx_lint` is a near-copy of `runLint`, not a caller of it — the CLI depends
@@ -47,16 +48,49 @@ export async function handleLint(params: { preset?: string; specPath?: string })
   const results = engine.lint(specs);
 
   // One definition of "does specPath select this file", shared by the
-  // diagnostic filter and the assessed count, so the two cannot disagree.
+  // diagnostic filter, the agent diagnostics below, and the assessed count, so
+  // none of the three can disagree.
   const { specPath } = params;
   const selects = (filePath: string) => specPath === undefined || filePath.includes(specPath);
 
-  let diagnostics = results.diagnostics;
+  let diagnostics: Diagnostic[] = results.diagnostics;
   let { hasErrors, hasWarnings } = results;
   if (specPath !== undefined) {
     diagnostics = diagnostics.filter((d) => selects(d.filePath));
     hasErrors = diagnostics.some((d) => d.severity === "error");
     hasWarnings = diagnostics.some((d) => d.severity === "warn");
+  }
+
+  // Agent instruction files, opt-in via the `agents` key. Kept in step with the
+  // CLI deliberately: this tool duplicates `runLint` rather than calling it, and
+  // that duplication has already shipped a divergence twice.
+  //
+  // Runs after the spec filter above, because it appends to the already-filtered
+  // diagnostics — appending first and filtering after would drop agent findings
+  // whenever `specPath` names a spec.
+  let agentFiles = 0;
+  if (config.agents) {
+    const agentResults = await lintAgentFiles({ config, configDir });
+    agentFiles = agentResults.filesLinted;
+    diagnostics = [...diagnostics];
+
+    if (!agentResults.assessed) {
+      const patterns = config.agents.paths ?? ["AGENTS.md", "CLAUDE.md"];
+      diagnostics.push({
+        ruleId: "agents/paths-match-nothing",
+        severity: "error",
+        message: `agents.paths matched no files (${patterns.join(", ")}), so no agent instruction file was linted. Remove the \`agents\` key or fix the paths.`,
+        filePath: "spec.config.yaml",
+      });
+      hasErrors = true;
+    }
+
+    for (const diagnostic of agentResults.diagnostics) {
+      if (!selects(diagnostic.filePath)) continue;
+      diagnostics.push(diagnostic);
+      if (diagnostic.severity === "error") hasErrors = true;
+      if (diagnostic.severity === "warn") hasWarnings = true;
+    }
   }
 
   const ignored = new Set(ignore);
@@ -69,5 +103,6 @@ export async function handleLint(params: { preset?: string; specPath?: string })
     specsChecked: linted.length,
     // False when nothing was selected — "no diagnostics" is then not a pass.
     assessed: linted.length > 0,
+    agentFilesChecked: agentFiles,
   });
 }

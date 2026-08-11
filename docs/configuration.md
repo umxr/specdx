@@ -157,6 +157,64 @@ All directory keys are optional. `app_dir` is honoured exactly as given; left
 out, both `app` and `src/app` are searched. Prisma schemas are found at
 `prisma/schema.prisma`, `schema.prisma` or `prisma/schema/*.prisma`.
 
+## `agents`
+
+Lints agent instruction files — `AGENTS.md`, `CLAUDE.md` and their nested
+variants. These are **not specs**: they carry no frontmatter, they do not go in
+the `specs` map, and they never enter the dependency graph, so `pack`, `diff`,
+`status` and `check` do not see them. `specdx lint` reads them and never
+rewrites them.
+
+```yaml
+agents:
+  paths: ["AGENTS.md", "CLAUDE.md"]   # globs, relative to this file
+  max_tokens: 8000                    # ceiling for one file
+  rules:
+    agents/stale-references: "error"  # error | warn | info | off
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `paths` | `["AGENTS.md", "CLAUDE.md"]` | Globs to lint, relative to `spec.config.yaml` |
+| `max_tokens` | `8000` | Token ceiling for a single file |
+| `rules` | `{}` | Per-rule severity, keyed by full rule id |
+
+Every key is optional, but **the `agents` key itself is what turns the feature
+on**. Without it no agent file is linted, so upgrading specdx never adds
+diagnostics to a suite that did not ask for them.
+
+`paths` matching no file is an **error**, not a quiet pass — a config that
+promises this check and inspects nothing is worse than no config at all.
+
+### Rules
+
+| Rule | Default | What it asserts |
+|---|---|---|
+| `agents/structure` | `warn` | The file has content, and is organised under headings rather than being one undifferentiated block |
+| `agents/stale-references` | `warn` | Every path the file names still exists. This is the one that does real work: a `CLAUDE.md` naming a file that moved sends every agent session to the wrong place |
+| `agents/size-budget` | `warn` | The file fits `max_tokens`, counted with the same tokenizer `pack` uses, so the numbers agree |
+
+These rules live in their own namespace and are **not** part of the `minimal`,
+`recommended` or `strict` presets. `lint.extends: strict` will not promote a
+finding about your `CLAUDE.md` into a build failure; only `agents.rules` sets
+their severity. An unknown rule id in `agents.rules` is an error, including when
+switching one `off` — a typo that silently configures nothing is how `lint.rules`
+stayed inert through six audits.
+
+### What `stale-references` treats as a claim
+
+Only inline code spans that look like paths (`` `packages/cli/src/main.ts` ``)
+and relative Markdown link targets (`[guide](docs/ci.md)`). Fenced code blocks
+are skipped entirely, because they are full of illustrative paths, and a rule
+that cries wolf is one people switch off.
+
+A reference resolves if it matches a real path **by suffix**, so the shorthand
+these files actually use keeps working: `` `resolver.ts` `` resolves against
+`packages/pack/src/resolver.ts`. Common placeholder stems (`foo`, `bar`,
+`example`, `your-app`) are never reported. A file naming no paths at all reports
+an `info` notice saying so, rather than passing silently — nothing was checked,
+and that is not the same as everything being fine.
+
 ## `ci`
 
 ```yaml
