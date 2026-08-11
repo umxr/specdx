@@ -95,8 +95,8 @@ lint:
 
 ### Linting AGENTS.md and CLAUDE.md
 
-specdx also lints the instruction files you already have, whether or not you
-have specs:
+specdx also lints the instruction files you already have. Add the `agents` key
+to `spec.config.yaml`:
 
 ```yaml
 agents:
@@ -112,6 +112,10 @@ session to the wrong place, confidently.
 These files are not specs. They stay out of the dependency graph, out of
 `pack`, and out of `diff`. Adding the `agents` key is what switches this on, and
 the spec presets never promote its findings.
+
+This currently runs as part of `specdx lint`, so it needs a `spec.config.yaml`
+to hang off. Linting an `AGENTS.md` in a project with no spec suite at all is
+not supported yet.
 
 **→ [Full configuration reference](docs/configuration.md)** — lint rule
 overrides, custom rules, pack budgets, staleness thresholds, `check` paths.
