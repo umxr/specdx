@@ -18,3 +18,24 @@ export {
   stalenessCheckRule,
   noVagueLanguageRule,
 } from "./rules/index.js";
+
+// Agent instruction files (AGENTS.md, CLAUDE.md). A separate namespace on
+// purpose: these are not specs, and the spec presets must not be able to pick
+// their rules up. See specs/adr/2026-08-11-linting-formats-we-do-not-own.md.
+export {
+  lintAgentFiles,
+  resolveAgentRules,
+  discoverAgentFiles,
+  extractReferences,
+  AgentConfigError,
+  AGENT_RULES,
+  DEFAULT_AGENT_PATHS,
+  DEFAULT_MAX_TOKENS,
+} from "./agents/index.js";
+export type {
+  AgentFile,
+  AgentRule,
+  AgentLintContext,
+  AgentLintResults,
+  LintAgentFilesOptions,
+} from "./agents/index.js";

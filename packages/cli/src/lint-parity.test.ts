@@ -66,6 +66,7 @@ describe("sdx_lint agrees with runLint", () => {
       hasWarnings: boolean;
       specsChecked: number;
       assessed: boolean;
+      agentFilesChecked: number;
     };
 
   it("agrees that a specPath matching no spec assessed nothing", async () => {
@@ -135,6 +136,81 @@ describe("sdx_lint agrees with runLint", () => {
     );
     // Every diagnostic that survived belongs to the selected file.
     for (const d of tool.diagnostics) expect(d.filePath).toContain("one.md");
+  });
+
+  describe("agent instruction files", () => {
+    // Agent linting landed on both surfaces in one commit precisely so they
+    // would not drift. These cases exist so that stays true — the pair has
+    // already diverged twice on this file, and a rebase reintroduced a
+    // hand-rolled copy of the path predicate on the CLI side once more.
+    const agentConfig = `${config}agents:\n  paths: ["CLAUDE.md"]\n`;
+
+    it("agrees on findings in an agent file", async () => {
+      await writeFile(join(tempDir, "spec.config.yaml"), agentConfig);
+      await write("one.md", spec("prd-one"));
+      await writeFile(join(tempDir, "CLAUDE.md"), "no headings, and `gone/a.ts` is gone");
+
+      const cli = await runLint({ configDir: tempDir });
+      const tool = await mcp({});
+
+      expect(cli.agentFiles).toBe(1);
+      expect(tool.agentFilesChecked).toBe(1);
+      expect(cli.diagnostics.map((d) => d.ruleId).sort()).toEqual(
+        tool.diagnostics.map((d) => d.ruleId).sort(),
+      );
+      expect(cli.diagnostics.map((d) => d.ruleId)).toContain("agents/structure");
+    });
+
+    it("agrees that agent paths matching nothing is an error, not a pass", async () => {
+      await writeFile(join(tempDir, "spec.config.yaml"), agentConfig);
+      await write("one.md", spec("prd-one"));
+      // No CLAUDE.md written.
+
+      const cli = await runLint({ configDir: tempDir });
+      const tool = await mcp({});
+
+      expect(cli.hasErrors).toBe(true);
+      expect(tool.hasErrors).toBe(true);
+      expect(cli.diagnostics.map((d) => d.ruleId)).toContain("agents/paths-match-nothing");
+      expect(tool.diagnostics.map((d) => d.ruleId)).toContain("agents/paths-match-nothing");
+      // The specs were still assessed, so this is an error, not "nothing ran".
+      expect(cli.assessed).toBe(true);
+      expect(tool.assessed).toBe(true);
+    });
+
+    it("agrees on narrowing agent diagnostics by path", async () => {
+      // The CLI filtered agent diagnostics through a hand-rolled predicate
+      // after a rebase, while MCP used the shared one. Identical behaviour
+      // here, so a second copy on either side shows up as disagreement.
+      await writeFile(join(tempDir, "spec.config.yaml"), `${config}agents:\n  paths: ["*.md"]\n`);
+      await write("one.md", spec("prd-one"));
+      await writeFile(join(tempDir, "CLAUDE.md"), "no headings");
+      await writeFile(join(tempDir, "AGENTS.md"), "no headings");
+
+      const cliAll = await runLint({ configDir: tempDir });
+      const toolAll = await mcp({});
+      expect(cliAll.diagnostics.filter((d) => d.ruleId === "agents/structure")).toHaveLength(2);
+      expect(toolAll.diagnostics.filter((d) => d.ruleId === "agents/structure")).toHaveLength(2);
+
+      const cliOne = await runLint({ configDir: tempDir, specPath: "CLAUDE.md" });
+      const toolOne = await mcp({ specPath: "CLAUDE.md" });
+      expect(cliOne.diagnostics.filter((d) => d.ruleId === "agents/structure")).toHaveLength(1);
+      expect(toolOne.diagnostics.filter((d) => d.ruleId === "agents/structure")).toHaveLength(1);
+    });
+
+    it("agrees that no agents key means no agent linting", async () => {
+      await writeFile(join(tempDir, "spec.config.yaml"), config);
+      await write("one.md", spec("prd-one"));
+      await writeFile(join(tempDir, "CLAUDE.md"), "no headings at all");
+
+      const cli = await runLint({ configDir: tempDir });
+      const tool = await mcp({});
+
+      expect(cli.agentFiles).toBe(0);
+      expect(tool.agentFilesChecked).toBe(0);
+      expect(cli.diagnostics.filter((d) => d.ruleId.startsWith("agents/"))).toEqual([]);
+      expect(tool.diagnostics.filter((d) => d.ruleId.startsWith("agents/"))).toEqual([]);
+    });
   });
 
   it("agrees on a whole-suite lint", async () => {

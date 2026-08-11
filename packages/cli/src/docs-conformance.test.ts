@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { REQUIRED_SECTIONS } from "@specdx/schema";
+import { AGENT_RULES } from "@specdx/lint";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const read = (...parts: string[]) => readFileSync(join(repoRoot, ...parts), "utf-8");
@@ -114,7 +115,7 @@ describe("documented config keys exist in the schema", () => {
     properties: Record<string, { properties?: Record<string, unknown> }>;
   };
 
-  it.each(["lint", "pack", "diff", "check", "ci", "specs", "project"])(
+  it.each(["lint", "pack", "diff", "check", "ci", "specs", "project", "agents"])(
     "the schema declares the `%s` section the docs describe",
     (section) => {
       expect(Object.keys(schema.properties)).toContain(section);
@@ -125,16 +126,35 @@ describe("documented config keys exist in the schema", () => {
     ["lint", "extends"],
     ["lint", "rules"],
     ["lint", "ignore"],
+    ["agents", "paths"],
+    ["agents", "max_tokens"],
+    ["agents", "rules"],
   ])("the schema declares %s.%s", (section, key) => {
     expect(Object.keys(schema.properties[section]?.properties ?? {})).toContain(key);
   });
 
-  it("documents every lint key the schema declares", () => {
+  it.each(["lint", "agents"])("documents every %s key the schema declares", (section) => {
     // The inverse direction: a key in the schema that no doc mentions is a
     // feature users cannot find, which is how `ignore` went unnoticed.
-    for (const key of Object.keys(schema.properties.lint?.properties ?? {})) {
-      expect(configuration, `docs/configuration.md never mentions lint.${key}`).toContain(
+    for (const key of Object.keys(schema.properties[section]?.properties ?? {})) {
+      expect(configuration, `docs/configuration.md never mentions ${section}.${key}`).toContain(
         `\`${key}\``,
+      );
+    }
+  });
+
+  it("documents every agent rule that ships", () => {
+    // The same inverse check one level down. An agent rule users cannot
+    // discover is a rule they cannot configure or switch off, and the rule ids
+    // are the whole configuration surface.
+    //
+    // Matched as a delimited code span, not a bare substring: `toContain` is
+    // satisfied by any longer id that starts with this one, so a renamed
+    // `agents/size-budget-v2` in the docs would have passed while the shipped
+    // rule went undocumented. Found by breaking this test on purpose.
+    for (const rule of AGENT_RULES) {
+      expect(configuration, `docs/configuration.md never documents ${rule.id}`).toContain(
+        `\`${rule.id}\``,
       );
     }
   });
