@@ -23,7 +23,7 @@ export default defineCommand({
   meta: {
     name: "check",
     description:
-      "Check spec-to-implementation drift. Exit codes: 0 ok, 1 errors found, 3 nothing checkable (coverage not assessed)",
+      "Check spec-to-implementation drift. Exit codes: 0 ok, 1 errors found, 3 nothing checkable, 4 a declared surface could not be read",
   },
   args: {
     ...sharedArgs(FORMATS),
@@ -40,6 +40,10 @@ export default defineCommand({
     "update-baseline": {
       type: "boolean",
       description: "Record the current findings as accepted and write the baseline file",
+    },
+    "allow-unassessed": {
+      type: "boolean",
+      description: "Exit 0 even when a declared surface could not be read (default: exit 4)",
     },
   },
   async run({ args }) {
@@ -124,6 +128,17 @@ export default defineCommand({
 
     // What gates, and what the report lists. The score stays on every finding.
     const gating = application ? application.remaining : result.findings;
+
+    // Decided once, before anything is printed, so the report cannot name an
+    // exit code the process does not then use.
+    //   1 errors  3 nothing checkable  4 a declared surface could not be read
+    const exitCode = gating.some((f) => f.severity === "error")
+      ? 1
+      : !result.score.assessed
+        ? 3
+        : result.unassessed.length > 0 && !args["allow-unassessed"]
+          ? 4
+          : 0;
 
     // AI analysis (opt-in)
     if (args.ai) {
@@ -287,15 +302,27 @@ export default defineCommand({
       const errors = gating.filter((f) => f.severity === "error").length;
       const warnings = gating.filter((f) => f.severity === "warn").length;
       const info = gating.filter((f) => f.severity === "info").length;
-      output.info(`\n  ${errors} errors, ${warnings} warnings, ${info} info\n`);
+      output.info(`\n  ${errors} errors, ${warnings} warnings, ${info} info`);
+
+      if (exitCode === 4) {
+        output.info(
+          `  ${result.unassessed.length} declared surface${
+            result.unassessed.length === 1 ? "" : "s"
+          } could not be read — the coverage above excludes ${
+            result.unassessed.length === 1 ? "it" : "them"
+          } (exit 4).`,
+        );
+        output.info("  Fix the shapes named above, or pass --allow-unassessed to accept it.");
+      }
+      output.info("");
     }
 
-    if (gating.some((f) => f.severity === "error")) {
-      process.exit(1);
-    }
-    // Distinct exit code so CI cannot mistake "nothing was checkable" for a pass
-    if (!result.score.assessed) {
-      process.exit(3);
+    // Distinct codes so CI cannot mistake "nothing was checkable" or "could not
+    // look" for a pass. An unreadable surface leaves the score's denominator
+    // silently, which *raises* the percentage — exiting 0 there is the same
+    // conflation issue #6 fixed for the whole-run case, still live per surface.
+    if (exitCode !== 0) {
+      process.exit(exitCode);
     }
   },
 });

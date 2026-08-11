@@ -6,6 +6,16 @@ export interface CheckResult {
   scanned: ScanSummary;
   /** Human-readable caveats about skipped or degraded analysis. */
   notes: string[];
+  /**
+   * The subset of `notes` naming a surface the author declared that could not
+   * be read — an unparseable Endpoints section, a Data Model in a shape the
+   * parser missed, a stack no extractor understands.
+   *
+   * Separate from `notes` because an unassessed surface leaves the score's
+   * denominator silently, which *raises* the percentage. A caller gating a
+   * build must be able to tell "found nothing wrong" from "could not look".
+   */
+  unassessed: string[];
 }
 
 export interface ScanSummary {
