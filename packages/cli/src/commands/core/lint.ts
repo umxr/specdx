@@ -59,9 +59,17 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
   const engine = createLintEngine({ rules, config, graph, ignore });
   const results = engine.lint(specs);
 
-  if (options.specPath) {
-    const specPath = options.specPath;
-    results.diagnostics = results.diagnostics.filter((d) => d.filePath.includes(specPath));
+  // One definition of "does --path select this file", shared by the diagnostic
+  // filter below and the assessed count further down. Two copies of this
+  // predicate would be free to disagree, and a count that disagrees with the
+  // filter is exactly how the vacuous pass got in: `--path` filtered the
+  // diagnostics to nothing while the count still described the whole suite, so
+  // a path matching no spec rendered as "All specs pass lint checks", exit 0.
+  const { specPath } = options;
+  const selects = (filePath: string) => specPath === undefined || filePath.includes(specPath);
+
+  if (specPath !== undefined) {
+    results.diagnostics = results.diagnostics.filter((d) => selects(d.filePath));
     results.hasErrors = results.diagnostics.some((d) => d.severity === "error");
     results.hasWarnings = results.diagnostics.some((d) => d.severity === "warn");
   }
@@ -80,8 +88,9 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
   // every spec produces no diagnostics, and reporting that as a pass is the
   // vacuous-pass shape one config key over: "0 problems" because nothing was
   // looked at reads identically to "0 problems" because nothing was wrong.
+  // `--path` narrows the same way, so it has to narrow this count too.
   const ignored = new Set(ignore);
-  const linted = specs.filter((spec) => !ignored.has(spec.filePath));
+  const linted = specs.filter((spec) => !ignored.has(spec.filePath) && selects(spec.filePath));
 
   return { ...results, specFiles: linted.length, assessed: linted.length > 0 };
 }
@@ -121,10 +130,14 @@ export default defineCommand({
           : format.format === "github"
             ? formatGithub
             : formatPretty;
-      // "No diagnostics" over an empty suite is not a pass (vacuous-pass audit)
+      // "No diagnostics" over an empty selection is not a pass (vacuous-pass
+      // audit). Name the actual cause: sending someone to spec.config.yaml when
+      // they mistyped `--path` is a worse hint than no hint.
       if (!results.assessed) {
         console.error(
-          "\n  ⚠ No specs were linted. Check the spec paths in spec.config.yaml, and whether `lint.ignore` excludes them all.\n",
+          args.path
+            ? `\n  ⚠ No specs matched path "${args.path}", so nothing was linted. Check it against the specs declared in spec.config.yaml.\n`
+            : "\n  ⚠ No specs were linted. Check the spec paths in spec.config.yaml, and whether `lint.ignore` excludes them all.\n",
         );
         process.exit(3);
       }

@@ -100,6 +100,45 @@ describe("runLint", () => {
     expect(result.assessed).toBe(true);
   });
 
+  it("does not report a vacuous pass when --path matches no spec (vacuous-pass audit)", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  prd:\n    path: "specs/prd.md"\n    type: "prd"\n`,
+    );
+    await writeFile(
+      join(tempDir, "specs/prd.md"),
+      `---\nid: "prd-001"\ntype: "prd"\ntitle: "Test"\nstatus: "draft"\nversion: "1.0"\ncreated: "2026-01-01"\nauthors: ["dev"]\n---\n\n# Test\n\n## Problem Statement\n\nContent.\n`,
+    );
+
+    // The suite is non-empty and healthy, so the only thing separating this
+    // from a real pass is that the path resolved to nothing. Before this was
+    // fixed the CLI printed "All specs pass lint checks" and exited 0, which
+    // makes a typo'd path in CI indistinguishable from a green suite.
+    const result = await runLint({ configDir: tempDir, specPath: "specs/typo.md" });
+    expect(result.specFiles).toBe(0);
+    expect(result.assessed).toBe(false);
+  });
+
+  it("counts only the specs --path selected, not the whole suite", async () => {
+    await writeFile(
+      join(tempDir, "spec.config.yaml"),
+      `version: "1.0"\nspecs:\n  all:\n    path: "specs/*.md"\n    type: "prd"\n`,
+    );
+    for (const name of ["one", "two", "three"]) {
+      await writeFile(
+        join(tempDir, `specs/${name}.md`),
+        `---\nid: "prd-${name}"\ntype: "prd"\ntitle: "Test"\nstatus: "draft"\nversion: "1.0"\ncreated: "2026-01-01"\nauthors: ["dev"]\n---\n\n# Test\n\n## Problem Statement\n\nContent.\n`,
+      );
+    }
+
+    const all = await runLint({ configDir: tempDir });
+    expect(all.specFiles).toBe(3);
+
+    const one = await runLint({ configDir: tempDir, specPath: "specs/two.md" });
+    expect(one.specFiles).toBe(1);
+    expect(one.assessed).toBe(true);
+  });
+
   it("single-file lint still resolves cross-references against the full suite", async () => {
     await writeFile(
       join(tempDir, "spec.config.yaml"),

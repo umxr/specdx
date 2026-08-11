@@ -86,3 +86,23 @@ npx specdx validate
 `--format github` produces GitHub workflow annotations that appear inline on
 the pull request diff. Every command exits non-zero on failure, so no extra
 wiring is needed.
+
+### Linting one file, and why exit 3 matters
+
+`specdx lint` takes an optional path, so a job can lint only what a pull
+request touched:
+
+```bash
+npx specdx lint specs/prd.md --format github
+```
+
+| Exit | Meaning |
+|---|---|
+| `0` | Specs were linted and no errors were found |
+| `1` | Specs were linted and at least one error was found |
+| `3` | **Nothing was linted** — the path matched no spec, or `lint.ignore` excluded every one |
+
+Exit `3` exists because "no errors" and "nothing was looked at" produce
+identical output otherwise. A renamed spec would leave a job passing forever
+against a path that no longer resolves. Treat `3` as a failure in CI; it means
+the gate is not running, not that the specs are clean.
