@@ -1,10 +1,20 @@
 import { defineCommand } from "citty";
-import { loadConfig, parseSpec, resolveGlob, buildGraph, createLogger } from "@specdx/core";
+import {
+  loadConfig,
+  findConfig,
+  ConfigError,
+  parseSpec,
+  resolveGlob,
+  buildGraph,
+  createLogger,
+} from "@specdx/core";
 import {
   createLintEngine,
   resolveLintConfig,
   lintAgentFiles,
+  lintAgentFilesWithoutConfig,
   type LintResults,
+  type Diagnostic,
 } from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 import { sharedArgs, resolveFormat } from "../../shared-args.js";
@@ -34,6 +44,17 @@ export interface RunLintResults extends LintResults {
    * is a config promising a check that is not running.
    */
   agentFiles: number;
+  /**
+   * False when there is no `spec.config.yaml` and only agent instruction files
+   * were linted. The zero-config on-ramp: a project with a CLAUDE.md and no
+   * spec suite gets a useful answer instead of "run specdx init".
+   *
+   * `assessed` keeps meaning "specs were assessed", so the vacuous-pass guard
+   * it exists for is unweakened; callers check this flag to know that a
+   * `specFiles: 0` is expected here rather than a suite that resolved to
+   * nothing.
+   */
+  specSuite: boolean;
 }
 
 export async function runLint(options: RunLintOptions): Promise<RunLintResults> {
@@ -42,7 +63,45 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
   if (!options.configDir) {
     throw new TypeError("runLint requires `configDir` — the directory holding spec.config.yaml.");
   }
-  const config = await loadConfig(undefined, options.configDir);
+  // No spec suite is not automatically an error: a project may have a
+  // CLAUDE.md and nothing else, and that is the on-ramp this supports.
+  //
+  // The presence check runs *before* `loadConfig`, deliberately. A missing
+  // config and a malformed one both surface as `ConfigError`, and degrading on
+  // the second would turn a YAML typo into a narrower check reported as a
+  // pass — the vacuous-pass shape, one level up. Only genuine absence
+  // degrades; anything else still throws.
+  const configPath = await findConfig(options.configDir);
+  if (!configPath) {
+    // A caller who named a spec file asked for something this directory cannot
+    // give. Linting the agent files instead and exiting 0 would report a pass
+    // for a file nobody looked at — #53's defect through a new door, and the
+    // guard below cannot catch it because it is scoped to a real suite.
+    if (options.specPath) {
+      throw new ConfigError(
+        `No spec.config.yaml at or above this directory, so "${options.specPath}" was not linted as a spec. ` +
+          `Run \`specdx lint\` with no path to lint AGENTS.md and CLAUDE.md, or \`specdx init\` to add a spec suite.`,
+      );
+    }
+    const agentResults = await lintAgentFilesWithoutConfig(options.configDir);
+    if (!agentResults) {
+      // Nothing to lint at all. The original guidance is still the right one.
+      throw new ConfigError("No spec.config.yaml found. Run 'specdx init' to create one.");
+    }
+    return {
+      diagnostics: agentResults.diagnostics,
+      hasErrors: agentResults.diagnostics.some((d) => d.severity === "error"),
+      hasWarnings: agentResults.diagnostics.some((d) => d.severity === "warn"),
+      specFiles: 0,
+      assessed: false,
+      agentFiles: agentResults.filesLinted,
+      specSuite: false,
+    };
+  }
+
+  // Pass the path `findConfig` already resolved rather than making `loadConfig`
+  // walk the tree a second time.
+  const config = await loadConfig(configPath, options.configDir);
   const preset = options.preset ?? config.lint?.extends ?? "recommended";
   const { rules, ignore } = await resolveLintConfig({
     config,
@@ -141,7 +200,36 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
   const ignored = new Set(ignore);
   const linted = specs.filter((spec) => !ignored.has(spec.filePath) && selects(spec.filePath));
 
-  return { ...results, specFiles: linted.length, assessed: linted.length > 0, agentFiles };
+  return {
+    ...results,
+    specFiles: linted.length,
+    assessed: linted.length > 0,
+    agentFiles,
+    specSuite: true,
+  };
+}
+
+/**
+ * The marker that says "no specs were checked here, and that is expected".
+ *
+ * `cleanRunMessage` says this in prose, but only on a clean pretty run. A CI
+ * job reading `--format json` in a tree whose `spec.config.yaml` was never
+ * checked out would otherwise get `[]` and exit 0 — byte-identical to a clean
+ * suite, with the whole suite unexamined. Same shape as
+ * `agents/paths-match-nothing` above: the fact has to reach machine formats,
+ * and a diagnostic is the channel they have.
+ *
+ * Info severity, so it cannot fail a build. Agent-only mode is a supported
+ * outcome, not a fault.
+ */
+export function noSpecSuiteNotice(configDir: string): Diagnostic {
+  return {
+    ruleId: "agents/no-spec-suite",
+    severity: "info",
+    message:
+      "No spec.config.yaml at or above this directory, so no specs were checked — only agent instruction files. Run `specdx init` to add a spec suite.",
+    filePath: configDir,
+  };
 }
 
 /**
@@ -150,11 +238,20 @@ export async function runLint(options: RunLintOptions): Promise<RunLintResults> 
  * Exported for tests: this string is the only thing a passing run shows a
  * user, so it is the thing worth asserting on.
  */
-export function cleanRunMessage(results: Pick<RunLintResults, "specFiles" | "agentFiles">): string {
-  const parts = [`${results.specFiles} ${results.specFiles === 1 ? "spec" : "specs"}`];
-  if (results.agentFiles > 0) {
-    parts.push(`${results.agentFiles} agent ${results.agentFiles === 1 ? "file" : "files"}`);
+export function cleanRunMessage(
+  results: Pick<RunLintResults, "specFiles" | "agentFiles" | "specSuite">,
+): string {
+  const agentPart = `${results.agentFiles} agent ${results.agentFiles === 1 ? "file" : "files"}`;
+
+  // Agent-only mode. Never claim specs were checked when there were none to
+  // check, and say why — someone in the wrong directory needs to be able to
+  // tell this apart from a healthy run.
+  if (!results.specSuite) {
+    return `  ✓ ${agentPart} checked, no problems found.\n    No spec.config.yaml here, so no specs were checked. Run \`specdx init\` to add a spec suite.\n`;
   }
+
+  const parts = [`${results.specFiles} ${results.specFiles === 1 ? "spec" : "specs"}`];
+  if (results.agentFiles > 0) parts.push(agentPart);
   return `  ✓ ${parts.join(" and ")} checked, no problems found.\n`;
 }
 
@@ -196,7 +293,11 @@ export default defineCommand({
       // "No diagnostics" over an empty selection is not a pass (vacuous-pass
       // audit). Name the actual cause: sending someone to spec.config.yaml when
       // they mistyped `--path` is a worse hint than no hint.
-      if (!results.assessed) {
+      // `assessed` is about the spec suite. In agent-only mode there is no
+      // suite to assess and `specFiles: 0` is the expected answer, not a
+      // vacuous pass — `runLint` has already refused the case where neither a
+      // suite nor an agent file exists.
+      if (!results.assessed && results.specSuite) {
         console.error(
           args.path
             ? `\n  ⚠ No specs matched path "${args.path}", so nothing was linted. Check it against the specs declared in spec.config.yaml.\n`
@@ -205,7 +306,16 @@ export default defineCommand({
         process.exit(3);
       }
 
-      const rendered = formatter(results.diagnostics);
+      // Agent-only mode has to be visible in every format. The prose notice in
+      // `cleanRunMessage` covers exactly one of three, and only when the run is
+      // clean; prepending the marker covers the other two and the pretty runs
+      // that do have diagnostics. The clean check below stays on the unprefixed
+      // array, so the `✓` message is still what a clean agent-only run shows.
+      const rendered = formatter(
+        results.specSuite
+          ? results.diagnostics
+          : [noSpecSuiteNotice(process.cwd()), ...results.diagnostics],
+      );
       // A clean pretty run is chrome; diagnostics and machine formats are not.
       if (format.format === "pretty" && results.diagnostics.length === 0) {
         // Say what was assessed, not just that nothing was wrong. With agent

@@ -95,8 +95,27 @@ lint:
 
 ### Linting AGENTS.md and CLAUDE.md
 
-specdx also lints the instruction files you already have. Add the `agents` key
-to `spec.config.yaml`:
+specdx also lints the instruction files you already have — no spec suite
+required. In a directory with an `AGENTS.md` or `CLAUDE.md` and no
+`spec.config.yaml` at or above it:
+
+```bash
+npx specdx lint
+```
+
+It lints those files alone and says so, in every output format. It checks that
+the file is organised under headings, that every path it names still exists,
+and that it fits a token budget. The middle one is the one that earns its
+keep — a `CLAUDE.md` pointing at a file that moved sends every agent session to
+the wrong place, confidently.
+
+The search walks upward, so this fallback is about projects with no spec suite,
+not about directories inside one. Run it in a package of a monorepo whose root
+has a `spec.config.yaml` and specdx uses that config, as it would anywhere else
+in the repo.
+
+Once you do have a spec suite, add the `agents` key to lint both together and
+to configure it:
 
 ```yaml
 agents:
@@ -104,18 +123,9 @@ agents:
   max_tokens: 8000
 ```
 
-It checks that the file is organised under headings, that every path it names
-still exists, and that it fits a token budget. The middle one is the one that
-earns its keep — a `CLAUDE.md` pointing at a file that moved sends every agent
-session to the wrong place, confidently.
-
 These files are not specs. They stay out of the dependency graph, out of
-`pack`, and out of `diff`. Adding the `agents` key is what switches this on, and
-the spec presets never promote its findings.
-
-This currently runs as part of `specdx lint`, so it needs a `spec.config.yaml`
-to hang off. Linting an `AGENTS.md` in a project with no spec suite at all is
-not supported yet.
+`pack`, and out of `diff`. In a project *with* a spec suite the `agents` key is
+what switches this on, and the spec presets never promote its findings.
 
 **→ [Full configuration reference](docs/configuration.md)** — lint rule
 overrides, custom rules, pack budgets, staleness thresholds, `check` paths.

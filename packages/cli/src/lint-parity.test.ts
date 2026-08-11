@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, mkdir, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { handleLint } from "@specdx/mcp";
@@ -66,6 +66,7 @@ describe("sdx_lint agrees with runLint", () => {
       hasWarnings: boolean;
       specsChecked: number;
       assessed: boolean;
+      specSuite: boolean;
       agentFilesChecked: number;
     };
 
@@ -210,6 +211,69 @@ describe("sdx_lint agrees with runLint", () => {
       expect(tool.agentFilesChecked).toBe(0);
       expect(cli.diagnostics.filter((d) => d.ruleId.startsWith("agents/"))).toEqual([]);
       expect(tool.diagnostics.filter((d) => d.ruleId.startsWith("agents/"))).toEqual([]);
+    });
+  });
+
+  describe("no spec suite (the zero-config on-ramp)", () => {
+    // Both surfaces route through `lintAgentFilesWithoutConfig` in
+    // @specdx/lint rather than each implementing the degrade. These pin that
+    // it stays that way — the previous three divergences all began as two
+    // copies of the same intent.
+    it("agrees on linting an agent file with no config at all", async () => {
+      await writeFile(join(tempDir, "CLAUDE.md"), "no headings, and `gone/a.ts` is gone");
+
+      const cli = await runLint({ configDir: tempDir });
+      const tool = await mcp({});
+
+      expect(cli.specSuite).toBe(false);
+      expect(tool.specSuite).toBe(false);
+      expect(cli.agentFiles).toBe(tool.agentFilesChecked);
+      expect(cli.specFiles).toBe(tool.specsChecked);
+      expect(cli.diagnostics.map((d) => d.ruleId).sort()).toEqual(
+        tool.diagnostics.map((d) => d.ruleId).sort(),
+      );
+    });
+
+    it("agrees that a broken config is an error on both, not a degrade", async () => {
+      // The dangerous asymmetry: if one surface degraded to agent-only on a
+      // malformed config it would report a pass where the other reported a
+      // failure, and the passing one would be wrong.
+      await writeFile(join(tempDir, "CLAUDE.md"), "# Fine\n\nAll good.");
+      await writeFile(join(tempDir, "spec.config.yaml"), "version: [unclosed\n");
+
+      await expect(runLint({ configDir: tempDir })).rejects.toThrow();
+      await expect(handleLint({})).rejects.toThrow();
+    });
+
+    it("agrees that nothing at all is an error on both", async () => {
+      await expect(runLint({ configDir: tempDir })).rejects.toThrow();
+      await expect(handleLint({})).rejects.toThrow();
+    });
+
+    it("agrees that a named spec path with no suite is refused, not passed", async () => {
+      // Both surfaces must refuse. An agent handed `hasErrors: false` for
+      // agent files it never asked about reads that as "the file you named is
+      // clean" — the #53 shape, arriving through the zero-config door.
+      await writeFile(join(tempDir, "CLAUDE.md"), "# Fine\n\nAll good.");
+
+      await expect(runLint({ configDir: tempDir, specPath: "specs/typo.md" })).rejects.toThrow(
+        /was not linted as a spec/,
+      );
+      await expect(handleLint({ specPath: "specs/typo.md" })).rejects.toThrow(
+        /was not linted as a spec/,
+      );
+    });
+
+    it("agrees that an unreadable config is an error on both, not a degrade", async () => {
+      if (process.getuid?.() === 0) return; // root ignores mode bits
+      await writeFile(join(tempDir, "CLAUDE.md"), "# Fine\n\nAll good.");
+      const configPath = join(tempDir, "spec.config.yaml");
+      await writeFile(configPath, config);
+      await chmod(configPath, 0o000);
+
+      await expect(runLint({ configDir: tempDir })).rejects.toThrow(/Cannot read config file/);
+      await expect(handleLint({})).rejects.toThrow(/Cannot read config file/);
+      await chmod(configPath, 0o644);
     });
   });
 
