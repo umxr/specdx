@@ -24,6 +24,7 @@ export {
 // their rules up. See specs/adr/2026-08-11-linting-formats-we-do-not-own.md.
 export {
   lintAgentFiles,
+  lintAgentFilesWithoutConfig,
   resolveAgentRules,
   discoverAgentFiles,
   extractReferences,

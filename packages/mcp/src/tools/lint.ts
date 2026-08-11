@@ -1,5 +1,10 @@
-import { loadConfig, parseSpec, resolveGlob, buildGraph } from "@specdx/core";
-import { createLintEngine, resolveLintConfig, lintAgentFiles } from "@specdx/lint";
+import { loadConfig, findConfig, parseSpec, resolveGlob, buildGraph } from "@specdx/core";
+import {
+  createLintEngine,
+  resolveLintConfig,
+  lintAgentFiles,
+  lintAgentFilesWithoutConfig,
+} from "@specdx/lint";
 import type { ParsedSpec } from "@specdx/core";
 import type { Diagnostic } from "@specdx/lint";
 
@@ -19,6 +24,25 @@ import type { Diagnostic } from "@specdx/lint";
  */
 export async function handleLint(params: { preset?: string; specPath?: string }): Promise<string> {
   const configDir = process.cwd();
+
+  // No spec suite: lint the agent instruction files alone, through the same
+  // shared helper the CLI uses. Only genuine absence degrades — a malformed
+  // config still throws, or a YAML typo would read as a narrower pass.
+  if (!(await findConfig(configDir))) {
+    const agentResults = await lintAgentFilesWithoutConfig(configDir);
+    if (agentResults) {
+      return JSON.stringify({
+        diagnostics: agentResults.diagnostics,
+        hasErrors: agentResults.diagnostics.some((d) => d.severity === "error"),
+        hasWarnings: agentResults.diagnostics.some((d) => d.severity === "warn"),
+        specsChecked: 0,
+        assessed: false,
+        specSuite: false,
+        agentFilesChecked: agentResults.filesLinted,
+      });
+    }
+  }
+
   const config = await loadConfig(undefined, configDir);
   const preset = params.preset ?? config.lint?.extends ?? "recommended";
   const { rules, ignore } = await resolveLintConfig({
@@ -103,6 +127,7 @@ export async function handleLint(params: { preset?: string; specPath?: string })
     specsChecked: linted.length,
     // False when nothing was selected — "no diagnostics" is then not a pass.
     assessed: linted.length > 0,
+    specSuite: true,
     agentFilesChecked: agentFiles,
   });
 }

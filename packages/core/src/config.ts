@@ -43,7 +43,16 @@ export async function loadConfig(filePath?: string, searchFrom?: string): Promis
   return data as unknown as SdxConfig;
 }
 
-async function findConfig(from: string): Promise<string | undefined> {
+/**
+ * The nearest `spec.config.yaml` at or above `from`, or undefined.
+ *
+ * Exported so a caller can distinguish "no spec suite here" from "the spec
+ * suite is broken" *before* loading. Both surface as a `ConfigError`, and a
+ * caller that degrades gracefully on the first must not degrade on the second:
+ * silently treating a YAML typo as "no config" would turn a spec lint into a
+ * narrower check and report it as a pass.
+ */
+export async function findConfig(from: string): Promise<string | undefined> {
   let dir = from;
   while (true) {
     const candidate = join(dir, CONFIG_FILENAME);

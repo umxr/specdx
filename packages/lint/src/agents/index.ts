@@ -127,3 +127,28 @@ export async function lintAgentFiles(options: LintAgentFilesOptions): Promise<Ag
 
   return { diagnostics, filesLinted: files.length, assessed: files.length > 0 };
 }
+
+/** The config a project with no `spec.config.yaml` is linted under. */
+const AGENT_ONLY_CONFIG: SdxConfig = { version: "1.0", specs: {}, agents: {} };
+
+/**
+ * Lint the default agent instruction files in a project that has no
+ * `spec.config.yaml`, or return null when it has none of those either.
+ *
+ * The zero-config on-ramp: a repo with a CLAUDE.md and no spec suite gets a
+ * useful answer instead of "run specdx init". Lives here rather than in the
+ * CLI so `sdx lint` and the MCP `sdx_lint` tool run the *same* function — the
+ * cli→mcp duplication has shipped a divergence three times, and this is one
+ * case where the shared code can sit below both instead of being pinned by a
+ * test after the fact.
+ *
+ * Callers must only reach for this when the config is genuinely **absent**. A
+ * malformed config has to stay a hard error: degrading on it would turn a YAML
+ * typo into a narrower check reported as a pass.
+ */
+export async function lintAgentFilesWithoutConfig(
+  configDir: string,
+): Promise<AgentLintResults | null> {
+  const results = await lintAgentFiles({ config: AGENT_ONLY_CONFIG, configDir });
+  return results.assessed ? results : null;
+}

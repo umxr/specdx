@@ -1,4 +1,4 @@
-export { loadConfig, ConfigError } from "./config.js";
+export { loadConfig, findConfig, ConfigError } from "./config.js";
 export {
   parseSpec,
   parseSpecFromString,

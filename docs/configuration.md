@@ -179,9 +179,18 @@ agents:
 | `max_tokens` | `8000` | Token ceiling for a single file |
 | `rules` | `{}` | Per-rule severity, keyed by full rule id |
 
-Every key is optional, but **the `agents` key itself is what turns the feature
-on**. Without it no agent file is linted, so upgrading specdx never adds
-diagnostics to a suite that did not ask for them.
+Every key is optional, but in a project **with** a `spec.config.yaml` the
+`agents` key itself is what turns the feature on. Without it no agent file is
+linted, so upgrading specdx never adds diagnostics to a suite that did not ask
+for them.
+
+In a project with **no** `spec.config.yaml`, `specdx lint` falls back to
+linting `AGENTS.md` and `CLAUDE.md` on their own, using the defaults below. It
+tells you it did, so a clean agent-only run cannot be mistaken for a clean spec
+suite. If there is neither a config nor an agent file, it errors as before.
+A config that exists but is malformed is always an error — it never degrades to
+the agent-only path, because a YAML typo silently narrowing what gets checked
+would be reported as a pass.
 
 `paths` matching no file is an **error**, not a quiet pass — a config that
 promises this check and inspects nothing is worse than no config at all.
