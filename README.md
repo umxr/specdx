@@ -196,7 +196,7 @@ inline annotations and exits non-zero on failure.
 | Command | Description |
 |---------|-------------|
 | `specdx init` | Scaffold a spec suite (`--template lightweight\|bmad\|api-first\|quick\|context`) |
-| `specdx lint` | Lint all specs (`--preset`, `--fix`) |
+| `specdx lint [path]` | Lint the suite, or just `path` (`--preset`, `--fix`) |
 | `specdx validate` | Validate `spec.config.yaml` |
 | `specdx pack --task <task>` | Pack specs into token-budgeted context (`--copy`, `--full`) |
 | `specdx status` | Spec suite health overview |
