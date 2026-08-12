@@ -51,6 +51,17 @@ export async function runCheck(
 ): Promise<CheckResult> {
   const findings: Finding[] = [];
   const notes: string[] = [];
+  // Surfaces the author declared that could not be read. Distinct from `notes`,
+  // which also carries purely advisory lines: an unreadable surface silently
+  // leaves the score's denominator, which *raises* the percentage, so a caller
+  // gating a build has to be able to tell the two apart.
+  const unassessed: string[] = [];
+
+  /** Note a declared surface that could not be assessed. */
+  const noteUnassessed = (message: string): void => {
+    notes.push(message);
+    unassessed.push(message);
+  };
   let routeTotal = 0;
   let typeTotal = 0;
   let testTotal = 0;
@@ -72,7 +83,7 @@ export async function runCheck(
     () => false,
   );
   if (!tsMorphAvailable) {
-    notes.push(
+    noteUnassessed(
       "route, type and test extraction skipped: ts-morph is not installed. " +
         "Install specdx and ts-morph as devDependencies (pnpm add -D specdx ts-morph) — " +
         "an ephemeral runner like pnpm dlx cannot provide it.",
@@ -91,7 +102,22 @@ export async function runCheck(
     const codeRoutes = await extractRoutes(projectDir, config, framework);
     codeRouteCount = codeRoutes.length;
 
-    for (const spec of apiContractSpecs) {
+    // No framework recognised *and* the fallback read nothing: we cannot tell an
+    // unimplemented contract from a stack we cannot parse (NestJS, tRPC, Fastify
+    // wrappers, anything not JS). Matching anyway reported every endpoint
+    // missing at severity error — a maximally red first run for most of the
+    // market, on a project that might be complete. Skip, like ts-morph does.
+    const unreadableStack = framework === null && codeRoutes.length === 0;
+
+    if (unreadableStack) {
+      noteUnassessed(
+        "no supported framework detected (express, hono, nextjs) and no routes were readable, " +
+          "so routes were not assessed. Set check.framework in spec.config.yaml, or pass --framework, " +
+          "if this project does use one of them.",
+      );
+    }
+
+    for (const spec of unreadableStack ? [] : apiContractSpecs) {
       const specEndpoints = parseEndpoints(spec.content);
       routeTotal += specEndpoints.length;
       findings.push(...matchRoutes(specEndpoints, codeRoutes, spec.frontmatter.id as string));
@@ -100,13 +126,15 @@ export async function runCheck(
       // entirely, which *raises* the percentage. Saying nothing presents that
       // as full coverage of a category never assessed.
       if (specEndpoints.length === 0 && hasEndpointsSection(spec.content)) {
-        notes.push(
+        noteUnassessed(
           `${spec.frontmatter.id as string}: no endpoints recognised in its Endpoints section, so routes were not assessed. ` +
             "Write each endpoint as `- GET /path — description` or as a `### GET /path` heading.",
         );
       }
     }
-    if (framework === null) {
+    // Only when the fallback actually read something; the unreadable case is
+    // already noted above, and saying both would contradict itself.
+    if (framework === null && !unreadableStack) {
       notes.push(
         "no supported framework detected (express, hono, nextjs) — route extraction ran in fallback mode across all extractors.",
       );
@@ -133,7 +161,7 @@ export async function runCheck(
     // worth saying out loud. Silence here read as "these models are not
     // implemented", which is the opposite of what happened.
     if ((await usesPrisma(projectDir)) && !prismaSchemaFound) {
-      notes.push(
+      noteUnassessed(
         "a prisma dependency is declared but no schema was found at prisma/schema.prisma, " +
           "schema.prisma or prisma/schema/*.prisma — Prisma models were not assessed.",
       );
@@ -149,7 +177,7 @@ export async function runCheck(
       // Reporting the resulting percentage without saying so presents partial
       // coverage as whole coverage.
       if (fieldCount === 0 && /^##\s+Data Model\s*$/im.test(spec.content)) {
-        notes.push(
+        noteUnassessed(
           `${spec.frontmatter.id as string}: no fields recognised in its Data Model, so types were not assessed. ` +
             "Write fields as `- name: type` (one per line, under a `### TypeName` heading).",
         );
@@ -159,7 +187,7 @@ export async function runCheck(
       // unreadable one beside it — a table-shaped type left the denominator with
       // nothing said, and the percentage did not move.
       for (const name of unreadableTypeBlocks(spec.content)) {
-        notes.push(
+        noteUnassessed(
           `${spec.frontmatter.id as string}: no fields recognised under \`### ${name}\`, so that type was not assessed. ` +
             "A table needs a field column and a type column, or write fields as `- name: type`.",
         );
@@ -209,7 +237,7 @@ export async function runCheck(
     artifactsPending: artifactResult.pending,
   };
 
-  return { findings, score, summary, scanned, notes };
+  return { findings, score, summary, scanned, notes, unassessed };
 }
 
 /**

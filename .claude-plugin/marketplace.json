@@ -1,0 +1,31 @@
+{
+  "name": "specdx",
+  "owner": {
+    "name": "Umar Gora",
+    "url": "https://github.com/umxr"
+  },
+  "metadata": {
+    "description": "Spec-driven development for Claude Code: validate, lint, pack and gate specs."
+  },
+  "plugins": [
+    {
+      "name": "specdx",
+      "source": "./packages/cli",
+      "description": "Keep AI coding sessions grounded in specs your team actually maintains. Ten skills for authoring, planning, packing context and checking drift.",
+      "author": {
+        "name": "Umar Gora",
+        "url": "https://github.com/umxr"
+      },
+      "homepage": "https://umar.codes/sdx",
+      "repository": "https://github.com/umxr/specdx",
+      "license": "MIT",
+      "keywords": [
+        "spec-driven-development",
+        "specs",
+        "linting",
+        "context",
+        "drift"
+      ]
+    }
+  ]
+}

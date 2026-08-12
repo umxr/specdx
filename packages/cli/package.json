@@ -42,12 +42,13 @@
   },
   "files": [
     "dist",
+    "skills",
     ".claude-plugin",
     "hooks",
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "node ../../scripts/sync-plugin-skills.mjs && tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist *.tsbuildinfo"

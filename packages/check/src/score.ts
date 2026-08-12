@@ -34,6 +34,15 @@ export function computeScore(findings: Finding[], totals: SpecTotals): Implement
     const missing = missingByCategory[categoryKey] ?? 0;
     const matched = Math.max(0, total - missing);
     byCategory[name] = { matched, total };
+    // Test cases are reported but not scored. They are matched by Jaccard
+    // similarity over prose, which measures shared vocabulary rather than
+    // shared meaning: "rejects a request with an expired token" scores 0.167
+    // against `returns 401 when the token has expired` and is called missing,
+    // while "creates an invoice" scores 0.750 against `creates an invoice
+    // draft` and is called covered. A signal that wrong cannot move a number
+    // anyone acts on — and it is worst when the spec is written first, which
+    // is the workflow specdx advocates.
+    if (name === "tests") continue;
     totalItems += total;
     totalMatched += matched;
   }

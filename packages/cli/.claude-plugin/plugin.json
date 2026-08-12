@@ -6,6 +6,6 @@
     "name": "umxr",
     "url": "https://github.com/umxr"
   },
-  "skills": "./dist/skills/core",
+  "skills": "./skills/core",
   "hooks": "./hooks/hooks.json"
 }
