@@ -8,6 +8,7 @@ import {
   parseTestCases,
   hasEndpointsSection,
   unreadableTypeBlocks,
+  unattachedFieldLines,
 } from "./spec-parsers.js";
 import { extractExpressRoutes } from "./extractors/express.js";
 import { extractHonoRoutes } from "./extractors/hono.js";
@@ -54,6 +55,7 @@ export async function runCheck(
   let routeTotal = 0;
   let typeTotal = 0;
   let testTotal = 0;
+  let typesPending = 0;
   let codeRouteCount: number | null = null;
   let codeTypeCount: number | null = null;
   let codeTestCount: number | null = null;
@@ -140,30 +142,50 @@ export async function runCheck(
     }
 
     for (const spec of designSpecs) {
+      const specId = spec.frontmatter.id as string;
       const specTypes = parseTypeDefinitions(spec.content);
       const fieldCount = specTypes.reduce((sum, t) => sum + t.fields.length, 0);
-      typeTotal += fieldCount;
-      findings.push(...matchTypes(specTypes, codeTypes, spec.frontmatter.id as string));
+      const typeFindings = matchTypes(specTypes, codeTypes, specId, {
+        status: spec.frontmatter.status,
+      });
+      findings.push(...typeFindings);
 
-      // A Data Model that yields no fields contributes nothing to the score.
-      // Reporting the resulting percentage without saying so presents partial
-      // coverage as whole coverage.
-      if (fieldCount === 0 && /^##\s+Data Model\s*$/im.test(spec.content)) {
+      // A type planned by a spec that is not yet approved leaves the score the
+      // way a planned artifact does — fields and all, or a draft design would
+      // drag coverage down for describing work before doing it (issue #52).
+      const pendingTypes = typeFindings.filter((f) => f.type === "pending");
+      typeTotal += fieldCount - pendingTypes.reduce((sum, f) => sum + (f.weight ?? 1), 0);
+      typesPending += pendingTypes.length;
+
+      // Field lines that no `### TypeName` heading claims are declarations the
+      // author expects to be checked, and they are not being. A Data Model
+      // written as prose declares nothing and draws no note: warning about it
+      // every run, unclearable short of rewriting valid prose, taught people to
+      // ignore the warnings that matter (issue #38).
+      const unattached = unattachedFieldLines(spec.content);
+      if (unattached.length > 0) {
         notes.push(
-          `${spec.frontmatter.id as string}: no fields recognised in its Data Model, so types were not assessed. ` +
-            "Write fields as `- name: type` (one per line, under a `### TypeName` heading).",
+          `${specId}: ${unattached.length} field line(s) in its Data Model sit under no \`### TypeName\` heading, ` +
+            `so they were not assessed — the first is \`${unattached[0]!}\`.`,
         );
       }
 
-      // The note above is per spec, so one readable type used to silence every
-      // unreadable one beside it — a table-shaped type left the denominator with
-      // nothing said, and the percentage did not move.
+      // The per-spec note is per spec, so one readable type used to silence
+      // every unreadable one beside it — a table-shaped type left the
+      // denominator with nothing said, and the percentage did not move.
       for (const name of unreadableTypeBlocks(spec.content)) {
         notes.push(
-          `${spec.frontmatter.id as string}: no fields recognised under \`### ${name}\`, so that type was not assessed. ` +
+          `${specId}: no fields recognised under \`### ${name}\`, so that type was not assessed. ` +
             "A table needs a field column and a type column, or write fields as `- name: type`.",
         );
       }
+    }
+
+    if (typesPending > 0) {
+      notes.push(
+        `${typesPending} declared type(s) pending: types planned by specs that are not yet approved. ` +
+          "They are excluded from the score and become enforceable when the spec status changes to approved.",
+      );
     }
   }
 
@@ -207,6 +229,7 @@ export async function runCheck(
     codeTests: codeTestCount,
     artifacts: artifactResult.total > 0 ? artifactResult.checked : null,
     artifactsPending: artifactResult.pending,
+    typesPending,
   };
 
   return { findings, score, summary, scanned, notes };

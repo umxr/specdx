@@ -5,6 +5,7 @@ import {
   parseTestCases,
   hasEndpointsSection,
   unreadableTypeBlocks,
+  unattachedFieldLines,
 } from "./spec-parsers.js";
 
 describe("parseEndpoints", () => {
@@ -410,5 +411,146 @@ describe("parseTestCases — case IDs", () => {
     const cases = parseTestCases("## Test Cases\n\n- Auth: login, logout\n");
     expect(cases.map((c) => c.description)).toEqual(["Auth: login", "Auth: logout"]);
     expect(cases[0]!.id).toBeUndefined();
+  });
+});
+
+describe("parseTypeDefinitions — a description after the type (issue #51)", () => {
+  // `- GET /path — description` has always parsed. The same em-dash after a
+  // field's type dropped the field, so a Data Model written in the house style
+  // reported "no fields recognised" and the type half of `check` sat inert.
+  it("reads a field whose type is followed by an em-dash description", () => {
+    const content = `## Data Model
+
+### TagEntry
+
+- tag: string — the raw frontmatter token, kebab-case, also the URL segment
+- label: string — display form
+- posts: Post[] — published posts carrying the tag, newest first
+`;
+    const [entry] = parseTypeDefinitions(content);
+    expect(entry!.name).toBe("TagEntry");
+    expect(entry!.fields).toEqual([
+      { name: "tag", type: "string", optional: false },
+      { name: "label", type: "string", optional: false },
+      { name: "posts", type: "Post[]", optional: false },
+    ]);
+  });
+
+  it("reads en-dash and hyphen descriptions too", () => {
+    const content = `## Data Model
+
+### Budget
+
+- key: string – the quantity's name
+- bytes: number - the ceiling
+`;
+    const [budget] = parseTypeDefinitions(content);
+    expect(budget!.fields.map((f) => f.type)).toEqual(["string", "number"]);
+  });
+
+  it("still reads a trailing parenthetical note", () => {
+    const [t] = parseTypeDefinitions("## Data Model\n\n### T\n\n- id: string (UUID)\n");
+    expect(t!.fields[0]).toEqual({ name: "id", type: "string", optional: false });
+  });
+
+  it("strips a description from a backticked field too", () => {
+    const content = "## Data Model\n\n### T\n\n- `id`: string — the primary key\n";
+    const [t] = parseTypeDefinitions(content);
+    expect(t!.fields[0]).toEqual({ name: "id", type: "string", optional: false });
+  });
+
+  it("keeps a hyphen that is part of the type", () => {
+    const [t] = parseTypeDefinitions('## Data Model\n\n### T\n\n- slug: "kebab-case"\n');
+    expect(t!.fields[0]!.type).toBe('"kebab-case"');
+  });
+});
+
+describe("parseTypeDefinitions — type shapes that are not bare identifiers (issue #51)", () => {
+  it("reads a quoted string-literal union", () => {
+    const [t] = parseTypeDefinitions('## Data Model\n\n### T\n\n- theme: "light" | "dark"\n');
+    expect(t!.fields[0]).toEqual({ name: "theme", type: '"light" | "dark"', optional: false });
+  });
+
+  it("reads a generic with more than one parameter", () => {
+    const [t] = parseTypeDefinitions(
+      "## Data Model\n\n### T\n\n- counts: Record<string, number>\n- pairs: Map<string, Set<number>>\n",
+    );
+    expect(t!.fields.map((f) => f.type)).toEqual([
+      "Record<string, number>",
+      "Map<string, Set<number>>",
+    ]);
+  });
+
+  it("reads an object literal and a function type", () => {
+    const [t] = parseTypeDefinitions(
+      "## Data Model\n\n### T\n\n- meta: { id: string }\n- onDone: () => void\n",
+    );
+    expect(t!.fields.map((f) => f.name)).toEqual(["meta", "onDone"]);
+  });
+
+  it("still refuses a sentence", () => {
+    const content = `## Data Model
+
+### User
+
+- id: string
+- Note: this table is partitioned by tenant and replicated to the read region
+- Retention: rows older than 90 days are dropped, in a nightly job
+`;
+    const [user] = parseTypeDefinitions(content);
+    expect(user!.fields.map((f) => f.name)).toEqual(["id"]);
+  });
+
+  it("reads a description after a table's type column", () => {
+    const content = `## Data Model
+
+### Payment
+
+| Field | Type | Notes |
+|---|---|---|
+| id | string — UUID | primary key |
+`;
+    const [payment] = parseTypeDefinitions(content);
+    expect(payment!.fields[0]).toEqual({ name: "id", type: "string", optional: false });
+  });
+});
+
+describe("unattachedFieldLines (issues #38, #51)", () => {
+  it("says nothing about a Data Model written as prose", () => {
+    // The whole point of #38: prose is not a failed field list, and warning
+    // about it every run trains people to ignore the warnings that matter.
+    const content = `## Data Model
+
+Logs are written to an object key of \`\${date}/\${host}.ndjson\`. Duplicates are
+tolerated: the drain is at-least-once, and the reader de-duplicates by request id.
+
+- Segmentation: one object per host per day, never per request.
+- Retention: 30 days, enforced by a lifecycle rule rather than by the drain.
+`;
+    expect(unattachedFieldLines(content)).toEqual([]);
+  });
+
+  it("names field lines that no `### TypeName` heading claims", () => {
+    const content = `## Data Model
+
+- id: string
+- email: string
+`;
+    expect(unattachedFieldLines(content)).toEqual(["- id: string", "- email: string"]);
+  });
+
+  it("names field lines under a prose heading", () => {
+    const content = `## Data Model
+
+### The user record
+
+- id: string
+`;
+    expect(unattachedFieldLines(content)).toEqual(["- id: string"]);
+  });
+
+  it("says nothing when every field line sits under a type heading", () => {
+    const content = "## Data Model\n\n### User\n\n- id: string\n";
+    expect(unattachedFieldLines(content)).toEqual([]);
   });
 });
