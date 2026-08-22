@@ -1,4 +1,5 @@
 import type { Finding, SpecTypeDefinition, ExtractedType } from "../types.js";
+import { enforcedByStatus, plannedSuggestion } from "../status.js";
 
 const STRIP_SUFFIXES = ["Schema", "Model", "Type", "Interface", "Entity"];
 
@@ -21,32 +22,50 @@ function findMatchingCodeType(
   return codeTypes.find((ct) => normaliseTypeName(ct.name) === specNorm);
 }
 
+/**
+ * A type a spec declares but code does not define is only a defect once the
+ * spec is approved. Before then it is planned work, reported the way a planned
+ * artifact is (issue #52). The status is optional and defaults to enforcing:
+ * a caller that cannot say what the status is gets the strict reading.
+ */
+export interface TypeMatchOptions {
+  status?: unknown;
+}
+
 export function matchTypes(
   specTypes: SpecTypeDefinition[],
   codeTypes: ExtractedType[],
   specId: string,
+  options: TypeMatchOptions = {},
 ): Finding[] {
   const findings: Finding[] = [];
+  const enforced = "status" in options ? enforcedByStatus(options.status) : true;
 
   for (const specType of specTypes) {
     const codeType = findMatchingCodeType(specType, codeTypes);
 
     if (!codeType) {
       findings.push({
-        type: "missing",
+        type: enforced ? "missing" : "pending",
         category: "type",
         specId,
         specSection: "Data Models",
         expected: `Type: ${specType.name}`,
-        severity: "error",
-        suggestion: `Implement type "${specType.name}" in code`,
+        severity: enforced ? "error" : "info",
+        suggestion: enforced
+          ? `Implement type "${specType.name}" in code`
+          : plannedSuggestion(specId, options.status),
         // The score's types denominator counts fields; an absent type must
         // subtract all of its fields, not 1, or a project that implements
-        // nothing of an N-field model scores (N-1)/N.
+        // nothing of an N-field model scores (N-1)/N. A pending type carries
+        // the same weight so its fields can leave the denominator entirely.
         weight: specType.fields.length,
       });
       continue;
     }
+
+    // The type exists, so its fields are real assertions whatever the spec's
+    // status -- the same rule artifacts apply to a file that exists.
 
     // Build a set of field names present in the code type
     const codeFieldNames = new Set(codeType.fields.map((f) => f.name));

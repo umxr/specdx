@@ -18,10 +18,12 @@ export interface ScanSummary {
   artifacts: number | null;
   /** Declared artifacts planned by not-yet-approved specs, excluded from scoring (issue #17). */
   artifactsPending: number;
+  /** Data Model types planned by not-yet-approved specs, excluded from scoring (issue #52). */
+  typesPending: number;
 }
 
 export interface Finding {
-  /** "pending" = declared but not yet built, by a spec that is not yet approved (issue #17). */
+  /** "pending" = declared but not yet built, by a spec that is not yet approved (issues #17, #52). */
   type: "missing" | "extra" | "mismatch" | "drift" | "pending";
   category: "route" | "type" | "test" | "artifact";
   specId: string;

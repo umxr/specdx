@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { ParsedSpec } from "@specdx/core";
 import type { Finding } from "./types.js";
+import { enforcedByStatus, plannedSuggestion } from "./status.js";
 
 /** A checkable artifact declared in a spec's `artifacts` frontmatter (issue #15). */
 export interface ArtifactDecl {
@@ -21,21 +22,6 @@ export interface ArtifactCheckResult {
   /** Declared-but-absent artifacts of specs not yet approved — planned, not missing (issue #17). */
   pending: number;
   notes: string[];
-}
-
-/**
- * Spec statuses at which declared artifacts must already exist.
- *
- * A spec is the plan for work that has not happened yet, so its artifacts are
- * enforceable only once it is approved. Before then a declared-but-absent file
- * is the expected state, not a defect (issue #17) — otherwise spec-first
- * authoring would fail the very gate the artifacts exist to feed.
- */
-const ENFORCED_STATUSES = new Set(["approved"]);
-
-/** True when a spec's declared artifacts must exist for the check to pass. */
-export function artifactsEnforced(status: unknown): boolean {
-  return typeof status === "string" && ENFORCED_STATUSES.has(status);
 }
 
 /**
@@ -93,7 +79,7 @@ export async function checkArtifacts(
   for (const spec of specs) {
     const specId = String(spec.frontmatter.id);
     const status = spec.frontmatter.status;
-    const enforced = artifactsEnforced(status);
+    const enforced = enforcedByStatus(status);
 
     for (const artifact of parseArtifacts(spec)) {
       const absolute = join(projectDir, artifact.path);
@@ -118,7 +104,7 @@ export async function checkArtifacts(
             specId,
             expected: `file "${artifact.path}"`,
             severity: "info",
-            suggestion: `planned by ${specId} (status: ${String(status)}) — not yet implemented; enforced once the spec is approved.`,
+            suggestion: plannedSuggestion(specId, status),
           });
         }
         // Export assertions for an absent file are not separately counted.
@@ -170,7 +156,7 @@ export async function checkArtifacts(
             codeLocation: { file: artifact.path, line: 1 },
             expected: `export "${name}" from ${artifact.path}`,
             severity: "info",
-            suggestion: `planned by ${specId} (status: ${String(status)}) — not yet implemented; enforced once the spec is approved.`,
+            suggestion: plannedSuggestion(specId, status),
           });
         }
       }
