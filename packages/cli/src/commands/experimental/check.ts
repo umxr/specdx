@@ -138,7 +138,9 @@ export default defineCommand({
         const fmt = (n: number | null) => (n === null ? "not scanned" : `${n} found`);
         output.out(`  Scanned: framework=${result.scanned.framework ?? "none detected"}`);
         output.out(`    routes: ${fmt(result.scanned.codeRoutes)}`);
-        output.out(`    types: ${fmt(result.scanned.codeTypes)}`);
+        const typesPending =
+          result.scanned.typesPending > 0 ? `, ${result.scanned.typesPending} pending` : "";
+        output.out(`    types: ${fmt(result.scanned.codeTypes)}${typesPending}`);
         output.out(`    tests: ${fmt(result.scanned.codeTests)}`);
         // "assessed", not "verified": this counts the assertions considered,
         // and a failed one is reported below. Calling six verified while the

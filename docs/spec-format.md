@@ -113,22 +113,24 @@ with a note, never silently passed.
 **Enforcement follows the spec's `status`**, so you can declare artifacts for
 work that has not been built yet:
 
-| Spec status | Missing file or export | Exit code |
+| Spec status | Missing file, export or type | Exit code |
 |---|---|---|
 | `draft`, `review`, `superseded` | reported as **pending** — planned, not built. Excluded from the score. | 0 |
 | `approved` | reported as a **missing** error | 1 |
 
-Files and exports that do exist are always verified, whatever the status.
-Flipping a spec to `approved` is what makes its contract enforceable, so
-`check` can tell "a plan for unbuilt work" apart from "approved, and three of
-its five artifacts are missing".
+One rule, both surfaces: a type named by a `## Data Model` heading that code
+does not define yet follows the same table as a declared artifact. Files,
+exports and types that *do* exist are always verified, whatever the status —
+only their absence is deferred. Flipping a spec to `approved` is what makes its
+contract enforceable, so `check` can tell "a plan for unbuilt work" apart from
+"approved, and three of its five artifacts are missing".
 
 ## Sections `specdx check` reads
 
 Most sections are prose that only a human reads. Three are parsed so `check`
 can compare them against code. Write them in one of the shapes below — anything
-else is treated as prose, and `check` reports the section as **not assessed**
-rather than counting it as covered.
+else is treated as prose, and left out of the score rather than counted as
+covered.
 
 ### `## Endpoints` (api-contract)
 
@@ -160,10 +162,23 @@ identifier — `### Notes on the model` is read as prose, not as a type called
 - id: string
 - `amountCents`: number
 - paidAt?: Date
+- status: "draft" | "sent" | "paid" — set by the state machine, never by hand
+- lines: Record<string, LineItem>
 ```
+
+A field may carry a description after its type, separated by ` — `, ` – `,
+` - `, or wrapped in parentheses — the same delimiters `## Endpoints` accepts
+after a path. The type itself may be any ordinary TypeScript annotation: a
+string-literal union, a generic with several parameters, an array, an object
+literal, a function type.
 
 A markdown table is also read, if it has a field column and a type column. A
 table that cannot be read is named in the output rather than dropped silently.
+
+A Data Model written as prose declares no fields, and `check` says nothing
+about it — it is documentation for a person, not a contract to verify. What
+`check` does report is a field line that no `### TypeName` heading claims,
+since that is a declaration expecting to be checked and nothing is checking it.
 
 ### `## Test Cases` (test-plan)
 

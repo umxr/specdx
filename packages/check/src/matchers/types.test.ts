@@ -123,3 +123,34 @@ describe("matchTypes", () => {
     expect(findings).toHaveLength(0);
   });
 });
+
+describe("matchTypes — the spec's status decides whether an absent type is a defect (issue #52)", () => {
+  const specTypes = [
+    { name: "Budget", fields: [{ name: "key", type: "string", optional: false }] },
+  ];
+
+  it("reports a not-yet-approved spec's absent type as planned", () => {
+    const [finding] = matchTypes(specTypes, [], "td-001", { status: "draft" });
+    expect(finding).toMatchObject({
+      type: "pending",
+      severity: "info",
+      expected: "Type: Budget",
+      weight: 1,
+    });
+    expect(finding!.suggestion).toBe(
+      "planned by td-001 (status: draft) — not yet implemented; enforced once the spec is approved.",
+    );
+  });
+
+  it("reports an approved spec's absent type as missing", () => {
+    const [finding] = matchTypes(specTypes, [], "td-001", { status: "approved" });
+    expect(finding).toMatchObject({ type: "missing", severity: "error" });
+  });
+
+  it("enforces when the caller says nothing about status", () => {
+    // A caller that cannot state the status gets the strict reading, never a
+    // silent downgrade of every finding to info.
+    const [finding] = matchTypes(specTypes, [], "td-001");
+    expect(finding).toMatchObject({ type: "missing", severity: "error" });
+  });
+});

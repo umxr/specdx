@@ -116,10 +116,86 @@ export function parseEndpoints(content: string): SpecEndpoint[] {
 }
 
 /**
- * An identifier, or identifiers joined by `|` / `&` -- what a type annotation
- * looks like, as opposed to a sentence.
+ * A bracketed group or quoted literal collapses to this single token, so a type
+ * carrying one is still one atom. It is a character no spec contains, so it can
+ * never be confused with something the author wrote.
  */
-const TYPE_SHAPE = /^[A-Za-z_$][\w$.<>[\]]*(?:\s*[|&]\s*[A-Za-z_$][\w$.<>[\]]*)*$/;
+const GROUP = "\u00A7";
+
+/**
+ * A type annotation, as opposed to a sentence: identifiers, quoted literals and
+ * numbers, joined by `|`, `&` or `=>`, each optionally carrying collapsed groups
+ * (`Record<...>`, `Post[]`, `{ ... }`, `() => void`).
+ *
+ * The shape this replaced allowed only bare identifiers and their `.<>[]`
+ * suffixes, so `"light" | "dark"` and `Record<string, number>` — ordinary
+ * TypeScript — were read as prose and dropped (issue #51).
+ */
+const TYPE_ATOM = `(?:[A-Za-z_$][\\w$.]*|-?\\d+(?:\\.\\d+)?|${GROUP})${GROUP}*`;
+const TYPE_SHAPE = new RegExp(`^${TYPE_ATOM}(?:\\s*(?:[|&]|=>)\\s*${TYPE_ATOM})*$`);
+
+/** Quoted literals and bracketed groups, innermost first, each reduced to one token. */
+function collapseGroups(type: string): string {
+  let collapsed = type.replace(/"[^"]*"|'[^']*'|`[^`]*`/g, GROUP);
+  let previous = "";
+  while (collapsed !== previous) {
+    previous = collapsed;
+    collapsed = collapsed.replace(/<[^<>]*>|\{[^{}]*\}|\([^()]*\)|\[[^[\]]*\]/g, GROUP);
+  }
+  return collapsed;
+}
+
+/** True when a string reads as a type annotation rather than as prose. */
+function looksLikeType(type: string): boolean {
+  return type.length > 0 && TYPE_SHAPE.test(collapseGroups(type));
+}
+
+/**
+ * Index of the first ` — `, ` – ` or ` - ` separating a type from a description,
+ * ignoring any inside brackets or quotes; -1 when there is none.
+ *
+ * `parseEndpoints` has always accepted those three after a path, so a spec that
+ * described its endpoints and its fields in the same house style had one read
+ * and the other silently dropped (issue #51).
+ */
+function descriptionStart(raw: string): number {
+  let depth = 0;
+  let quote: string | null = null;
+
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i]!;
+    if (quote !== null) {
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+      continue;
+    }
+    if (ch === "(" || ch === "[" || ch === "{" || ch === "<") {
+      depth += 1;
+      continue;
+    }
+    if (ch === ")" || ch === "]" || ch === "}" || ch === ">") {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+    if (depth > 0 || !/\s/.test(ch)) continue;
+    if (/^\s+(?:—|–|-{1,2})\s+/.test(raw.slice(i))) return i;
+  }
+  return -1;
+}
+
+/** The type a field declares, with any description or parenthetical note removed. */
+function normaliseFieldType(raw: string): string {
+  const cut = descriptionStart(raw);
+  const type = (cut === -1 ? raw : raw.slice(0, cut)).trim();
+
+  // A trailing parenthetical is a note about the field ("(UUID)") -- unless
+  // removing it leaves nothing, in which case it was the type: `(A | B)`.
+  const withoutNote = type.replace(/\s*\(.*?\)\s*$/, "").trim();
+  return withoutNote.length > 0 ? withoutNote : type;
+}
 
 /**
  * What a `### Heading` inside a Data Model must look like to be a type name:
@@ -127,6 +203,59 @@ const TYPE_SHAPE = /^[A-Za-z_$][\w$.<>[\]]*(?:\s*[|&]\s*[A-Za-z_$][\w$.<>[\]]*)*
  * have spaces and are not type declarations.
  */
 const TYPE_NAME_SHAPE = /^[A-Za-z_$][\w$]*(?:<[\w$,\s[\]]+>)?$/;
+
+/**
+ * A field declaration line, backticked or not -- `- \`fieldName?\`: type` or
+ * `- fieldName?: type` -- under any of the three markdown bullet markers.
+ */
+const FIELD_LINE = /^[ \t]*[-*+]\s+(?:`([^`]+)`|([A-Za-z_$][\w$]*\??))\s*:\s*(.+)$/;
+
+/**
+ * The field a line declares, or null when the line is prose.
+ *
+ * Requiring backticks meant an ordinary markdown Data Model parsed to zero
+ * fields, which `check` then dropped from coverage without saying so. The
+ * un-backticked form is deliberately strict -- the type has to look like a type
+ * -- so "- Note: this table is partitioned by tenant" is not read as a field.
+ * Backticks are the author saying "this is a field", so the type is then taken
+ * as written.
+ */
+function parseFieldLine(line: string): SpecTypeDefinition["fields"][number] | null {
+  const match = FIELD_LINE.exec(line);
+  if (!match) return null;
+
+  const backticked = match[1] !== undefined;
+  const rawName = (match[1] ?? match[2])!;
+  const optional = rawName.endsWith("?");
+  const type = normaliseFieldType(match[3]!);
+
+  if (type.length === 0) return null;
+  if (!backticked && !looksLikeType(type)) return null;
+
+  return { name: optional ? rawName.slice(0, -1) : rawName, type, optional };
+}
+
+/** The `### TypeName` a block declares, or null when its heading is prose. */
+function typeHeading(block: string): string | null {
+  // The whole heading line, not just its first word: `### Notes on the model`
+  // used to register a type called "Notes" that code was then told to
+  // implement. A type name is a single identifier-shaped token.
+  const headingMatch = /^###\s+(.+?)\s*$/m.exec(block);
+  if (!headingMatch) return null;
+
+  const name = headingMatch[1]!.trim().replace(/^`|`$/g, "");
+  return TYPE_NAME_SHAPE.test(name) ? name : null;
+}
+
+/** Every field a `### TypeName` block declares as bullets. */
+function parseFieldBullets(block: string): SpecTypeDefinition["fields"] {
+  const fields: SpecTypeDefinition["fields"] = [];
+  for (const line of block.split("\n")) {
+    const field = parseFieldLine(line);
+    if (field) fields.push(field);
+  }
+  return fields;
+}
 
 /**
  * Parses the `## Data Model` section of a spec and returns structured type definitions.
@@ -138,47 +267,11 @@ export function parseTypeDefinitions(content: string): SpecTypeDefinition[] {
   const results: SpecTypeDefinition[] = [];
 
   // Split by `### TypeName` headings
-  const blocks = section.split(/^(?=###\s)/m);
+  for (const block of section.split(/^(?=###\s)/m)) {
+    const name = typeHeading(block);
+    if (name === null) continue;
 
-  for (const block of blocks) {
-    // The whole heading line, not just its first word: `### Notes on the model`
-    // used to register a type called "Notes" that code was then told to
-    // implement. A type name is a single identifier-shaped token.
-    const headingMatch = /^###\s+(.+?)\s*$/m.exec(block);
-    if (!headingMatch) continue;
-
-    const name = headingMatch[1]!.trim().replace(/^`|`$/g, "");
-    if (!TYPE_NAME_SHAPE.test(name)) continue;
-
-    const fields: SpecTypeDefinition["fields"] = [];
-
-    // Field lines, backticked or not: `- \`fieldName?\`: type` / `- fieldName?: type`.
-    //
-    // Requiring backticks meant an ordinary markdown Data Model parsed to zero
-    // fields, which `check` then dropped from coverage without saying so. The
-    // un-backticked form is deliberately strict -- a single identifier only --
-    // so prose like "- Note: this table is partitioned" is not read as a field.
-    const fieldPattern = /^-\s+(?:`([^`]+)`|([A-Za-z_$][\w$]*\??))\s*:\s*(.+)/gm;
-    let fieldMatch: RegExpExecArray | null;
-
-    while ((fieldMatch = fieldPattern.exec(block)) !== null) {
-      const backticked = fieldMatch[1] !== undefined;
-      const rawName = (fieldMatch[1] ?? fieldMatch[2])!;
-      const optional = rawName.endsWith("?");
-      const fieldName = optional ? rawName.slice(0, -1) : rawName;
-
-      // Type is everything before optional parenthetical notes like "(UUID)"
-      const rawType = fieldMatch[3]!.trim();
-      const type = rawType.replace(/\s*\(.*?\)\s*$/, "").trim();
-
-      // Backticks are the author saying "this is a field", so the type is taken
-      // as written. Without them the line is only a field if the type also
-      // looks like one -- otherwise "- Note: this table is partitioned by
-      // tenant" would become a field named Note.
-      if (!backticked && !TYPE_SHAPE.test(type)) continue;
-
-      fields.push({ name: fieldName, type, optional });
-    }
+    const fields = parseFieldBullets(block);
 
     // A table is the third way people write a data model, and reading only the
     // bullet forms meant a table-shaped type contributed nothing to the score
@@ -243,7 +336,7 @@ function parseFieldTable(block: string): SpecTypeDefinition["fields"] {
     const name = optional ? rawName.slice(0, -1) : rawName;
     if (!/^[A-Za-z_$][\w$]*$/.test(name)) continue;
 
-    fields.push({ name, type: rawType.replace(/\s*\(.*?\)\s*$/, "").trim(), optional });
+    fields.push({ name, type: normaliseFieldType(rawType), optional });
   }
   return fields;
 }
@@ -264,11 +357,8 @@ export function unreadableTypeBlocks(content: string): string[] {
 
   const unreadable: string[] = [];
   for (const block of section.split(/^(?=###\s)/m)) {
-    const headingMatch = /^###\s+(.+?)\s*$/m.exec(block);
-    if (!headingMatch) continue;
-
-    const name = headingMatch[1]!.trim().replace(/^`|`$/g, "");
-    if (!TYPE_NAME_SHAPE.test(name)) continue;
+    const name = typeHeading(block);
+    if (name === null) continue;
 
     const hasTable = block.split("\n").some((line) => tableCells(line) !== null);
     if (!hasTable) continue;
@@ -277,6 +367,33 @@ export function unreadableTypeBlocks(content: string): string[] {
     if (parsed.length === 0) unreadable.push(name);
   }
   return unreadable;
+}
+
+/**
+ * Field lines in a Data Model that no type claims, because no `### TypeName`
+ * heading stands above them.
+ *
+ * This is the only unreadable-Data-Model case left worth a word. A Data Model
+ * written as prose declares no fields and is not trying to: warning about it
+ * once per spec on every run, with no edit short of restructuring valid prose
+ * to clear it, taught people to ignore every warning `check` prints (issue
+ * #38). A line that does parse as a field but belongs to nothing is different —
+ * it is a declaration the author expects to be checked, and it is not being.
+ */
+export function unattachedFieldLines(content: string): string[] {
+  const section = extractSection(content, "Data Model");
+  if (!section) return [];
+
+  const unattached: string[] = [];
+  for (const block of section.split(/^(?=###\s)/m)) {
+    // Fields under a type heading are read; only orphans are of interest.
+    if (typeHeading(block) !== null) continue;
+
+    for (const line of block.split("\n")) {
+      if (parseFieldLine(line) !== null) unattached.push(line.trim());
+    }
+  }
+  return unattached;
 }
 
 /**

@@ -377,10 +377,11 @@ describe("runCheck", () => {
   });
 });
 
-describe("runCheck — an unparseable Data Model is reported, not ignored (F8)", () => {
-  it("notes a Data Model whose fields were not recognised", async () => {
-    // Silence here is what let an 88% coverage figure be reported while the
-    // whole types category contributed nothing.
+describe("runCheck — a Data Model it could not read (F8, issue #38)", () => {
+  it("says nothing about a Data Model written as prose", async () => {
+    // A prose Data Model is not a failed field list. Warning once per spec per
+    // run, with no edit short of restructuring valid prose to clear it, taught
+    // people to ignore every warning `check` prints (issue #38).
     const specs: ParsedSpec[] = [
       makeSpec(
         { id: "td", type: "technical-design" },
@@ -396,7 +397,25 @@ describe("runCheck — an unparseable Data Model is reported, not ignored (F8)",
 
     const result = await runCheck(specs, FIXTURES_DIR, { framework: "express" });
 
-    expect(result.notes.some((n) => /data model/i.test(n))).toBe(true);
+    expect(result.notes.some((n) => /data model/i.test(n))).toBe(false);
+  });
+
+  it("names field lines that belong to no type heading", async () => {
+    // Still worth saying: these lines *are* field declarations, and they left
+    // the denominator without contributing to it.
+    const specs: ParsedSpec[] = [
+      makeSpec(
+        { id: "td-loose", type: "technical-design" },
+        ["## Data Model", "", "- id: string", "- email: string"].join("\n"),
+      ),
+    ];
+
+    const result = await runCheck(specs, FIXTURES_DIR, { framework: "express" });
+
+    const note = result.notes.find((n) => /data model/i.test(n));
+    expect(note).toContain("td-loose");
+    expect(note).toContain("### TypeName");
+    expect(note).toContain("- id: string");
   });
 
   it("says nothing when the Data Model parses", async () => {
@@ -410,6 +429,96 @@ describe("runCheck — an unparseable Data Model is reported, not ignored (F8)",
     const result = await runCheck(specs, FIXTURES_DIR, { framework: "express" });
 
     expect(result.notes.some((n) => /data model/i.test(n))).toBe(false);
+  });
+
+  it("reads a Data Model whose fields carry descriptions (issue #51)", async () => {
+    const specs: ParsedSpec[] = [
+      makeSpec(
+        { id: "td-desc", type: "technical-design" },
+        [
+          "## Data Model",
+          "",
+          "### Budget",
+          "",
+          "- key: string — the quantity's name",
+          "- bytes: number — the ceiling",
+        ].join("\n"),
+      ),
+    ];
+
+    const result = await runCheck(specs, FIXTURES_DIR, { framework: "express" });
+
+    expect(result.score.byCategory["types"]).toEqual({ matched: 0, total: 2 });
+    expect(result.notes.some((n) => /data model/i.test(n))).toBe(false);
+  });
+});
+
+describe("runCheck — status governs types as it governs artifacts (issue #52)", () => {
+  const dataModel = [
+    "## Data Model",
+    "",
+    "### Budget",
+    "",
+    "- key: string — the quantity's name",
+    "- bytes: number — the ceiling",
+    "",
+    "### User",
+    "",
+    "- id: string",
+    "- name: string",
+    "- email: string",
+    '- role: "admin" | "user"',
+    "- createdAt: Date",
+  ].join("\n");
+
+  it("holds a draft spec's unimplemented types back instead of failing on them", async () => {
+    const spec = makeSpec({ id: "td-draft", type: "technical-design", status: "draft" }, dataModel);
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    const budget = result.findings.filter((f) => f.expected === "Type: Budget");
+    expect(budget).toHaveLength(1);
+    expect(budget[0]!.type).toBe("pending");
+    expect(budget[0]!.severity).toBe("info");
+    expect(budget[0]!.suggestion).toContain("enforced once the spec is approved");
+
+    // Excluded from the score, exactly as a planned artifact is: the five
+    // implemented User fields are the whole denominator.
+    expect(result.findings.filter((f) => f.severity === "error")).toHaveLength(0);
+    expect(result.score.byCategory["types"]).toEqual({ matched: 5, total: 5 });
+    expect(result.scanned.typesPending).toBe(1);
+    expect(result.notes.some((n) => /type\(s\) pending/i.test(n))).toBe(true);
+  });
+
+  it("fails on the same types once the spec is approved", async () => {
+    const spec = makeSpec(
+      { id: "td-approved", type: "technical-design", status: "approved" },
+      dataModel,
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    const budget = result.findings.filter((f) => f.expected === "Type: Budget");
+    expect(budget[0]!.type).toBe("missing");
+    expect(budget[0]!.severity).toBe("error");
+    expect(result.score.byCategory["types"]).toEqual({ matched: 5, total: 7 });
+    expect(result.scanned.typesPending).toBe(0);
+  });
+
+  it("still checks the fields of a draft spec's type that does exist", async () => {
+    // The artifacts rule: a file that exists is a real assertion whatever the
+    // status. A type that exists is too — only its absence is deferred.
+    const spec = makeSpec(
+      { id: "td-draft-fields", type: "technical-design", status: "draft" },
+      ["## Data Model", "", "### User", "", "- id: string", "- nickname: string"].join("\n"),
+    );
+
+    const result = await runCheck([spec], FIXTURES_DIR, { framework: "express" });
+
+    const missingField = result.findings.filter((f) => /User\.nickname/.test(f.expected));
+    expect(missingField).toHaveLength(1);
+    expect(missingField[0]!.severity).toBe("warn");
+    expect(result.scanned.typesPending).toBe(0);
   });
 });
 
